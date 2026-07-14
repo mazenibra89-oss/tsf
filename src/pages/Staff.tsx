@@ -498,6 +498,12 @@ export const Staff: React.FC = () => {
     priority2: '',
     motivation: '',
     fileUrl: '',
+    ktmKrsLink: '',
+    cvLink: '',
+    repostLink: '',
+    twibbonLink: '',
+    igFollowLink: '',
+    tiktokFollowLink: '',
     divTaskAnswer1: '',
     divTaskAnswer2: '',
     // General Task Fields
@@ -718,13 +724,27 @@ export const Staff: React.FC = () => {
 
   const validateStep5 = () => {
     const errors: Record<string, string> = {};
-    if (!formData.fileUrl) {
-      errors.fileUrl = 'Harap unggah CV/Portofolio Anda';
-    }
+    const linkFields = [
+      { key: 'ktmKrsLink', label: 'Link KTM/KRSM' },
+      { key: 'cvLink', label: 'Link CV/Curriculum Vitae' },
+      { key: 'repostLink', label: 'Link Repost Oprec SG' },
+      { key: 'twibbonLink', label: 'Link Twibbon' },
+      { key: 'igFollowLink', label: 'Link Bukti Follow Instagram @tdcits dan @tdcsummitfest' },
+      { key: 'tiktokFollowLink', label: 'Link Bukti Follow Tiktok @tdcits dan @tdcsummitfest' }
+    ];
+
+    linkFields.forEach(field => {
+      const val = (formData as any)[field.key]?.trim() || '';
+      if (!val) {
+        errors[field.key] = `${field.label} wajib diisi`;
+      } else if (!/^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/.test(val)) {
+        errors[field.key] = 'Format link/URL tidak valid (contoh: drive.google.com/...)';
+      }
+    });
 
     setFormErrors(prev => {
       const cleanErrors = { ...prev };
-      const step5Keys = ['fileUrl'];
+      const step5Keys = ['fileUrl', 'ktmKrsLink', 'cvLink', 'repostLink', 'twibbonLink', 'igFollowLink', 'tiktokFollowLink'];
       step5Keys.forEach(k => delete cleanErrors[k]);
       return { ...cleanErrors, ...errors };
     });
@@ -816,6 +836,12 @@ export const Staff: React.FC = () => {
         division_priority_2: formData.priority2,
         motivation: formData.generalMotivation,
         file_url: formData.fileUrl,
+        ktm_krs_link: formData.ktmKrsLink,
+        cv_link: formData.cvLink,
+        repost_link: formData.repostLink,
+        twibbon_link: formData.twibbonLink,
+        ig_follow_link: formData.igFollowLink,
+        tiktok_follow_link: formData.tiktokFollowLink,
         div_task_answer_1: formData.divTaskAnswer1,
         div_task_answer_2: formData.divTaskAnswer2,
         // General Task fields
@@ -847,6 +873,12 @@ export const Staff: React.FC = () => {
         priority2: '',
         motivation: '',
         fileUrl: '',
+        ktmKrsLink: '',
+        cvLink: '',
+        repostLink: '',
+        twibbonLink: '',
+        igFollowLink: '',
+        tiktokFollowLink: '',
         divTaskAnswer1: '',
         divTaskAnswer2: '',
         generalKnowledge: '',
@@ -2030,53 +2062,109 @@ export const Staff: React.FC = () => {
                         <Icon name="FileText" size={16} />
                         <span>E. Berkas & Dokumen Pendukung</span>
                       </h4>
-
-                      {/* File Upload Simulator with Drag & Drop */}
-                      <div className="space-y-2">
-                        <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Unggah CV & Portofolio *</label>
-                        
-                        <div 
-                          id="staff-file-dropzone"
-                          className={`border-2 border-dashed rounded-none p-6 text-center cursor-pointer transition-all ${
-                            dragActive 
-                              ? 'border-decor bg-decor/5' 
-                              : formErrors.fileUrl 
-                                ? 'border-red-inferno bg-red-inferno/5' 
-                                : 'border-blue-sail hover:border-decor bg-blue-sail/5'
-                          }`}
-                          onDragEnter={handleDrag}
-                          onDragOver={handleDrag}
-                          onDragLeave={handleDrag}
-                          onDrop={handleDrop}
-                          onClick={() => fileInputRef.current?.click()}
-                        >
+                      {/* Drive/Folder Link inputs */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-sail/5 p-4 border border-blue-sail/10">
+                        {/* 1. KTM / KRSM */}
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">KTM / KRSM (Link Drive) *</label>
                           <input
-                            ref={fileInputRef}
-                            id="staff-file-input"
-                            type="file"
-                            accept=".pdf,.zip,.rar"
-                            onChange={handleFileChange}
-                            className="hidden"
+                            id="staff-ktmKrsLink"
+                            name="ktmKrsLink"
+                            type="text"
+                            value={formData.ktmKrsLink}
+                            onChange={e => setFormData(prev => ({ ...prev, ktmKrsLink: e.target.value }))}
+                            placeholder="Contoh: drive.google.com/..."
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                              formErrors.ktmKrsLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
                           />
-                          
-                          <div className="flex flex-col items-center justify-center space-y-2">
-                            <div className="p-3 bg-decor text-blue-sail rounded-none border-2 border-blue-sail">
-                              <Icon name="Upload" size={24} className="stroke-[2px]" />
-                            </div>
-                            {uploadedFileName ? (
-                              <div className="space-y-1">
-                                <p className="text-xs font-bold text-blue-sail font-mono uppercase">{uploadedFileName}</p>
-                                <p className="text-[10px] text-decor bg-blue-sail font-semibold px-2 py-0.5 rounded-none inline-block uppercase border border-decor">Berhasil Diunggah</p>
-                              </div>
-                            ) : (
-                              <div className="space-y-1">
-                                <p className="text-xs font-bold text-blue-sail uppercase">Seret file di sini atau klik untuk memilih</p>
-                                <p className="text-[10px] text-blue-sail/60">Mendukung file PDF/ZIP ukuran maksimal 5MB (CV, Portfolio, Bukti Persyaratan)</p>
-                              </div>
-                            )}
-                          </div>
+                          {formErrors.ktmKrsLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.ktmKrsLink}</p>}
                         </div>
-                        {formErrors.fileUrl && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.fileUrl}</p>}
+
+                        {/* 2. CV / Curriculum Vitae */}
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">CV / Curriculum Vitae (Link Drive) *</label>
+                          <input
+                            id="staff-cvLink"
+                            name="cvLink"
+                            type="text"
+                            value={formData.cvLink}
+                            onChange={e => setFormData(prev => ({ ...prev, cvLink: e.target.value }))}
+                            placeholder="Contoh: drive.google.com/..."
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                              formErrors.cvLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
+                          />
+                          {formErrors.cvLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.cvLink}</p>}
+                        </div>
+
+                        {/* 3. Repost Oprec SG */}
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Repost Oprec SG (Link Drive) *</label>
+                          <input
+                            id="staff-repostLink"
+                            name="repostLink"
+                            type="text"
+                            value={formData.repostLink}
+                            onChange={e => setFormData(prev => ({ ...prev, repostLink: e.target.value }))}
+                            placeholder="Contoh: drive.google.com/..."
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                              formErrors.repostLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
+                          />
+                          {formErrors.repostLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.repostLink}</p>}
+                        </div>
+
+                        {/* 4. Twibbon */}
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Twibbon (Link Drive) *</label>
+                          <input
+                            id="staff-twibbonLink"
+                            name="twibbonLink"
+                            type="text"
+                            value={formData.twibbonLink}
+                            onChange={e => setFormData(prev => ({ ...prev, twibbonLink: e.target.value }))}
+                            placeholder="Contoh: drive.google.com/..."
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                              formErrors.twibbonLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
+                          />
+                          {formErrors.twibbonLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.twibbonLink}</p>}
+                        </div>
+
+                        {/* 5. Bukti Follow Instagram @tdcits dan @tdcsummitfest */}
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Bukti Follow Instagram @tdcits & @tdcsummitfest (Link Drive) *</label>
+                          <input
+                            id="staff-igFollowLink"
+                            name="igFollowLink"
+                            type="text"
+                            value={formData.igFollowLink}
+                            onChange={e => setFormData(prev => ({ ...prev, igFollowLink: e.target.value }))}
+                            placeholder="Contoh: drive.google.com/..."
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                              formErrors.igFollowLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
+                          />
+                          {formErrors.igFollowLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.igFollowLink}</p>}
+                        </div>
+
+                        {/* 6. Bukti Follow Tiktok @tdcits dan @tdcsummitfest */}
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Bukti Follow Tiktok @tdcits & @tdcsummitfest (Link Drive) *</label>
+                          <input
+                            id="staff-tiktokFollowLink"
+                            name="tiktokFollowLink"
+                            type="text"
+                            value={formData.tiktokFollowLink}
+                            onChange={e => setFormData(prev => ({ ...prev, tiktokFollowLink: e.target.value }))}
+                            placeholder="Contoh: drive.google.com/..."
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                              formErrors.tiktokFollowLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
+                          />
+                          {formErrors.tiktokFollowLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.tiktokFollowLink}</p>}
+                        </div>
                       </div>
 
                       {/* Section D: Agreement & Submit */}

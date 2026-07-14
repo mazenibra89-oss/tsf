@@ -580,9 +580,9 @@ export const Admin: React.FC = () => {
                             <p className="line-clamp-3 leading-relaxed text-blue-sail/80 italic font-medium">"{app.motivation}"</p>
                           </td>
                           <td className="p-4">
-                            {app.file_url ? (
+                            {(app.cv_link || app.file_url) ? (
                               <a
-                                href={app.file_url}
+                                href={app.cv_link || app.file_url}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-red-inferno hover:text-barbera font-mono font-bold flex items-center space-x-1"
@@ -1341,9 +1341,115 @@ export const Admin: React.FC = () => {
                     <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Instagram</p>
                     <p className="font-mono text-xs text-blue-sail">@{selectedApplicant.instagram || '-'}</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Section: Berkas & Dokumen Pelamar */}
+              <div className="space-y-3">
+                <h4 className="font-display font-extrabold text-xs text-red-inferno uppercase tracking-wider border-b border-blue-sail/10 pb-1 flex items-center space-x-1.5">
+                  <Icon name="FileText" size={14} />
+                  <span>BERKAS & DOKUMEN PENDUKUNG</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-3 border border-blue-sail/10">
                   <div>
-                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">CV / Berkas</p>
-                    {selectedApplicant.file_url ? (
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">KTM / KRSM</p>
+                    {selectedApplicant.ktm_krs_link ? (
+                      <a
+                        href={selectedApplicant.ktm_krs_link.startsWith('http') ? selectedApplicant.ktm_krs_link : `https://${selectedApplicant.ktm_krs_link}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
+                      >
+                        <Icon name="ExternalLink" size={12} />
+                        <span>Buka KTM / KRSM</span>
+                      </a>
+                    ) : (
+                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">CV / Curriculum Vitae</p>
+                    {selectedApplicant.cv_link ? (
+                      <a
+                        href={selectedApplicant.cv_link.startsWith('http') ? selectedApplicant.cv_link : `https://${selectedApplicant.cv_link}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
+                      >
+                        <Icon name="ExternalLink" size={12} />
+                        <span>Buka CV / CV</span>
+                      </a>
+                    ) : (
+                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Repost Oprec SG</p>
+                    {selectedApplicant.repost_link ? (
+                      <a
+                        href={selectedApplicant.repost_link.startsWith('http') ? selectedApplicant.repost_link : `https://${selectedApplicant.repost_link}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
+                      >
+                        <Icon name="ExternalLink" size={12} />
+                        <span>Buka Repost Oprec SG</span>
+                      </a>
+                    ) : (
+                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Twibbon</p>
+                    {selectedApplicant.twibbon_link ? (
+                      <a
+                        href={selectedApplicant.twibbon_link.startsWith('http') ? selectedApplicant.twibbon_link : `https://${selectedApplicant.twibbon_link}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
+                      >
+                        <Icon name="ExternalLink" size={12} />
+                        <span>Buka Twibbon</span>
+                      </a>
+                    ) : (
+                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Bukti Follow Instagram</p>
+                    {selectedApplicant.ig_follow_link ? (
+                      <a
+                        href={selectedApplicant.ig_follow_link.startsWith('http') ? selectedApplicant.ig_follow_link : `https://${selectedApplicant.ig_follow_link}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
+                      >
+                        <Icon name="ExternalLink" size={12} />
+                        <span>Buka Follow Instagram</span>
+                      </a>
+                    ) : (
+                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Bukti Follow Tiktok</p>
+                    {selectedApplicant.tiktok_follow_link ? (
+                      <a
+                        href={selectedApplicant.tiktok_follow_link.startsWith('http') ? selectedApplicant.tiktok_follow_link : `https://${selectedApplicant.tiktok_follow_link}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
+                      >
+                        <Icon name="ExternalLink" size={12} />
+                        <span>Buka Follow Tiktok</span>
+                      </a>
+                    ) : (
+                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
+                    )}
+                  </div>
+                  {selectedApplicant.file_url && (
+                    <div className="col-span-1 md:col-span-2 border-t border-dashed border-blue-sail/10 pt-2 mt-1">
+                      <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">CV / Berkas (Old File Upload)</p>
                       <a
                         href={selectedApplicant.file_url}
                         target="_blank"
@@ -1353,10 +1459,8 @@ export const Admin: React.FC = () => {
                         <Icon name="FileText" size={12} />
                         <span>Buka Link CV/Portofolio</span>
                       </a>
-                    ) : (
-                      <span className="text-blue-sail/40 font-mono text-xs">Belum diunggah</span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

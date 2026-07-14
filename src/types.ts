@@ -38,6 +38,12 @@ export interface StaffApplication {
   division_priority_2: string;
   motivation: string;
   file_url?: string;
+  ktm_krs_link?: string;
+  cv_link?: string;
+  repost_link?: string;
+  twibbon_link?: string;
+  ig_follow_link?: string;
+  tiktok_follow_link?: string;
   // General Task Fields
   general_knowledge?: string;
   general_motivation?: string;
