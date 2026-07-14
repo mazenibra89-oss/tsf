@@ -148,7 +148,9 @@ export interface VendorApplication {
 export interface FormFieldConfig {
   id: string;
   label: string;
+  type: 'text' | 'select';
   placeholder?: string;
+  options?: string[];
   required: boolean;
 }
 

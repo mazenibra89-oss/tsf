@@ -72,6 +72,129 @@ const SerializedAnswersViewer: React.FC<{ serializedText: string }> = ({ seriali
   );
 };
 
+const parseQuestionText = (text: string) => {
+  const isStudyCase = text.toLowerCase().startsWith('study case:');
+  let cleanText = text;
+  if (isStudyCase) {
+    cleanText = text.replace(/^study case:\s*/i, '');
+  }
+
+  // Support explicit delimiters '|||'
+  if (cleanText.includes('|||')) {
+    const parts = cleanText.split('|||');
+    const background = parts[0]?.trim() || '';
+    const rawQuestions = parts[1]?.trim() || '';
+    const questions = rawQuestions
+      .split('\n')
+      .map(q => q.trim())
+      .filter(Boolean);
+
+    return {
+      isStudyCase,
+      background,
+      questions,
+      listItems: [],
+      hasContent: text.trim().length > 0
+    };
+  }
+
+  // Fallback to old heuristic parsing for backwards compatibility
+  const hasNumberedList = /\b[1-9]\)\s/.test(cleanText);
+  let introText = cleanText;
+  const listItems: string[] = [];
+
+  if (hasNumberedList) {
+    const parts = cleanText.split(/\b[1-9]\)\s/);
+    introText = parts[0];
+    for (let i = 1; i < parts.length; i++) {
+      listItems.push(parts[i].trim());
+    }
+  }
+
+  // Now, let's separate context from the actual questions.
+  const sentenceParts = introText.split(/(\. |\? |\! )/);
+
+  const sentences: { text: string; isQuestion: boolean }[] = [];
+
+  for (let i = 0; i < sentenceParts.length; i += 2) {
+    const part = sentenceParts[i]?.trim();
+    if (!part) continue;
+    const punct = sentenceParts[i + 1] || '';
+    const fullSentence = part + punct;
+
+    const isQuestion = fullSentence.trim().endsWith('?') ||
+      /^(bagaimana|apa|sebutkan|rancang|jelaskan|tindakan|keputusan|pihak|menurut|ceritakan|apakah|berapa)/i.test(fullSentence.trim());
+
+    sentences.push({ text: fullSentence.trim(), isQuestion });
+  }
+
+  const background: string[] = [];
+  const questions: string[] = [];
+
+  sentences.forEach((s) => {
+    if (s.isQuestion) {
+      questions.push(s.text);
+    } else {
+      if (questions.length === 0) {
+        background.push(s.text);
+      } else {
+        questions.push(s.text);
+      }
+    }
+  });
+
+  return {
+    isStudyCase,
+    background: background.join(' '),
+    questions,
+    listItems,
+    hasContent: text.trim().length > 0
+  };
+};
+
+const FormattedQuestionPreview: React.FC<{ text: string }> = ({ text }) => {
+  const parsed = parseQuestionText(text);
+
+  if (!parsed.hasContent) return null;
+
+  return (
+    <div className="mt-2 space-y-2 p-3 bg-blue-sail/[0.03] border-2 border-dashed border-red-inferno/30 text-[11px] text-blue-sail animate-fadeIn">
+      <div className="font-bold text-red-inferno uppercase font-mono tracking-wider flex items-center gap-1">
+        <span>🚨 PREVIEW TAMPILAN STUDY CASE (DI FORM)</span>
+      </div>
+      
+      {parsed.background && (
+        <div className="bg-white p-2 border border-blue-sail/10">
+          <span className="font-mono text-[8px] font-bold text-blue-sail/45 block uppercase mb-1">Konteks / Skenario:</span>
+          <p className="whitespace-pre-line text-blue-sail/90 leading-normal font-medium">{parsed.background}</p>
+        </div>
+      )}
+
+      {parsed.listItems.length > 0 && (
+        <div className="space-y-1 bg-white p-2 border border-blue-sail/10">
+          <span className="font-mono text-[8px] font-bold text-blue-sail/45 block uppercase">Daftar Kendala / Masalah:</span>
+          <ul className="list-decimal list-inside space-y-0.5 text-blue-sail/90 leading-normal font-medium">
+            {parsed.listItems.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {parsed.questions.length > 0 && (
+        <div className="bg-red-inferno/5 border border-red-inferno/10 p-2 text-blue-sail font-semibold">
+          <span className="font-mono text-[8px] font-bold text-red-inferno block uppercase mb-1">Tugas & Instruksi Penyelesaian:</span>
+          <div className="space-y-1">
+            {parsed.questions.map((q, idx) => (
+              <p key={idx}>{parsed.questions.length > 1 ? `${idx + 1}. ` : ''}{q}</p>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const Admin: React.FC = () => {
   const {
     phases,
@@ -101,11 +224,24 @@ export const Admin: React.FC = () => {
 
   // Login states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [adminAccounts, setAdminAccounts] = useState<{username: string, password: string}[]>(() => {
+    const saved = localStorage.getItem('tsf_admin_accounts');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    const initial = [{ username: 'admin', password: 'admin123' }];
+    localStorage.setItem('tsf_admin_accounts', JSON.stringify(initial));
+    return initial;
+  });
 
   // Active sub-dashboard section tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'staff' | 'competitions' | 'thrift' | 'divisions' | 'form-control'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control'>('overview');
 
   // Form Questions Config states
   const [formSubTab, setFormSubTab] = useState<'dataDiri' | 'generalTask' | 'berkas' | 'divisionTasks'>('dataDiri');
@@ -164,6 +300,7 @@ export const Admin: React.FC = () => {
     const newField = {
       id: `custom-${Date.now()}`,
       label: 'Pertanyaan baru',
+      type: 'text' as const,
       placeholder: 'Isi jawaban di sini...',
       required: true
     };
@@ -239,6 +376,7 @@ export const Admin: React.FC = () => {
     const newField = {
       id: `custom-${Date.now()}`,
       label: 'Berkas tambahan',
+      type: 'text' as const,
       placeholder: 'Contoh: drive.google.com/...',
       required: true
     };
@@ -340,11 +478,14 @@ export const Admin: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === 'admin123') {
+    const user = usernameInput.trim().toLowerCase();
+    const pass = passwordInput;
+    const account = adminAccounts.find(acc => acc.username.toLowerCase() === user && acc.password === pass);
+    if (account) {
       setIsAuthenticated(true);
       setLoginError('');
     } else {
-      setLoginError('Sandi salah! Gunakan: admin123');
+      setLoginError('Username atau kata sandi salah!');
     }
   };
 
@@ -499,6 +640,18 @@ export const Admin: React.FC = () => {
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-1 text-left">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-decor">USERNAME ADMIN</label>
+                <input
+                  id="admin-username-input"
+                  type="text"
+                  value={usernameInput}
+                  onChange={e => setUsernameInput(e.target.value)}
+                  placeholder="Isi username: admin"
+                  className="w-full px-4 py-2.5 text-sm bg-white border-2 border-decor text-blue-sail rounded-none outline-none font-mono focus:shadow-[2px_2px_0_0_#F6BB02]"
+                />
+              </div>
+
+              <div className="space-y-1 text-left">
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-decor">KATA SANDI PANITIA</label>
                 <input
                   id="admin-password-input"
@@ -582,15 +735,15 @@ export const Admin: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setActiveTab('thrift')}
+            onClick={() => setActiveTab('accounts')}
             className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'thrift'
+              activeTab === 'accounts'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
             }`}
           >
-            <Icon name="ShoppingBag" size={16} />
-            <span>Thrift Bazar & Booth</span>
+            <Icon name="UserPlus" size={16} />
+            <span>Tambahkan Akun ({adminAccounts.length})</span>
           </button>
 
           <button
@@ -646,7 +799,7 @@ export const Admin: React.FC = () => {
             </div>
 
             {/* LIVE DATA CARD METRICS SUMMARY */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-ballroom p-5 rounded-none border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex items-center space-x-4">
                 <div className="p-3 bg-blue-sail/5 text-blue-sail rounded-none border border-blue-sail/25 shrink-0">
                   <Icon name="Users" size={24} />
@@ -669,21 +822,11 @@ export const Admin: React.FC = () => {
 
               <div className="bg-ballroom p-5 rounded-none border-4 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] flex items-center space-x-4">
                 <div className="p-3 bg-red-inferno/5 text-red-inferno rounded-none border border-blue-sail/25 shrink-0">
-                  <Icon name="Store" size={24} />
+                  <Icon name="UserPlus" size={24} />
                 </div>
                 <div>
-                  <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Pendaftar Booth</span>
-                  <span className="block font-display font-black text-2xl text-blue-sail">{vendorApplications.length} Vendor</span>
-                </div>
-              </div>
-
-              <div className="bg-ballroom p-5 rounded-none border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex items-center space-x-4">
-                <div className="p-3 bg-blue-sail/5 text-blue-sail rounded-none border border-blue-sail/25 shrink-0">
-                  <Icon name="ShoppingBag" size={24} />
-                </div>
-                <div>
-                  <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Katalog Produk Thrift</span>
-                  <span className="block font-display font-black text-2xl text-blue-sail">{thriftProducts.length} Produk</span>
+                  <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Akun Admin Aktif</span>
+                  <span className="block font-display font-black text-2xl text-blue-sail">{adminAccounts.length} Akun</span>
                 </div>
               </div>
             </div>
@@ -1029,134 +1172,149 @@ export const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* 4. SECTION TAB: THRIFT MANAGEMENT CRUD (PROD & VENDORS) */}
-        {activeTab === 'thrift' && (
-          <div className="space-y-8">
-            
-            {/* THRIFT PRODUCTS CRUD */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="space-y-1">
-                  <h2 className="font-display font-black text-xl uppercase">MANAJEMEN KATALOG BARANG THRIFT</h2>
-                  <p className="text-xs text-blue-sail/60">Tambah produk baju balap vintage baru atau hapus item catalog.</p>
-                </div>
-
-                <button
-                  id="add-prod-btn"
-                  onClick={() => {
-                    setProdForm({ id: '', name: '', price: 150000, condition: '9/10', category: 'clothing', image_url: '', vendor_id: thriftVendors[0]?.id || 'v-1', status: 'available' });
-                    setIsProdModalOpen(true);
-                  }}
-                  className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-black text-xs uppercase px-5 py-2.5 rounded-none border-2 border-decor tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#BD1B1F] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
-                >
-                  <Icon name="Plus" size={14} className="stroke-[3px]" />
-                  <span>TAMBAH CATALOG PRODUK</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {thriftProducts.map(prod => (
-                  <div key={prod.id} className="bg-white rounded-none border-4 border-blue-sail overflow-hidden flex flex-col justify-between shadow-[4px_4px_0_0_#2A4C9E] hover:shadow-[6px_6px_0_0_#2A4C9E] transition-all">
-                    <div className="h-40 overflow-hidden relative bg-gray-100 border-b-2 border-blue-sail">
-                      <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" />
-                      <div className="absolute top-2 right-2 bg-blue-sail text-decor text-[8px] font-mono font-bold px-2 py-0.5 rounded-none border border-decor/40 uppercase">
-                        {prod.category}
-                      </div>
-                    </div>
-                    <div className="p-4 flex-1 flex flex-col justify-between space-y-4 text-xs">
-                      <div>
-                        <h4 className="font-display font-bold text-sm text-blue-sail uppercase truncate">{prod.name}</h4>
-                        <p className="font-mono text-[10px] text-red-inferno font-bold mt-1">
-                          Rp {prod.price.toLocaleString('id-ID')}
-                        </p>
-                        <p className="text-[10px] text-blue-sail/60 mt-0.5">Kondisi: {prod.condition}</p>
-                        <p className="text-[10px] text-blue-sail/60">Status: {prod.status.toUpperCase()}</p>
-                      </div>
-
-                      <div className="border-t-2 border-blue-sail/10 pt-3 flex justify-end gap-1.5">
-                        <button
-                          onClick={() => {
-                            setProdForm(prod);
-                            setIsProdModalOpen(true);
-                          }}
-                          className="bg-blue-sail/5 hover:bg-blue-sail hover:text-ballroom p-2 text-blue-sail rounded-none border border-blue-sail transition-colors cursor-pointer"
-                        >
-                          <Icon name="Edit" size={12} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`Yakin hapus produk "${prod.name}" dari katalog?`)) {
-                              deleteThriftProduct(prod.id);
-                            }
-                          }}
-                          className="bg-red-50 hover:bg-red-inferno hover:text-ballroom p-2 text-red-inferno rounded-none border border-red-inferno transition-colors cursor-pointer"
-                        >
-                          <Icon name="Trash2" size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {/* 4. SECTION TAB: ACCOUNTS MANAGEMENT (ADD ADMIN ACCOUNTS) */}
+        {activeTab === 'accounts' && (
+          <div className="space-y-6 animate-fadeIn font-sans text-blue-sail">
+            <div className="space-y-1">
+              <h2 className="font-display font-black text-2xl uppercase">MANAJEMEN AKUN ADMIN CMS</h2>
+              <p className="text-xs text-blue-sail/60">Tambahkan akun administrator baru atau hapus akun admin yang ada di sistem local storage.</p>
             </div>
 
-            {/* THRIFT VENDORS CRUD */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-t-4 border-blue-sail/15 pt-8">
-                <div className="space-y-1">
-                  <h2 className="font-display font-black text-xl uppercase">MANAJEMEN SELLER THRIFT BOOTH</h2>
-                  <p className="text-xs text-blue-sail/60">Tambah brand vintage tenant, set lokasi booth, dan kontak telepon seller.</p>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Form Tambah Akun */}
+              <div className="lg:col-span-1 bg-ballroom p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E]">
+                <h3 className="font-display font-black text-sm uppercase tracking-wider text-red-inferno border-b border-blue-sail/10 pb-2 mb-4 flex items-center gap-1.5">
+                  <Icon name="UserPlus" size={16} />
+                  <span>Tambah Akun Baru</span>
+                </h3>
+                
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const target = e.target as any;
+                    const username = target.username.value.trim();
+                    const password = target.password.value;
+                    const confirmPass = target.confirmPassword.value;
 
-                <button
-                  id="add-vendor-btn"
-                  onClick={() => {
-                    setVendorFormState({ id: '', vendor_name: '', booth_location: 'Booth Utama A-1', contact: '6281234567890', status: 'active' });
-                    setIsVendorModalOpen(true);
+                    if (!username || !password) {
+                      alert('Username dan kata sandi wajib diisi!');
+                      return;
+                    }
+
+                    if (password !== confirmPass) {
+                      alert('Konfirmasi kata sandi tidak cocok!');
+                      return;
+                    }
+
+                    if (adminAccounts.some(acc => acc.username.toLowerCase() === username.toLowerCase())) {
+                      alert('Username sudah terdaftar!');
+                      return;
+                    }
+
+                    const updated = [...adminAccounts, { username, password }];
+                    setAdminAccounts(updated);
+                    localStorage.setItem('tsf_admin_accounts', JSON.stringify(updated));
+                    target.reset();
+                    alert(`Akun "${username}" berhasil ditambahkan.`);
                   }}
-                  className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-black text-xs uppercase px-5 py-2.5 rounded-none border-2 border-decor tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#BD1B1F] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                  className="space-y-4"
                 >
-                  <Icon name="Plus" size={14} className="stroke-[3px]" />
-                  <span>TAMBAH MERCHANTS / VENDOR</span>
-                </button>
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-sail/70">Username Admin</label>
+                    <input
+                      name="username"
+                      type="text"
+                      placeholder="Contoh: panitia_tsf"
+                      className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-sail/70">Kata Sandi</label>
+                    <input
+                      name="password"
+                      type="password"
+                      placeholder="Masukkan sandi..."
+                      className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-sail/70">Konfirmasi Kata Sandi</label>
+                    <input
+                      name="confirmPassword"
+                      type="password"
+                      placeholder="Ulangi sandi..."
+                      className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase py-2.5 rounded-none border-2 border-blue-sail tracking-widest shadow-[3px_3px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer mt-2"
+                  >
+                    DAFTARKAN AKUN
+                  </button>
+                </form>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {thriftVendors.map(v => (
-                  <div key={v.id} className="bg-white p-5 rounded-none border-4 border-blue-sail flex flex-col justify-between items-start space-y-4 shadow-[4px_4px_0_0_#F6BB02] hover:shadow-[6px_6px_0_0_#F6BB02] transition-all text-xs">
-                    <div className="space-y-1.5">
-                      <h4 className="font-display font-bold text-sm text-blue-sail uppercase">{v.vendor_name}</h4>
-                      <p className="text-blue-sail/70 font-medium">Lokasi: <strong>{v.booth_location}</strong></p>
-                      <p className="font-mono text-[10px] text-blue-sail/60">Phone: {v.contact}</p>
-                      <p className="font-mono text-[10px] text-blue-sail/60">Status Booth: {v.status.toUpperCase()}</p>
-                    </div>
+              {/* Daftar Akun */}
+              <div className="lg:col-span-2 bg-ballroom p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#F6BB02] space-y-4">
+                <h3 className="font-display font-black text-sm uppercase tracking-wider text-blue-sail border-b border-blue-sail/10 pb-2 flex items-center gap-1.5">
+                  <Icon name="Users" size={16} />
+                  <span>Daftar Akun Admin Aktif</span>
+                </h3>
 
-                    <div className="border-t-2 border-blue-sail/10 pt-3 w-full flex justify-end gap-1.5">
-                      <button
-                        onClick={() => {
-                          setVendorFormState(v);
-                          setIsVendorModalOpen(true);
-                        }}
-                        className="bg-blue-sail/5 hover:bg-blue-sail hover:text-ballroom p-2 text-blue-sail rounded-none border border-blue-sail transition-colors cursor-pointer"
-                      >
-                        <Icon name="Edit" size={12} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(`Hapus vendor "${v.vendor_name}"? PERINGATAN: Semua produk di bawah vendor ini akan terhapus juga!`)) {
-                            deleteThriftVendor(v.id);
-                          }
-                        }}
-                        className="bg-red-50 hover:bg-red-inferno hover:text-ballroom p-2 text-red-inferno rounded-none border border-red-inferno transition-colors cursor-pointer"
-                      >
-                        <Icon name="Trash2" size={12} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b-2 border-blue-sail/25 font-display font-black uppercase text-[10px] tracking-wider">
+                        <th className="p-3">No.</th>
+                        <th className="p-3">Username</th>
+                        <th className="p-3">Kata Sandi</th>
+                        <th className="p-3 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-sail/10">
+                      {adminAccounts.map((acc, idx) => {
+                        const isPrimary = acc.username.toLowerCase() === 'admin';
+                        return (
+                          <tr key={acc.username} className="hover:bg-blue-sail/[0.01]">
+                            <td className="p-3 font-mono font-bold text-blue-sail/50">{idx + 1}</td>
+                            <td className="p-3 font-semibold text-blue-sail">{acc.username}</td>
+                            <td className="p-3 font-mono text-blue-sail/80">•••••••• (sandi)</td>
+                            <td className="p-3 text-right">
+                              {isPrimary ? (
+                                <span className="text-[9px] font-mono text-blue-sail/40 uppercase font-bold italic bg-blue-sail/5 px-2 py-1 border border-blue-sail/10">
+                                  Default Akun
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (confirm(`Apakah Anda yakin ingin menghapus akun admin "${acc.username}"?`)) {
+                                      const updated = adminAccounts.filter(a => a.username.toLowerCase() !== acc.username.toLowerCase());
+                                      setAdminAccounts(updated);
+                                      localStorage.setItem('tsf_admin_accounts', JSON.stringify(updated));
+                                    }
+                                  }}
+                                  className="bg-red-50 hover:bg-red-inferno text-red-inferno hover:text-ballroom text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border border-red-inferno transition-all cursor-pointer"
+                                >
+                                  Hapus
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-
           </div>
         )}
 
@@ -1374,15 +1532,113 @@ export const Admin: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="space-y-1">
-                          <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Teks Pertanyaan</label>
-                          <textarea
-                            rows={2}
-                            value={q.text}
-                            onChange={e => handleGeneralTaskChange(q.id, 'text', e.target.value)}
-                            className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
-                          />
-                        </div>
+                        {(() => {
+                          const isStudyCase = q.text.toLowerCase().startsWith('study case:');
+                          if (!isStudyCase) {
+                            return (
+                              <div className="space-y-1">
+                                <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Teks Pertanyaan</label>
+                                <textarea
+                                  rows={2}
+                                  value={q.text}
+                                  onChange={e => handleGeneralTaskChange(q.id, 'text', e.target.value)}
+                                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                                />
+                                <div className="flex items-center gap-4 mt-1.5">
+                                  <label className="flex items-center gap-1.5 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={false}
+                                      onChange={() => {
+                                        handleGeneralTaskChange(q.id, 'text', `Study Case: ${q.text}`);
+                                      }}
+                                      className="h-3.5 w-3.5 border-2 border-blue-sail rounded-none"
+                                    />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-sail/75">Format Soal Studi Kasus (Study Case)</span>
+                                  </label>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          const clean = q.text.replace(/^study case:\s*/i, '');
+                          const hasDelimiter = clean.includes('|||');
+                          const parts = clean.split('|||');
+                          const contextVal = hasDelimiter ? parts[0].trim() : '';
+                          const tasksVal = hasDelimiter ? parts[1].trim() : clean.trim();
+
+                          return (
+                            <div className="space-y-3 p-3 bg-red-inferno/[0.02] border border-red-inferno/10">
+                              <div className="flex justify-between items-center border-b border-red-inferno/10 pb-1.5">
+                                <span className="text-[10px] font-extrabold text-red-inferno uppercase tracking-wider">🛠️ PENGATURAN STUDY CASE</span>
+                                <label className="flex items-center gap-1.5 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={true}
+                                    onChange={() => {
+                                      handleGeneralTaskChange(q.id, 'text', tasksVal);
+                                    }}
+                                    className="h-3.5 w-3.5 border-2 border-red-inferno rounded-none"
+                                  />
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-inferno/75">Format Soal Studi Kasus (Study Case)</span>
+                                </label>
+                              </div>
+
+                              <div className="flex items-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (hasDelimiter) {
+                                      handleGeneralTaskChange(q.id, 'text', `Study Case: ${tasksVal}`);
+                                    } else {
+                                      handleGeneralTaskChange(q.id, 'text', `Study Case: Skenario baru di sini... ||| ${tasksVal}`);
+                                    }
+                                  }}
+                                  className="text-[9px] font-extrabold bg-blue-sail text-white px-2 py-1 uppercase tracking-wide hover:bg-barbera cursor-pointer active:translate-y-0.5 transition-all shadow-[1px_1px_0_0_#BD1B1F] flex items-center gap-1"
+                                >
+                                  {hasDelimiter ? '❌ Hapus Skenario / Konteks' : '➕ Tambah Skenario / Konteks'}
+                                </button>
+                              </div>
+
+                              {hasDelimiter && (
+                                <div className="space-y-1 bg-white p-2 border border-blue-sail/10 animate-fadeIn">
+                                  <label className="block text-[9px] font-bold uppercase tracking-wide text-blue-sail/70">Konteks / Skenario</label>
+                                  <textarea
+                                    rows={3}
+                                    value={contextVal}
+                                    placeholder="Tuliskan latar belakang, cerita, atau deskripsi skenario di sini..."
+                                    onChange={e => {
+                                      handleGeneralTaskChange(q.id, 'text', `Study Case: ${e.target.value} ||| ${tasksVal}`);
+                                    }}
+                                    className="w-full px-2 py-1 text-xs bg-white border border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                                  />
+                                </div>
+                              )}
+
+                              <div className="space-y-1 bg-white p-2 border border-blue-sail/10">
+                                <label className="block text-[9px] font-bold uppercase tracking-wide text-blue-sail/70">
+                                  Tugas & Instruksi Penyelesaian
+                                </label>
+                                <textarea
+                                  rows={4}
+                                  value={tasksVal}
+                                  placeholder="Tuliskan pertanyaan/tugas. Gunakan enter (baris baru) untuk memisahkan setiap poin pertanyaan."
+                                  onChange={e => {
+                                    const newTasks = e.target.value;
+                                    if (hasDelimiter) {
+                                      handleGeneralTaskChange(q.id, 'text', `Study Case: ${contextVal} ||| ${newTasks}`);
+                                    } else {
+                                      handleGeneralTaskChange(q.id, 'text', `Study Case: ${newTasks}`);
+                                    }
+                                  }}
+                                  className="w-full px-2 py-1 text-xs bg-white border border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                                />
+                              </div>
+
+                              <FormattedQuestionPreview text={q.text} />
+                            </div>
+                          );
+                        })()}
 
                         {q.id !== 'commitmentScale' && q.id !== 'paidIkoma' && (
                           <div className="space-y-1">
@@ -1544,13 +1800,113 @@ export const Admin: React.FC = () => {
 
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="md:col-span-2 space-y-1">
-                                  <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Teks Pertanyaan (Gunakan awalan 'Study Case: ' jika merupakan soal studi kasus)</label>
-                                  <textarea
-                                    rows={3}
-                                    value={q.text}
-                                    onChange={e => handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', e.target.value)}
-                                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
-                                  />
+                                  {(() => {
+                                    const isStudyCase = q.text.toLowerCase().startsWith('study case:');
+                                    if (!isStudyCase) {
+                                      return (
+                                        <div className="space-y-1">
+                                          <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Teks Pertanyaan</label>
+                                          <textarea
+                                            rows={3}
+                                            value={q.text}
+                                            onChange={e => handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', e.target.value)}
+                                            className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                                          />
+                                          <div className="flex items-center gap-4 mt-1.5">
+                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                              <input
+                                                type="checkbox"
+                                                checked={false}
+                                                onChange={() => {
+                                                  handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', `Study Case: ${q.text}`);
+                                                }}
+                                                className="h-3.5 w-3.5 border-2 border-blue-sail rounded-none"
+                                              />
+                                              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-sail/75">Format Soal Studi Kasus (Study Case)</span>
+                                            </label>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    const clean = q.text.replace(/^study case:\s*/i, '');
+                                    const hasDelimiter = clean.includes('|||');
+                                    const parts = clean.split('|||');
+                                    const contextVal = hasDelimiter ? parts[0].trim() : '';
+                                    const tasksVal = hasDelimiter ? parts[1].trim() : clean.trim();
+
+                                    return (
+                                      <div className="space-y-3 p-3 bg-red-inferno/[0.02] border border-red-inferno/10">
+                                        <div className="flex justify-between items-center border-b border-red-inferno/10 pb-1.5">
+                                          <span className="text-[10px] font-extrabold text-red-inferno uppercase tracking-wider">🛠️ PENGATURAN STUDY CASE</span>
+                                          <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={true}
+                                              onChange={() => {
+                                                handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', tasksVal);
+                                              }}
+                                              className="h-3.5 w-3.5 border-2 border-red-inferno rounded-none"
+                                            />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-red-inferno/75">Format Soal Studi Kasus (Study Case)</span>
+                                          </label>
+                                        </div>
+
+                                        <div className="flex items-center">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              if (hasDelimiter) {
+                                                handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', `Study Case: ${tasksVal}`);
+                                              } else {
+                                                handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', `Study Case: Skenario baru di sini... ||| ${tasksVal}`);
+                                              }
+                                            }}
+                                            className="text-[9px] font-extrabold bg-blue-sail text-white px-2 py-1 uppercase tracking-wide hover:bg-barbera cursor-pointer active:translate-y-0.5 transition-all shadow-[1px_1px_0_0_#BD1B1F] flex items-center gap-1"
+                                          >
+                                            {hasDelimiter ? '❌ Hapus Skenario / Konteks' : '➕ Tambah Skenario / Konteks'}
+                                          </button>
+                                        </div>
+
+                                        {hasDelimiter && (
+                                          <div className="space-y-1 bg-white p-2 border border-blue-sail/10 animate-fadeIn">
+                                            <label className="block text-[9px] font-bold uppercase tracking-wide text-blue-sail/70">Konteks / Skenario</label>
+                                            <textarea
+                                              rows={3}
+                                              value={contextVal}
+                                              placeholder="Tuliskan latar belakang, cerita, atau deskripsi skenario di sini..."
+                                              onChange={e => {
+                                                handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', `Study Case: ${e.target.value} ||| ${tasksVal}`);
+                                              }}
+                                              className="w-full px-2 py-1 text-xs bg-white border border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                                            />
+                                          </div>
+                                        )}
+
+                                        <div className="space-y-1 bg-white p-2 border border-blue-sail/10">
+                                          <label className="block text-[9px] font-bold uppercase tracking-wide text-blue-sail/70">
+                                            Tugas & Instruksi Penyelesaian
+                                          </label>
+                                          <textarea
+                                            rows={4}
+                                            value={tasksVal}
+                                            placeholder="Tuliskan pertanyaan/tugas. Gunakan enter (baris baru) untuk memisahkan setiap poin pertanyaan."
+                                            onChange={e => {
+                                              const newTasks = e.target.value;
+                                              if (hasDelimiter) {
+                                                handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', `Study Case: ${contextVal} ||| ${newTasks}`);
+                                              } else {
+                                                handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', `Study Case: ${newTasks}`);
+                                              }
+                                            }}
+                                            className="w-full px-2 py-1 text-xs bg-white border border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                                          />
+                                        </div>
+
+                                        <FormattedQuestionPreview text={q.text} />
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
 
                                 <div className="space-y-3">

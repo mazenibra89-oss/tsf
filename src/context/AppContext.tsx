@@ -145,7 +145,7 @@ const SEED_DIVISIONS: Division[] = [
     sub_divisions: [
       'Sub Divisi BnM - Creative Design',
       'Sub Divisi BnM - Media Production',
-      'Sub Divisi BnM - Divisi Marketing Strategist',
+      'Sub Divisi BnM - Marketing Strategist',
       'Sub Divisi BnM - Talent Management'
     ]
   },
@@ -178,12 +178,12 @@ const SEED_DIVISIONS: Division[] = [
 
 const SEED_FORM_QUESTIONS: FormQuestionsConfig = {
   dataDiri: [
-    { id: 'fullName', label: 'Nama Lengkap', placeholder: 'Nama lengkap sesuai KTM/KTP', required: true },
-    { id: 'nim', label: 'NRP', placeholder: 'Contoh: 5025211044', required: true },
-    { id: 'faculty', label: 'Fakultas', placeholder: '-- Pilih Fakultas --', required: true },
-    { id: 'department', label: 'Departemen', placeholder: 'Contoh: Teknik Informatika', required: true },
-    { id: 'phone', label: 'No. WA (WhatsApp)', placeholder: 'Contoh: 08123456789', required: true },
-    { id: 'email', label: 'Email', placeholder: 'Contoh: mazen@student.ac.id', required: true }
+    { id: 'fullName', label: 'Nama Lengkap', type: 'text', placeholder: 'Nama lengkap sesuai KTM/KTP', required: true },
+    { id: 'nim', label: 'NRP', type: 'text', placeholder: 'Contoh: 5025211044', required: true },
+    { id: 'faculty', label: 'Fakultas', type: 'select', placeholder: '-- Pilih Fakultas --', options: ['FSAD', 'FTIRS', 'FTSPK', 'FTK', 'FTEIC', 'FDKBD', 'FKK', 'FV'], required: true },
+    { id: 'department', label: 'Departemen', type: 'text', placeholder: 'Contoh: Teknik Informatika', required: true },
+    { id: 'phone', label: 'No. WA (WhatsApp)', type: 'text', placeholder: 'Contoh: 08123456789', required: true },
+    { id: 'email', label: 'Email', type: 'text', placeholder: 'Contoh: mazen@student.ac.id', required: true }
   ],
   generalTask: [
     { id: 'generalKnowledge', text: 'Apa yang kamu ketahui tentang TDC Summit Fest 2026?', type: 'text', placeholder: 'Jelaskan pemahaman singkat kamu tentang acara ini...', required: true },
@@ -197,12 +197,12 @@ const SEED_FORM_QUESTIONS: FormQuestionsConfig = {
     { id: 'relations', text: 'Apakah Kamu Memiliki Relasi Kenalan/Perusahaan', type: 'text', placeholder: 'Sebutkan relasi alumni, media partner, pembicara, sponsor, atau perusahaan. Jika tidak ada, tuliskan \'Tidak ada\'...', required: true }
   ],
   berkas: [
-    { id: 'ktmKrsLink', label: 'KTM / KRSM (Link Drive)', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'cvLink', label: 'CV / Curriculum Vitae (Link Drive)', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'repostLink', label: 'Repost Oprec SG (Link Drive)', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'twibbonLink', label: 'Twibbon (Link Drive)', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'igFollowLink', label: 'Bukti Follow Instagram @tdcits & @tdcsummitfest (Link Drive)', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'tiktokFollowLink', label: 'Bukti Follow Tiktok @tdcits & @tdcsummitfest (Link Drive)', placeholder: 'Contoh: drive.google.com/...', required: true }
+    { id: 'ktmKrsLink', label: 'KTM / KRSM (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
+    { id: 'cvLink', label: 'CV / Curriculum Vitae (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
+    { id: 'repostLink', label: 'Repost Oprec SG (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
+    { id: 'twibbonLink', label: 'Twibbon (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
+    { id: 'igFollowLink', label: 'Bukti Follow Instagram @tdcits & @tdcsummitfest (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
+    { id: 'tiktokFollowLink', label: 'Bukti Follow Tiktok @tdcits & @tdcsummitfest (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true }
   ],
   divisionTasks: {
     'Sub Divisi Event - Competition': [
@@ -281,18 +281,20 @@ const SEED_FORM_QUESTIONS: FormQuestionsConfig = {
     ],
     'Sub Divisi BnM - Creative Design': [
       { id: 'q1', text: 'Sebutkan software desain grafis yang paling kamu kuasai dan seberapa mahir kamu menggunakannya?', type: 'text' },
-      { id: 'q2', text: 'Bagaimana caramu menterjemahkan konsep \'Retro-Motorsport\' ke dalam desain feed Instagram?', type: 'text' },
-      { id: 'q3', text: 'Study Case: Jika panitia inti meminta revisi desain poster utama H-1 jam sebelum publikasi massal, apa tindakan cepat yang kamu lakukan?', type: 'text' }
+      { id: 'q2', text: 'Berkas portofolio desain terbaik yang pernah kamu kerjakan sebelumnya (Link Drive)', type: 'text', placeholder: 'Tempelkan link Google Drive portofolio desain kamu di sini...' },
+      { id: 'q3', text: 'Bagaimana caramu menterjemahkan konsep \'Retro-Motorsport\' ke dalam desain feed Instagram?', type: 'text' },
+      { id: 'q4', text: 'Study Case: Jika panitia inti meminta revisi desain poster utama H-1 jam sebelum publikasi massal, apa tindakan cepat yang kamu lakukan?', type: 'text' }
     ],
     'Sub Divisi BnM - Media Production': [
-      { id: 'q1', text: 'Sebutkan portfolio video atau dokumentasi acara terbaik yang pernah kamu kerjakan sebelumnya.', type: 'text' },
+      { id: 'q1', text: 'Berkas portofolio video atau dokumentasi acara terbaik yang pernah kamu kerjakan sebelumnya (Link Drive)', type: 'text', placeholder: 'Tempelkan link Google Drive portofolio video/dokumentasi kamu di sini...' },
       { id: 'q2', text: 'Bagaimana strategi penyusunan storyboard video teaser TSF 2026 agar terlihat megah dan estetik?', type: 'text' },
       { id: 'q3', text: 'Study Case: Saat hari-H sirkuit drift, kamera utamamu mengalami overheat di tengah cuaca panas. Bagaimana tindakan mitigasimu?', type: 'text' }
     ],
-    'Sub Divisi BnM - Divisi Marketing Strategist': [
+    'Sub Divisi BnM - Marketing Strategist': [
       { id: 'q1', text: 'Apa strategi pemasaran digital paling efektif untuk menggaet segmen penonton anak muda non-otomotif?', type: 'text' },
       { id: 'q2', text: 'Bagaimana cara mengoptimalkan engagement rate media sosial TSF selama masa pre-event?', type: 'text' },
-      { id: 'q3', text: 'Study Case: Jika penjualan tiket festival melambat di pertengahan promosi, kampanye taktis apa yang akan kamu usulkan?', type: 'text' }
+      { id: 'q3', text: 'Study Case: Jika penjualan tiket festival melambat di pertengahan promosi, kampanye taktis apa yang akan kamu usulkan?', type: 'text' },
+      { id: 'q4', text: 'Berkas portofolio campaign, copywriting, atau social media result terbaik yang pernah kamu kerjakan sebelumnya (Link Drive)', type: 'text', placeholder: 'Tempelkan link Google Drive portofolio kamu di sini...', required: false }
     ],
     'Sub Divisi BnM - Talent Management': [
       { id: 'q1', text: 'Bagaimana pengalamanmu dalam menghubungi atau bernegosiasi dengan manajer/pihak Guest Star?', type: 'text' },
@@ -302,13 +304,14 @@ const SEED_FORM_QUESTIONS: FormQuestionsConfig = {
     'Divisi Decoration': [
       { id: 'q1', text: 'Bagaimana konsep visual dekorasi sirkuit balap retro yang ingin kamu terapkan pada area gate utama?', type: 'text' },
       { id: 'q2', text: 'Apakah kamu memiliki pengalaman dalam merakit instalasi dekorasi fisik berskala besar?', type: 'text' },
-      { id: 'q3', text: 'Study Case: Bahan dekorasi utama mengalami keterlambatan pengiriman oleh kurir, sedangkan gladi resih akan dimulai 3 jam lagi. Bagaimana kamu menyiasatinya?', type: 'text' }
+      { id: 'q3', text: 'Study Case: Bahan dekorasi utama mengalami keterlambatan pengiriman oleh kurir, sedangkan gladi resih akan dimulai 3 jam lagi. Bagaimana kamu menyiasatinya?', type: 'text' },
+      { id: 'q4', text: 'Berkas portofolio dekorasi terbaik yang pernah kamu kerjakan sebelumnya (Link Drive)', type: 'text', placeholder: 'Tempelkan link Google Drive portofolio dekorasi kamu di sini...' }
     ]
   }
 };
-
 const DIVISION_TASK_KEY_ALIASES: Record<string, string> = {
-  'Sub Divisi Non Competition': 'Sub Divisi Event - Non Competition'
+  'Sub Divisi Non Competition': 'Sub Divisi Event - Non Competition',
+  'Sub Divisi BnM - Divisi Marketing Strategist': 'Sub Divisi BnM - Marketing Strategist'
 };
 
 const normalizeFormQuestions = (config: FormQuestionsConfig): FormQuestionsConfig => {
@@ -322,6 +325,40 @@ const normalizeFormQuestions = (config: FormQuestionsConfig): FormQuestionsConfi
   return {
     ...config,
     divisionTasks
+  };
+};
+
+const mergeQuestionLists = <T extends { id: string }>(seedQuestions: T[], savedQuestions: T[] = []): T[] => {
+  const merged = [...savedQuestions];
+  seedQuestions.forEach(seedQuestion => {
+    if (!merged.some(question => question.id === seedQuestion.id)) {
+      merged.push(seedQuestion);
+    }
+  });
+  return merged;
+};
+
+const mergeFormQuestionsWithSeed = (savedConfig?: FormQuestionsConfig | null): FormQuestionsConfig => {
+  const normalizedSaved = savedConfig ? normalizeFormQuestions(savedConfig) : null;
+  const seed = normalizeFormQuestions(SEED_FORM_QUESTIONS);
+
+  if (!normalizedSaved) {
+    return seed;
+  }
+
+  const mergedDivisionTasks: Record<string, QuestionConfig[]> = { ...normalizedSaved.divisionTasks };
+
+  Object.entries(seed.divisionTasks).forEach(([divisionKey, seedQuestions]) => {
+    mergedDivisionTasks[divisionKey] = mergeQuestionLists(seedQuestions, normalizedSaved.divisionTasks[divisionKey]);
+  });
+
+  return {
+    ...seed,
+    ...normalizedSaved,
+    dataDiri: mergeQuestionLists(seed.dataDiri, normalizedSaved.dataDiri),
+    generalTask: mergeQuestionLists(seed.generalTask, normalizedSaved.generalTask),
+    berkas: mergeQuestionLists(seed.berkas, normalizedSaved.berkas),
+    divisionTasks: mergedDivisionTasks
   };
 };
 
@@ -566,7 +603,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...parsed,
           phases: mergedPhases.length > 0 ? mergedPhases : SEED_PHASES,
           divisions: SEED_DIVISIONS,
-          formQuestions: parsed.formQuestions ? normalizeFormQuestions(parsed.formQuestions) : normalizeFormQuestions(SEED_FORM_QUESTIONS)
+          formQuestions: mergeFormQuestionsWithSeed(parsed.formQuestions)
         };
       } catch (e) {
         console.error('Failed to parse local storage tsf_state:', e);
@@ -582,7 +619,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       thriftProducts: SEED_PRODUCTS,
       thriftVendors: SEED_VENDORS,
       vendorApplications: [],
-      formQuestions: normalizeFormQuestions(SEED_FORM_QUESTIONS)
+      formQuestions: mergeFormQuestionsWithSeed()
     };
   });
 
@@ -601,7 +638,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       thriftProducts: SEED_PRODUCTS,
       thriftVendors: SEED_VENDORS,
       vendorApplications: [],
-      formQuestions: normalizeFormQuestions(SEED_FORM_QUESTIONS)
+      formQuestions: mergeFormQuestionsWithSeed()
     });
   };
 

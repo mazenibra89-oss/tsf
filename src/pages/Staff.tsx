@@ -153,7 +153,26 @@ export const parseQuestionText = (text: string) => {
     cleanText = text.replace(/^study case:\s*/i, '');
   }
 
-  // Check for numbered list like 1) 2) 3)
+  // Support explicit delimiters '|||'
+  if (cleanText.includes('|||')) {
+    const parts = cleanText.split('|||');
+    const background = parts[0]?.trim() || '';
+    const rawQuestions = parts[1]?.trim() || '';
+    const questions = rawQuestions
+      .split('\n')
+      .map(q => q.trim())
+      .filter(Boolean);
+
+    return {
+      isStudyCase,
+      background,
+      questions,
+      listItems: [],
+      hasContent: text.trim().length > 0
+    };
+  }
+
+  // Fallback to old heuristic parsing for backwards compatibility
   const hasNumberedList = /\b[1-9]\)\s/.test(cleanText);
   let introText = cleanText;
   const listItems: string[] = [];
@@ -1622,170 +1641,223 @@ export const Staff: React.FC = () => {
                       </h4>
 
                       {/* Q1: Apa yang kamu ketahui tentang TDC Summit Fest 2026? */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          1. {formQuestions?.generalTask.find(q => q.id === 'generalKnowledge')?.text || 'Apa yang kamu ketahui tentang TDC Summit Fest 2026?'} *
-                        </label>
-                        <textarea
-                          id="general-knowledge"
-                          rows={3}
-                          value={formData.generalKnowledge}
-                          onChange={e => setFormData(prev => ({ ...prev, generalKnowledge: e.target.value }))}
-                          placeholder={formQuestions?.generalTask.find(q => q.id === 'generalKnowledge')?.placeholder || 'Jelaskan pemahaman singkat kamu tentang acara ini...'}
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.generalKnowledge ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
-                        />
-                        {formErrors.generalKnowledge && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.generalKnowledge}</p>}
-                      </div>
+                      {(() => {
+                        const q = formQuestions?.generalTask.find(item => item.id === 'generalKnowledge');
+                        const qText = q?.text || 'Apa yang kamu ketahui tentang TDC Summit Fest 2026?';
+                        const isStudyCase = qText.toLowerCase().startsWith('study case:');
+                        return (
+                          <div className={isStudyCase ? "space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn" : "space-y-1.5"}>
+                            {isStudyCase ? (
+                              <FormattedQuestionText text={qText} index={1} />
+                            ) : (
+                              <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                1. {qText} *
+                              </label>
+                            )}
+                            <textarea
+                              id="general-knowledge"
+                              rows={3}
+                              value={formData.generalKnowledge}
+                              onChange={e => setFormData(prev => ({ ...prev, generalKnowledge: e.target.value }))}
+                              placeholder={q?.placeholder || 'Jelaskan pemahaman singkat kamu tentang acara ini...'}
+                              className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                                formErrors.generalKnowledge ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
+                            />
+                            {formErrors.generalKnowledge && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.generalKnowledge}</p>}
+                          </div>
+                        );
+                      })()}
 
                       {/* Q2: Apa motivasi kamu mendaftar Sebagai bagian dari TDC Summit Fest 2026? */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          2. {formQuestions?.generalTask.find(q => q.id === 'generalMotivation')?.text || 'Apa motivasi kamu mendaftar Sebagai bagian dari TDC Summit Fest 2026?'} *
-                        </label>
-                        <textarea
-                          id="general-motivation"
-                          rows={3}
-                          value={formData.generalMotivation}
-                          onChange={e => setFormData(prev => ({ ...prev, generalMotivation: e.target.value }))}
-                          placeholder={formQuestions?.generalTask.find(q => q.id === 'generalMotivation')?.placeholder || 'Jelaskan ketertarikan, motivasi, dan apa yang ingin kamu capai...'}
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.generalMotivation ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
-                        />
-                        {formErrors.generalMotivation && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.generalMotivation}</p>}
-                      </div>
+                      {(() => {
+                        const q = formQuestions?.generalTask.find(item => item.id === 'generalMotivation');
+                        const qText = q?.text || 'Apa motivasi kamu mendaftar Sebagai bagian dari TDC Summit Fest 2026?';
+                        const isStudyCase = qText.toLowerCase().startsWith('study case:');
+                        return (
+                          <div className={isStudyCase ? "space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn" : "space-y-1.5"}>
+                            {isStudyCase ? (
+                              <FormattedQuestionText text={qText} index={2} />
+                            ) : (
+                              <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                2. {qText} *
+                              </label>
+                            )}
+                            <textarea
+                              id="general-motivation"
+                              rows={3}
+                              value={formData.generalMotivation}
+                              onChange={e => setFormData(prev => ({ ...prev, generalMotivation: e.target.value }))}
+                              placeholder={q?.placeholder || 'Jelaskan ketertarikan, motivasi, dan apa yang ingin kamu capai...'}
+                              className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                                formErrors.generalMotivation ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
+                            />
+                            {formErrors.generalMotivation && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.generalMotivation}</p>}
+                          </div>
+                        );
+                      })()}
 
                       {/* Q3: Kepanitiaan / Organisasi Experience */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          3. {formQuestions?.generalTask.find(q => q.id === 'experience')?.text || 'Apakah kamu memiliki pengalaman dalam kepanitiaan atau organisasi? jika iya, sebutkan & jelaskan secara singkat jobdesk kamu'} *
-                        </label>
-                        <textarea
-                          id="general-experience"
-                          rows={3}
-                          value={formData.experience}
-                          onChange={e => setFormData(prev => ({ ...prev, experience: e.target.value }))}
-                          placeholder={formQuestions?.generalTask.find(q => q.id === 'experience')?.placeholder || 'Sebutkan nama kepanitian/organisasi beserta tugas/jobdesk kamu. Jika belum ada, tuliskan \'Tidak ada\'...'}
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.experience ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
-                        />
-                        {formErrors.experience && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.experience}</p>}
-                      </div>
+                      {(() => {
+                        const q = formQuestions?.generalTask.find(item => item.id === 'experience');
+                        const qText = q?.text || 'Apakah kamu memiliki pengalaman dalam kepanitiaan atau organisasi? jika iya, sebutkan & jelaskan secara singkat jobdesk kamu';
+                        const isStudyCase = qText.toLowerCase().startsWith('study case:');
+                        return (
+                          <div className={isStudyCase ? "space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn" : "space-y-1.5"}>
+                            {isStudyCase ? (
+                              <FormattedQuestionText text={qText} index={3} />
+                            ) : (
+                              <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                3. {qText} *
+                              </label>
+                            )}
+                            <textarea
+                              id="general-experience"
+                              rows={3}
+                              value={formData.experience}
+                              onChange={e => setFormData(prev => ({ ...prev, experience: e.target.value }))}
+                              placeholder={q?.placeholder || 'Sebutkan nama kepanitian/organisasi beserta tugas/jobdesk kamu. Jika belum ada, tuliskan \'Tidak ada\'...'}
+                              className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                                formErrors.experience ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
+                            />
+                            {formErrors.experience && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.experience}</p>}
+                          </div>
+                        );
+                      })()}
 
                       {/* Q4: Kelebihan & Kekurangan */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          4. {formQuestions?.generalTask.find(q => q.id === 'strengthsWeaknesses')?.text || 'Sebutkan kelebihan & kekurangan kamu'} *
-                        </label>
-                        <textarea
-                          id="general-strengths-weaknesses"
-                          rows={3}
-                          value={formData.strengthsWeaknesses}
-                          onChange={e => setFormData(prev => ({ ...prev, strengthsWeaknesses: e.target.value }))}
-                          placeholder={formQuestions?.generalTask.find(q => q.id === 'strengthsWeaknesses')?.placeholder || 'Jelaskan secara realistis kelebihan dan kekurangan yang kamu miliki...'}
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.strengthsWeaknesses ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
-                        />
-                        {formErrors.strengthsWeaknesses && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.strengthsWeaknesses}</p>}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Q5: Commitment Scale (0-10) */}
-                        <div className="space-y-1.5 bg-blue-sail/[0.02] p-4 border-2 border-blue-sail/10">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                            5. {formQuestions?.generalTask.find(q => q.id === 'commitmentScale')?.text || 'Komitment kamu untuk TDC Summit Fest 2026 (Skala 0-10)'} *
-                          </label>
-                          <div className="pt-2 px-2">
-                            <input
-                              id="general-commitment-scale"
-                              type="range"
-                              min="0"
-                              max="10"
-                              step="1"
-                              value={formData.commitmentScale}
-                              onChange={e => setFormData(prev => ({ ...prev, commitmentScale: parseInt(e.target.value) }))}
-                              className="w-full h-2 bg-blue-sail/20 rounded-none appearance-none cursor-pointer accent-red-inferno"
+                      {(() => {
+                        const q = formQuestions?.generalTask.find(item => item.id === 'strengthsWeaknesses');
+                        const qText = q?.text || 'Sebutkan kelebihan & kekurangan kamu';
+                        const isStudyCase = qText.toLowerCase().startsWith('study case:');
+                        return (
+                          <div className={isStudyCase ? "space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn" : "space-y-1.5"}>
+                            {isStudyCase ? (
+                              <FormattedQuestionText text={qText} index={4} />
+                            ) : (
+                              <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                4. {qText} *
+                              </label>
+                            )}
+                            <textarea
+                              id="general-strengths-weaknesses"
+                              rows={3}
+                              value={formData.strengthsWeaknesses}
+                              onChange={e => setFormData(prev => ({ ...prev, strengthsWeaknesses: e.target.value }))}
+                              placeholder={q?.placeholder || 'Jelaskan secara realistis kelebihan dan kekurangan yang kamu miliki...'}
+                              className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                                formErrors.strengthsWeaknesses ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                             />
-                            <div className="flex justify-between text-[11px] font-mono font-bold text-blue-sail mt-2">
-                              <span>0 (Tidak Komit)</span>
-                              <span className="text-sm bg-red-inferno text-white px-3 py-0.5 font-bold animate-pulse">
-                                Skala: {formData.commitmentScale} / 10
-                              </span>
-                              <span>10 (Sangat Komit)</span>
-                            </div>
+                            {formErrors.strengthsWeaknesses && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.strengthsWeaknesses}</p>}
                           </div>
-                        </div>
+                        );
+                      })()}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Q5: Commitment Scale (0-10) */}
+                        {(() => {
+                          const q = formQuestions?.generalTask.find(item => item.id === 'commitmentScale');
+                          const qText = q?.text || 'Komitment kamu untuk TDC Summit Fest 2026 (Skala 0-10)';
+                          const isStudyCase = qText.toLowerCase().startsWith('study case:');
+                          return (
+                            <div className={`space-y-1.5 border-2 border-blue-sail/10 p-4 ${isStudyCase ? "bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn col-span-2" : "bg-blue-sail/[0.02]"}`}>
+                              {isStudyCase ? (
+                                <FormattedQuestionText text={qText} index={5} />
+                              ) : (
+                                <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                  5. {qText} *
+                                </label>
+                              )}
+                              <div className="pt-2 px-2">
+                                <input
+                                  id="general-commitment-scale"
+                                  type="range"
+                                  min="0"
+                                  max="10"
+                                  step="1"
+                                  value={formData.commitmentScale}
+                                  onChange={e => setFormData(prev => ({ ...prev, commitmentScale: parseInt(e.target.value) }))}
+                                  className="w-full h-2 bg-blue-sail/20 rounded-none appearance-none cursor-pointer accent-red-inferno"
+                                />
+                                <div className="flex justify-between text-[11px] font-mono font-bold text-blue-sail mt-2">
+                                  <span>0 (Tidak Komit)</span>
+                                  <span className="text-sm bg-red-inferno text-white px-3 py-0.5 font-bold animate-pulse">
+                                    Skala: {formData.commitmentScale} / 10
+                                  </span>
+                                  <span>10 (Sangat Komit)</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {/* Q9: Apakah Sudah Bayar Ikoma ITS? */}
-                        <div className="space-y-1.5 bg-blue-sail/[0.02] p-4 border-2 border-blue-sail/10 flex flex-col justify-between">
-                          <div>
-                            <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                              9. {formQuestions?.generalTask.find(q => q.id === 'paidIkoma')?.text || 'Apakah Sudah Bayar Ikoma ITS?'} *
-                            </label>
-                            <p className="text-[10px] text-blue-sail/60 leading-tight mb-2">Pilih 'Ya' untuk mengunggah bukti pembayaran IKOMA.</p>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <label className="flex items-center space-x-2 text-sm text-blue-sail font-semibold cursor-pointer">
-                              <input
-                                id="ikoma-yes"
-                                type="radio"
-                                name="paidIkoma"
-                                value="yes"
-                                checked={formData.paidIkoma === 'yes'}
-                                onChange={() => setFormData(prev => ({ ...prev, paidIkoma: 'yes' }))}
-                                className="h-4 w-4 text-blue-sail border-2 border-blue-sail focus:ring-0"
-                              />
-                              <span>Ya, Sudah Bayar</span>
-                            </label>
-                            <label className="flex items-center space-x-2 text-sm text-blue-sail font-semibold cursor-pointer">
-                              <input
-                                id="ikoma-no"
-                                type="radio"
-                                name="paidIkoma"
-                                value="no"
-                                checked={formData.paidIkoma === 'no'}
-                                onChange={() => setFormData(prev => ({ ...prev, paidIkoma: 'no' }))}
-                                className="h-4 w-4 text-blue-sail border-2 border-blue-sail focus:ring-0"
-                              />
-                              <span>Belum Bayar</span>
-                            </label>
-                          </div>
-                        </div>
+                        {(() => {
+                          const q = formQuestions?.generalTask.find(item => item.id === 'paidIkoma');
+                          const qText = q?.text || 'Apakah Sudah Bayar Ikoma ITS?';
+                          const isStudyCase = qText.toLowerCase().startsWith('study case:');
+                          return (
+                            <div className={`space-y-1.5 border-2 border-blue-sail/10 p-4 flex flex-col justify-between ${isStudyCase ? "bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn col-span-2" : "bg-blue-sail/[0.02]"}`}>
+                              <div>
+                                {isStudyCase ? (
+                                  <FormattedQuestionText text={qText} index={9} />
+                                ) : (
+                                  <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                    9. {qText} *
+                                  </label>
+                                )}
+                                <p className="text-[10px] text-blue-sail/60 leading-tight mb-2">Pilih 'Ya' untuk melampirkan link bukti pembayaran IKOMA.</p>
+                              </div>
+                              <div className="flex items-center space-x-4">
+                                <label className="flex items-center space-x-2 text-sm text-blue-sail font-semibold cursor-pointer">
+                                  <input
+                                    id="ikoma-yes"
+                                    type="radio"
+                                    name="paidIkoma"
+                                    value="yes"
+                                    checked={formData.paidIkoma === 'yes'}
+                                    onChange={() => setFormData(prev => ({ ...prev, paidIkoma: 'yes' }))}
+                                    className="h-4 w-4 text-blue-sail border-2 border-blue-sail focus:ring-0"
+                                  />
+                                  <span>Ya, Sudah Bayar</span>
+                                </label>
+                                <label className="flex items-center space-x-2 text-sm text-blue-sail font-semibold cursor-pointer">
+                                  <input
+                                    id="ikoma-no"
+                                    type="radio"
+                                    name="paidIkoma"
+                                    value="no"
+                                    checked={formData.paidIkoma === 'no'}
+                                    onChange={() => setFormData(prev => ({ ...prev, paidIkoma: 'no' }))}
+                                    className="h-4 w-4 text-blue-sail border-2 border-blue-sail focus:ring-0"
+                                  />
+                                  <span>Belum Bayar</span>
+                                </label>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Q9 Conditional Bukti Pembayaran */}
                       {formData.paidIkoma === 'yes' && (
                         <div className="space-y-1.5 p-4 bg-red-inferno/[0.03] border-2 border-red-inferno/25 animate-fadeIn">
                           <label className="block text-xs font-bold text-red-inferno uppercase tracking-wide flex items-center space-x-1">
-                            <Icon name="UploadCloud" size={14} />
-                            <span>Unggah Bukti Pembayaran IKOMA ITS *</span>
+                            <Icon name="Link2" size={14} />
+                            <span>Link Google Drive Bukti Pembayaran IKOMA ITS *</span>
                           </label>
-                          <div className="flex items-center space-x-3 mt-1">
-                            <button
-                              id="ikoma-upload-trigger"
-                              type="button"
-                              onClick={() => ikomaFileInputRef.current?.click()}
-                              className="bg-blue-sail hover:bg-blue-sail/95 text-ballroom font-mono font-bold text-xs uppercase px-4 py-2.5 rounded-none border border-blue-sail tracking-wide active:translate-y-0.5 transition-all cursor-pointer shrink-0"
-                            >
-                              PILIH FILE BUKTI
-                            </button>
-                            <input
-                              ref={ikomaFileInputRef}
-                              id="ikoma-file-input"
-                              type="file"
-                              accept=".pdf,.png,.jpg,.jpeg"
-                              onChange={handleIkomaFileChange}
-                              className="hidden"
-                            />
-                            {ikomaUploadedFileName ? (
-                              <div className="flex items-center space-x-2 text-xs font-semibold text-blue-sail uppercase">
-                                <Icon name="FileCheck2" className="text-red-inferno" size={16} />
-                                <span className="truncate max-w-[180px] font-mono text-[10px]">{ikomaUploadedFileName}</span>
-                              </div>
-                            ) : (
-                              <span className="text-[10px] text-blue-sail/50">Mendukung format PDF/PNG/JPG maks. 3MB</span>
-                            )}
-                          </div>
+                          <input
+                            id="ikoma-proof-url"
+                            type="text"
+                            value={formData.ikomaProofUrl}
+                            onChange={e => setFormData(prev => ({ ...prev, ikomaProofUrl: e.target.value }))}
+                            placeholder="Contoh: drive.google.com/..."
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                              formErrors.ikomaProofUrl ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
+                          />
                           {formErrors.ikomaProofUrl && (
                             <p className="text-red-inferno text-[10px] font-bold uppercase mt-1">{formErrors.ikomaProofUrl}</p>
                           )}
@@ -1793,94 +1865,137 @@ export const Staff: React.FC = () => {
                       )}
 
                       {/* Q6: Bentuk Komitmen */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          6. {formQuestions?.generalTask.find(q => q.id === 'commitmentForm')?.text || 'Jelaskan apa bentuk komitmen kamu untuk TSF 2026'} *
-                        </label>
-                        <textarea
-                          id="general-commitment-form"
-                          rows={3}
-                          value={formData.commitmentForm}
-                          onChange={e => setFormData(prev => ({ ...prev, commitmentForm: e.target.value }))}
-                          placeholder={formQuestions?.generalTask.find(q => q.id === 'commitmentForm')?.placeholder || 'Jelaskan kontribusi waktu, tenaga, dan kesiapan kamu berkontribusi...'}
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.commitmentForm ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
-                        />
-                        {formErrors.commitmentForm && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.commitmentForm}</p>}
-                      </div>
+                      {(() => {
+                        const q = formQuestions?.generalTask.find(item => item.id === 'commitmentForm');
+                        const qText = q?.text || 'Jelaskan apa bentuk komitmen kamu untuk TSF 2026';
+                        const isStudyCase = qText.toLowerCase().startsWith('study case:');
+                        return (
+                          <div className={isStudyCase ? "space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn" : "space-y-1.5"}>
+                            {isStudyCase ? (
+                              <FormattedQuestionText text={qText} index={6} />
+                            ) : (
+                              <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                6. {qText} *
+                              </label>
+                            )}
+                            <textarea
+                              id="general-commitment-form"
+                              rows={3}
+                              value={formData.commitmentForm}
+                              onChange={e => setFormData(prev => ({ ...prev, commitmentForm: e.target.value }))}
+                              placeholder={q?.placeholder || 'Jelaskan kontribusi waktu, tenaga, dan kesiapan kamu berkontribusi...'}
+                              className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                                formErrors.commitmentForm ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
+                            />
+                            {formErrors.commitmentForm && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.commitmentForm}</p>}
+                          </div>
+                        );
+                      })()}
 
                       {/* Q7: Kesibukan saat ini dan 5 bulan kedepan */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          7. {formQuestions?.generalTask.find(q => q.id === 'busySchedule')?.text || 'Apa saja kesibukan kamu saat ini dan 5 bulan kedepan'} *
-                        </label>
-                        <textarea
-                          id="general-busy-schedule"
-                          rows={3}
-                          value={formData.busySchedule}
-                          onChange={e => setFormData(prev => ({ ...prev, busySchedule: e.target.value }))}
-                          placeholder={formQuestions?.generalTask.find(q => q.id === 'busySchedule')?.placeholder || 'Contoh: Kuliah, Praktikum, Organisasi lain, Magang, Tugas Akhir...'}
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.busySchedule ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
-                        />
-                        {formErrors.busySchedule && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.busySchedule}</p>}
-                      </div>
+                      {(() => {
+                        const q = formQuestions?.generalTask.find(item => item.id === 'busySchedule');
+                        const qText = q?.text || 'Apa saja kesibukan kamu saat ini dan 5 bulan kedepan';
+                        const isStudyCase = qText.toLowerCase().startsWith('study case:');
+                        return (
+                          <div className={isStudyCase ? "space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn" : "space-y-1.5"}>
+                            {isStudyCase ? (
+                              <FormattedQuestionText text={qText} index={7} />
+                            ) : (
+                              <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                7. {qText} *
+                              </label>
+                            )}
+                            <textarea
+                              id="general-busy-schedule"
+                              rows={3}
+                              value={formData.busySchedule}
+                              onChange={e => setFormData(prev => ({ ...prev, busySchedule: e.target.value }))}
+                              placeholder={q?.placeholder || 'Contoh: Kuliah, Praktikum, Organisasi lain, Magang, Tugas Akhir...'}
+                              className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                                formErrors.busySchedule ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
+                            />
+                            {formErrors.busySchedule && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.busySchedule}</p>}
+                          </div>
+                        );
+                      })()}
 
                       {/* Q8: Relasi Kenalan / Perusahaan */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          8. {formQuestions?.generalTask.find(q => q.id === 'relations')?.text || 'Apakah Kamu Memiliki Relasi Kenalan/Perusahaan'} *
-                        </label>
-                        <textarea
-                          id="general-relations"
-                          rows={3}
-                          value={formData.relations}
-                          onChange={e => setFormData(prev => ({ ...prev, relations: e.target.value }))}
-                          placeholder={formQuestions?.generalTask.find(q => q.id === 'relations')?.placeholder || 'Sebutkan relasi alumni, media partner, pembicara, sponsor, atau perusahaan. Jika tidak ada, tuliskan \'Tidak ada\'...'}
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.relations ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
-                        />
-                        {formErrors.relations && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.relations}</p>}
-                      </div>
+                      {(() => {
+                        const q = formQuestions?.generalTask.find(item => item.id === 'relations');
+                        const qText = q?.text || 'Apakah Kamu Memiliki Relasi Kenalan/Perusahaan';
+                        const isStudyCase = qText.toLowerCase().startsWith('study case:');
+                        return (
+                          <div className={isStudyCase ? "space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn" : "space-y-1.5"}>
+                            {isStudyCase ? (
+                              <FormattedQuestionText text={qText} index={8} />
+                            ) : (
+                              <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                8. {qText} *
+                              </label>
+                            )}
+                            <textarea
+                              id="general-relations"
+                              rows={3}
+                              value={formData.relations}
+                              onChange={e => setFormData(prev => ({ ...prev, relations: e.target.value }))}
+                              placeholder={q?.placeholder || 'Sebutkan relasi alumni, media partner, pembicara, sponsor, atau perusahaan. Jika tidak ada, tuliskan \'Tidak ada\'...'}
+                              className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
+                                formErrors.relations ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
+                            />
+                            {formErrors.relations && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.relations}</p>}
+                          </div>
+                        );
+                      })()}
 
                       {(formQuestions?.generalTask || []).some(q => !GENERAL_TASK_FIELD_IDS.has(q.id)) && (
                         <div className="space-y-4 pt-2 border-t border-blue-sail/10">
                           <h5 className="font-display font-extrabold text-xs uppercase tracking-wider text-red-inferno">Pertanyaan Tambahan General Task</h5>
                           <div className="space-y-4">
-                            {(formQuestions?.generalTask || []).filter(q => !GENERAL_TASK_FIELD_IDS.has(q.id)).map(q => (
-                              <div key={q.id} className="space-y-1.5">
-                                <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                                  {q.text}{q.required !== false ? ' *' : ''}
-                                </label>
-                                {q.type === 'select' ? (
-                                  <select
-                                    value={getCustomAnswerValue('generalTask', q.id)}
-                                    onChange={e => setCustomAnswerValue('generalTask', q.id, e.target.value)}
-                                    className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${formErrors[`generalTask_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                                      }`}
-                                  >
-                                    <option value="">-- Pilih Jawaban --</option>
-                                    {q.options?.map((opt, idx) => (
-                                      <option key={idx} value={opt}>{opt}</option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <textarea
-                                    rows={3}
-                                    value={getCustomAnswerValue('generalTask', q.id)}
-                                    onChange={e => setCustomAnswerValue('generalTask', q.id, e.target.value)}
-                                    placeholder={q.placeholder || 'Tuliskan jawaban Anda di sini...'}
-                                    className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors[`generalTask_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                                      }`}
-                                  />
-                                )}
-                                {formErrors[`generalTask_${q.id}`] && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors[`generalTask_${q.id}`]}</p>}
-                              </div>
-                            ))}
+                            {(formQuestions?.generalTask || []).filter(q => !GENERAL_TASK_FIELD_IDS.has(q.id)).map((q, qIdx) => {
+                              const index = GENERAL_TASK_FIELD_IDS.size + qIdx + 1;
+                              const isStudyCase = q.text.toLowerCase().startsWith('study case:');
+                              return (
+                                <div key={q.id} className={isStudyCase ? "space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)] animate-fadeIn" : "space-y-1.5"}>
+                                  {isStudyCase ? (
+                                    <FormattedQuestionText text={q.text} index={index} />
+                                  ) : (
+                                    <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                      {index}. {q.text}{q.required !== false ? ' *' : ''}
+                                    </label>
+                                  )}
+                                  {q.type === 'select' ? (
+                                    <select
+                                      value={getCustomAnswerValue('generalTask', q.id)}
+                                      onChange={e => setCustomAnswerValue('generalTask', q.id, e.target.value)}
+                                      className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${formErrors[`generalTask_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                        }`}
+                                    >
+                                      <option value="">-- Pilih Jawaban --</option>
+                                      {q.options?.map((opt, idx) => (
+                                        <option key={idx} value={opt}>{opt}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <textarea
+                                      rows={3}
+                                      value={getCustomAnswerValue('generalTask', q.id)}
+                                      onChange={e => setCustomAnswerValue('generalTask', q.id, e.target.value)}
+                                      placeholder={q.placeholder || 'Tuliskan jawaban Anda di sini...'}
+                                      className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors[`generalTask_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                        }`}
+                                    />
+                                  )}
+                                  {formErrors[`generalTask_${q.id}`] && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors[`generalTask_${q.id}`]}</p>}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
-
                       {/* Step 2 Control Buttons */}
                       <div className="pt-4 flex justify-between items-center">
                         <button
