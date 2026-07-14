@@ -40,6 +40,16 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
               </div>
             </div>
           </div>
+          
+          <div className="pt-8 border-t border-ballroom/10 w-full text-center text-xs text-ballroom/60 font-sans tracking-wide">
+            <span>© 2026 TDC Summit Fest. All rights reserved</span>
+            <span 
+              onClick={() => handleNavClick('admin')} 
+              className="cursor-default select-none hover:text-ballroom/60 transition-colors"
+            >
+              .
+            </span>
+          </div>
         </div>
       </div>
     </footer>
