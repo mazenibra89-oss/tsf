@@ -1,0 +1,6 @@
+{
+  "name": "TSF Event Portal",
+  "description": "Official dynamic portal for TSF Event, featuring interactive timelines, staff recruitment, PE1/PE2 sub-events, competition registrations, thrift bazaar catalog, and a fully functional CMS/Admin control center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

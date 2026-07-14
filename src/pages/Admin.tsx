@@ -1,0 +1,1541 @@
+import React, { useState } from 'react';
+import { useApp } from '../context/AppContext';
+import { Icon } from '../components/Icon';
+import { Division, ThriftProduct, ThriftVendor } from '../types';
+
+const SerializedAnswersViewer: React.FC<{ serializedText: string }> = ({ serializedText }) => {
+  if (!serializedText) {
+    return <p className="text-xs text-blue-sail/50 italic">Belum mengisi jawaban.</p>;
+  }
+
+  // If it's not a serialized answer, just render it as is
+  if (!serializedText.includes('[PERTANYAAN')) {
+    return (
+      <div className="bg-white p-3 border border-blue-sail/10 text-xs font-medium text-blue-sail whitespace-pre-wrap">
+        {serializedText}
+      </div>
+    );
+  }
+
+  const blocks = serializedText.split(/\[PERTANYAAN\s+\d+\]/i);
+  const parsed: { question: string; answer: string }[] = [];
+
+  blocks.forEach((block) => {
+    const trimmed = block.trim();
+    if (!trimmed) return;
+
+    const parts = trimmed.split(/\[JAWABAN\]/i);
+    const question = parts[0]?.trim() || 'Pertanyaan';
+    const answer = parts[1]?.trim() || '-';
+    parsed.push({ question, answer });
+  });
+
+  return (
+    <div className="space-y-4 font-sans text-left">
+      {parsed.map((item, idx) => {
+        const isStudyCase = item.question.toLowerCase().includes('study case:');
+        let displayQuestion = item.question;
+        if (isStudyCase) {
+          displayQuestion = item.question.replace(/^study case:\s*/i, '');
+        }
+
+        return (
+          <div key={idx} className="bg-white border-2 border-blue-sail/10 hover:border-blue-sail/20 transition-all p-4 space-y-3 shadow-[3px_3px_0_0_rgba(42,76,158,0.05)]">
+            {/* Header / Question Part */}
+            <div className="space-y-1.5 border-b border-blue-sail/5 pb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="bg-blue-sail text-white font-mono text-[9px] font-bold px-1.5 py-0.5 border border-blue-sail">
+                  Q{idx + 1}
+                </span>
+                {isStudyCase && (
+                  <span className="bg-red-inferno text-white font-mono text-[8px] font-bold px-1.5 py-0.5 border border-red-inferno tracking-wider">
+                    STUDY CASE
+                  </span>
+                )}
+              </div>
+              <p className="text-xs font-bold text-blue-sail uppercase tracking-wide leading-relaxed">
+                {displayQuestion}
+              </p>
+            </div>
+
+            {/* Answer Part */}
+            <div className="bg-blue-sail/5 p-3 border-l-4 border-blue-sail/50 space-y-1">
+              <p className="text-[10px] font-bold text-blue-sail/40 uppercase tracking-wide font-mono">Jawaban Pelamar:</p>
+              <p className="text-xs text-blue-sail font-medium leading-relaxed whitespace-pre-wrap italic">
+                "{item.answer}"
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export const Admin: React.FC = () => {
+  const {
+    phases,
+    divisions,
+    staffApplications,
+    subEvents,
+    competitions,
+    competitionRegistrations,
+    thriftProducts,
+    thriftVendors,
+    vendorApplications,
+    setActivePhase,
+    addDivision,
+    updateDivision,
+    deleteDivision,
+    addThriftVendor,
+    updateThriftVendor,
+    deleteThriftVendor,
+    addThriftProduct,
+    updateThriftProduct,
+    deleteThriftProduct,
+    updateStaffApplicationStatus,
+    resetToDefault
+  } = useApp();
+
+  // Login states
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [loginError, setLoginError] = useState('');
+
+  // Active sub-dashboard section tab state
+  const [activeTab, setActiveTab] = useState<'overview' | 'staff' | 'competitions' | 'thrift' | 'divisions'>('overview');
+
+  // Selected applicant detail modal state
+  const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
+
+  // Modal / Form state for Div CRUD
+  const [isDivModalOpen, setIsDivModalOpen] = useState(false);
+  const [divForm, setDivForm] = useState({ id: '', name: '', description: '', quota: 10, icon_name: 'Users' });
+
+  // Modal / Form state for Thrift Prod CRUD
+  const [isProdModalOpen, setIsProdModalOpen] = useState(false);
+  const [prodForm, setProdForm] = useState({ id: '', name: '', price: 100000, condition: '9/10', category: 'clothing', image_url: '', vendor_id: '', status: 'available' as const });
+
+  // Modal / Form state for Thrift Vendor CRUD
+  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
+  const [vendorFormState, setVendorFormState] = useState({ id: '', vendor_name: '', booth_location: '', contact: '', status: 'active' as const });
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === 'admin123') {
+      setIsAuthenticated(true);
+      setLoginError('');
+    } else {
+      setLoginError('Sandi salah! Gunakan: admin123');
+    }
+  };
+
+  // CSV Exporter Helper
+  const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(','), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(','))].join('\n');
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportStaffCSV = () => {
+    const headers = ['Nama Lengkap', 'NRP', 'Fakultas', 'Departemen', 'Jurusan', 'Angkatan', 'No WA', 'Email', 'Divisi P1', 'Divisi P2', 'Motivasi', 'Status', 'Tanggal Daftar'];
+    const rows = staffApplications.map(app => [
+      app.full_name,
+      app.nim,
+      app.faculty || '-',
+      app.department || '-',
+      app.major,
+      app.batch,
+      app.phone,
+      app.email,
+      app.division_priority_1,
+      app.division_priority_2,
+      app.motivation,
+      app.status,
+      new Date(app.submitted_at).toLocaleDateString('id-ID')
+    ]);
+    downloadCSV('TSF_Pendaftar_Staff.csv', headers, rows);
+  };
+
+  const exportCompCSV = () => {
+    const headers = ['Nama Tim', 'Ketua Tim', 'Anggota', 'Instansi', 'No WA', 'Email', 'Cabang Kompetisi', 'Bukti Transfer', 'Tanggal Daftar'];
+    const rows = competitionRegistrations.map(reg => {
+      const comp = competitions.find(c => c.id === reg.category_id);
+      return [
+        reg.team_name,
+        reg.leader_name,
+        reg.members.join(', '),
+        reg.institution,
+        reg.contact,
+        reg.email,
+        comp ? comp.title : 'Kategori Tidak Ditemukan',
+        reg.payment_proof_url,
+        new Date(reg.submitted_at).toLocaleDateString('id-ID')
+      ];
+    });
+    downloadCSV('TSF_Pendaftar_Kompetisi.csv', headers, rows);
+  };
+
+  const exportVendorCSV = () => {
+    const headers = ['Nama Brand', 'Kontak WA', 'Kategori', 'Katalog/Deskripsi', 'Tanggal Daftar'];
+    const rows = vendorApplications.map(app => [
+      app.vendor_name,
+      app.contact,
+      app.product_category,
+      app.description,
+      new Date(app.submitted_at).toLocaleDateString('id-ID')
+    ]);
+    downloadCSV('TSF_Sewa_Booth_Vendor.csv', headers, rows);
+  };
+
+  // Division submit
+  const handleDivSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (divForm.id) {
+      updateDivision({
+        id: divForm.id,
+        name: divForm.name,
+        description: divForm.description,
+        quota: Number(divForm.quota),
+        icon_name: divForm.icon_name
+      });
+    } else {
+      addDivision({
+        name: divForm.name,
+        description: divForm.description,
+        quota: Number(divForm.quota),
+        icon_name: divForm.icon_name
+      });
+    }
+    setIsDivModalOpen(false);
+    setDivForm({ id: '', name: '', description: '', quota: 10, icon_name: 'Users' });
+  };
+
+  // Product submit
+  const handleProdSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const imageToUse = prodForm.image_url || 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=600';
+    if (prodForm.id) {
+      updateThriftProduct({
+        ...prodForm,
+        image_url: imageToUse,
+        price: Number(prodForm.price)
+      });
+    } else {
+      addThriftProduct({
+        name: prodForm.name,
+        price: Number(prodForm.price),
+        condition: prodForm.condition,
+        category: prodForm.category,
+        image_url: imageToUse,
+        vendor_id: prodForm.vendor_id || thriftVendors[0]?.id || 'v-1',
+        status: prodForm.status
+      });
+    }
+    setIsProdModalOpen(false);
+    setProdForm({ id: '', name: '', price: 100000, condition: '9/10', category: 'clothing', image_url: '', vendor_id: '', status: 'available' });
+  };
+
+  // Vendor submit
+  const handleVendorSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (vendorFormState.id) {
+      updateThriftVendor(vendorFormState);
+    } else {
+      addThriftVendor({
+        vendor_name: vendorFormState.vendor_name,
+        booth_location: vendorFormState.booth_location,
+        contact: vendorFormState.contact,
+        status: vendorFormState.status
+      });
+    }
+    setIsVendorModalOpen(false);
+    setVendorFormState({ id: '', vendor_name: '', booth_location: '', contact: '', status: 'active' });
+  };
+
+  if (!isAuthenticated) {
+    /* LOGIN SCREEN */
+    return (
+      <div className="asphalt-texture min-h-screen flex items-center justify-center p-4">
+        <div className="bg-blue-sail text-ballroom w-full max-w-sm border-4 border-decor p-8 rounded-none shadow-[8px_8px_0_0_#BD1B1F] relative overflow-hidden font-sans">
+          <div className="absolute inset-0 grid-pattern opacity-10" />
+          
+          <div className="relative z-10 text-center space-y-6">
+            <div className="flex justify-center">
+              <div className="bg-decor text-blue-sail p-3 rounded-none border-2 border-blue-sail font-display font-black text-2xl">
+                TSF
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <h1 className="font-display font-black text-xl uppercase tracking-wider text-decor">CMS CONTROL CENTER</h1>
+              <p className="text-xs text-ballroom/75 leading-relaxed">Masukkan kata sandi kepanitiaan untuk mengontrol status event dan mengunduh database.</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1 text-left">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-decor">KATA SANDI PANITIA</label>
+                <input
+                  id="admin-password-input"
+                  type="password"
+                  value={passwordInput}
+                  onChange={e => setPasswordInput(e.target.value)}
+                  placeholder="Isi sandi: admin123"
+                  className="w-full px-4 py-2.5 text-sm bg-white border-2 border-decor text-blue-sail rounded-none outline-none font-mono focus:shadow-[2px_2px_0_0_#F6BB02]"
+                />
+              </div>
+
+              {loginError && <p className="text-red-inferno font-mono font-bold text-[10px] uppercase text-left">{loginError}</p>}
+
+              <button
+                id="admin-login-btn"
+                type="submit"
+                className="w-full bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase py-3 rounded-none border-2 border-blue-sail tracking-widest shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                VERIFIKASI & MASUK
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Find active phase
+  const activePhase = phases.find(p => p.status === 'active');
+
+  return (
+    <div className="min-h-screen bg-ballroom font-sans text-blue-sail flex flex-col lg:flex-row">
+      
+      {/* SIDE NAV FOR CMS */}
+      <aside className="w-full lg:w-64 bg-blue-sail text-ballroom border-b-4 lg:border-b-0 lg:border-r-4 border-decor shrink-0">
+        <div className="p-6 border-b border-ballroom/10 relative">
+          <div className="absolute inset-0 grid-pattern opacity-10" />
+          <div className="relative z-10 flex items-center space-x-2">
+            <div className="bg-decor text-blue-sail px-2.5 py-0.5 rounded-none border border-blue-sail font-display font-black tracking-tighter text-lg">
+              TSF
+            </div>
+            <span className="font-display font-black text-sm tracking-widest uppercase text-decor">CMS PANEL</span>
+          </div>
+        </div>
+
+        <nav className="p-4 space-y-2 font-sans font-bold text-xs uppercase tracking-wider">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              activeTab === 'overview'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="Sliders" size={16} />
+            <span>Kontrol Utama / Fase</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('staff')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              activeTab === 'staff'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="Users" size={16} />
+            <span>Pendaftar Staff ({staffApplications.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('competitions')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              activeTab === 'competitions'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="Trophy" size={16} />
+            <span>Pendaftar Lomba ({competitionRegistrations.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('thrift')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              activeTab === 'thrift'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="ShoppingBag" size={16} />
+            <span>Thrift Bazar & Booth</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('divisions')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              activeTab === 'divisions'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="CalendarRange" size={16} />
+            <span>Manajemen Divisi ({divisions.length})</span>
+          </button>
+
+          <div className="pt-6 border-t border-ballroom/10 mt-6">
+            <button
+              onClick={() => {
+                if (confirm('Apakah Anda yakin ingin menyetel ulang database simulasi ke setelan awal?')) {
+                  resetToDefault();
+                  alert('Database berhasil disetel ulang ke setelan awal pabrik.');
+                }
+              }}
+              className="w-full text-left px-4 py-2.5 rounded-none flex items-center space-x-2.5 text-red-inferno hover:bg-red-inferno hover:text-ballroom transition-all border-2 border-red-inferno cursor-pointer shadow-[3px_3px_0_0_#8B011A]"
+            >
+              <Icon name="XCircle" size={14} />
+              <span>Reset Database</span>
+            </button>
+          </div>
+        </nav>
+      </aside>
+
+      {/* DASHBOARD AREA */}
+      <main className="flex-1 p-6 lg:p-8 space-y-8 overflow-x-hidden">
+        
+        {/* 1. SECTION TAB: OVERVIEW / ACTIVE PHASE CONTROLLER */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <h2 className="font-display font-black text-2xl uppercase">DASHBOARD & KONTROL FASE</h2>
+              <p className="text-xs text-blue-sail/60">Pilih fase event yang sedang aktif di website secara dinamis.</p>
+            </div>
+
+            {/* LIVE DATA CARD METRICS SUMMARY */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-ballroom p-5 rounded-none border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex items-center space-x-4">
+                <div className="p-3 bg-blue-sail/5 text-blue-sail rounded-none border border-blue-sail/25 shrink-0">
+                  <Icon name="Users" size={24} />
+                </div>
+                <div>
+                  <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Pendaftar Staff</span>
+                  <span className="block font-display font-black text-2xl text-blue-sail">{staffApplications.length} Orang</span>
+                </div>
+              </div>
+
+              <div className="bg-ballroom p-5 rounded-none border-4 border-blue-sail shadow-[4px_4px_0_0_#F6BB02] flex items-center space-x-4">
+                <div className="p-3 bg-decor/10 text-decor rounded-none border border-blue-sail/25 shrink-0">
+                  <Icon name="Trophy" size={24} className="text-blue-sail" />
+                </div>
+                <div>
+                  <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Tim Terdaftar Lomba</span>
+                  <span className="block font-display font-black text-2xl text-blue-sail">{competitionRegistrations.length} Tim</span>
+                </div>
+              </div>
+
+              <div className="bg-ballroom p-5 rounded-none border-4 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] flex items-center space-x-4">
+                <div className="p-3 bg-red-inferno/5 text-red-inferno rounded-none border border-blue-sail/25 shrink-0">
+                  <Icon name="Store" size={24} />
+                </div>
+                <div>
+                  <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Pendaftar Booth</span>
+                  <span className="block font-display font-black text-2xl text-blue-sail">{vendorApplications.length} Vendor</span>
+                </div>
+              </div>
+
+              <div className="bg-ballroom p-5 rounded-none border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex items-center space-x-4">
+                <div className="p-3 bg-blue-sail/5 text-blue-sail rounded-none border border-blue-sail/25 shrink-0">
+                  <Icon name="ShoppingBag" size={24} />
+                </div>
+                <div>
+                  <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Katalog Produk Thrift</span>
+                  <span className="block font-display font-black text-2xl text-blue-sail">{thriftProducts.length} Produk</span>
+                </div>
+              </div>
+            </div>
+
+            {/* DYNAMIC ACTIVE PHASE CONTROLLER BANNER */}
+            <div className="bg-ballroom p-6 sm:p-8 rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#2A4C9E] space-y-6">
+              <div className="flex items-center space-x-3.5 border-b-2 border-blue-sail/10 pb-4">
+                <div className="p-2 bg-decor text-blue-sail rounded-none border border-blue-sail">
+                  <Icon name="Sliders" size={20} />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-lg uppercase">Status Keaktifan Lini Masa (CMS)</h3>
+                  <p className="text-xs text-blue-sail/70">Aktifkan salah satu tahapan di bawah ini. Tombol navigasi 'Daftar Sekarang' & Banner di Home otomatis mengarah ke halaman tahapan aktif.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {phases.map((phase) => {
+                  const isActive = phase.status === 'active';
+                  return (
+                    <div
+                      key={phase.id}
+                      onClick={() => setActivePhase(phase.name)}
+                      className={`cursor-pointer p-4 rounded-none border-2 border-blue-sail flex flex-col justify-between h-36 transition-all ${
+                        isActive 
+                          ? 'bg-blue-sail border-decor text-ballroom shadow-[4px_4px_0_0_#F6BB02]' 
+                          : 'bg-white border-blue-sail/30 hover:border-blue-sail hover:shadow-[3px_3px_0_0_#2A4C9E] text-blue-sail'
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="font-mono text-[9px] font-bold tracking-wider uppercase">
+                            {isActive ? '● SEDANG AKTIF' : 'NONAKTIF'}
+                          </span>
+                          <input
+                            type="radio"
+                            name="activePhaseCMS"
+                            checked={isActive}
+                            onChange={() => setActivePhase(phase.name)}
+                            className="h-4.5 w-4.5 text-decor border-blue-sail/25 rounded-full focus:ring-0"
+                          />
+                        </div>
+                        <h4 className="font-display font-bold text-base uppercase leading-tight mt-1">{phase.label}</h4>
+                      </div>
+
+                      <div className="font-mono text-[9px] border-t border-current/10 pt-2 flex justify-between items-center">
+                        <span>Fase: {phase.name === 'staff_recruitment' ? 'Staff' : phase.name.toUpperCase()}</span>
+                        <Icon name="ArrowRight" size={12} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 2. SECTION TAB: STAFF APPLICATIONS & CSV EXPORT */}
+        {activeTab === 'staff' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="space-y-1">
+                <h2 className="font-display font-black text-2xl uppercase">DATA PENDAFTAR STAFF TSF</h2>
+                <p className="text-xs text-blue-sail/60">Tinjau seluruh pengajuan rekrutmen staff, ganti status penyeleksian, dan ekspor spreadsheets.</p>
+              </div>
+
+              <button
+                id="staff-export-csv"
+                onClick={exportStaffCSV}
+                className="bg-green-600 hover:bg-green-700 text-white font-display font-bold text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#2A4C9E] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
+                <Icon name="Download" size={14} className="stroke-[2.5px]" />
+                <span>EKSPOR CSV (EXCEL)</span>
+              </button>
+            </div>
+
+            {/* Table data */}
+            <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
+              {staffApplications.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Icon name="Users" size={40} className="text-blue-sail/30 mx-auto mb-2" />
+                  <p className="text-sm font-semibold">Belum Ada Pelamar Staff Terdaftar</p>
+                  <p className="text-xs text-blue-sail/50 mt-1">Coba isi Formulir Pendaftaran Staff di menu utama untuk merekam data simulasi.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-sans border-collapse">
+                    <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                      <tr>
+                        <th className="p-4">Pelamar</th>
+                        <th className="p-4">Akademik & Fakultas</th>
+                        <th className="p-4">Prioritas 1 & 2</th>
+                        <th className="p-4">Alasan / Motivasi</th>
+                        <th className="p-4">CV File</th>
+                        <th className="p-4">Status Seleksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y-2 divide-blue-sail/15">
+                      {staffApplications.map(app => (
+                        <tr key={app.id} className="hover:bg-gray-50/50">
+                          <td className="p-4 space-y-1 max-w-[180px]">
+                            <p className="font-bold text-blue-sail uppercase">{app.full_name}</p>
+                            <p className="font-mono text-[10px] text-blue-sail/50 font-semibold">NRP: {app.nim}</p>
+                            <p className="font-mono text-[10px] text-blue-sail/50">WA: {app.phone}</p>
+                            <p className="font-mono text-[10px] text-blue-sail/50">{app.email}</p>
+                            <button
+                              onClick={() => setSelectedApplicant(app)}
+                              className="mt-2 w-full bg-blue-sail hover:bg-red-inferno text-white font-mono font-bold text-[10px] uppercase py-1 px-2 border border-blue-sail hover:border-red-inferno transition-all flex items-center justify-center space-x-1 cursor-pointer"
+                            >
+                              <Icon name="Eye" size={12} />
+                              <span>Lihat Jawaban</span>
+                            </button>
+                          </td>
+                          <td className="p-4 space-y-0.5">
+                            <p className="font-bold text-red-inferno text-xs uppercase">{app.faculty || 'FSAD'}</p>
+                            <p className="font-semibold text-blue-sail">{app.department || app.major}</p>
+                            <p className="text-blue-sail/60 text-[10px] font-medium uppercase font-mono">Angkatan: {app.batch}</p>
+                          </td>
+                          <td className="p-4 space-y-1">
+                            <p className="text-red-inferno font-semibold">P1: {app.division_priority_1}</p>
+                            <p className="text-blue-sail/60 font-semibold">P2: {app.division_priority_2}</p>
+                          </td>
+                          <td className="p-4 max-w-[240px]">
+                            <p className="line-clamp-3 leading-relaxed text-blue-sail/80 italic font-medium">"{app.motivation}"</p>
+                          </td>
+                          <td className="p-4">
+                            {app.file_url ? (
+                              <a
+                                href={app.file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-red-inferno hover:text-barbera font-mono font-bold flex items-center space-x-1"
+                              >
+                                <Icon name="FileText" size={14} />
+                                <span>CV / Link</span>
+                              </a>
+                            ) : (
+                              <span className="text-blue-sail/40 font-mono">None</span>
+                            )}
+                          </td>
+                          <td className="p-4 space-y-2">
+                            {/* Dropdown status changer */}
+                            <select
+                              value={app.status}
+                              onChange={e => updateStaffApplicationStatus(app.id, e.target.value as any)}
+                              className={`px-2.5 py-1.5 font-bold uppercase rounded-none border-2 text-[10px] outline-none font-mono ${
+                                app.status === 'accepted' 
+                                  ? 'bg-green-50 border-green-400 text-green-700 focus:shadow-[2px_2px_0_0_#15803d]' 
+                                  : app.status === 'rejected'
+                                    ? 'bg-red-50 border-red-400 text-red-600 focus:shadow-[2px_2px_0_0_#b91c1c]'
+                                    : 'bg-yellow-50 border-yellow-400 text-yellow-700 focus:shadow-[2px_2px_0_0_#ca8a04]'
+                              }`}
+                            >
+                              <option value="pending">PENDING / WAITLIST</option>
+                              <option value="accepted">ACCEPTED / LOLOS</option>
+                              <option value="rejected">REJECTED / GAGAL</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 3. SECTION TAB: COMPETITIONS REGISTRATIONS & VENDOR SEWA BOOTH */}
+        {activeTab === 'competitions' && (
+          <div className="space-y-8">
+            
+            {/* LOMBA DATABASE */}
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <h2 className="font-display font-black text-xl uppercase">REGISTRASI PESERTA KOMPETISI TSF</h2>
+                  <p className="text-xs text-blue-sail/60">Tinjau pembayaran registrasi tim kontestan, bukti transfer, dan download laporan.</p>
+                </div>
+
+                <button
+                  id="comp-export-csv"
+                  onClick={exportCompCSV}
+                  className="bg-green-600 hover:bg-green-700 text-white font-display font-bold text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#2A4C9E] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  <Icon name="Download" size={14} className="stroke-[2.5px]" />
+                  <span>EKSPOR CSV LOMBA</span>
+                </button>
+              </div>
+
+              {/* Table Data */}
+              <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
+                {competitionRegistrations.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <Icon name="Trophy" size={40} className="text-blue-sail/30 mx-auto mb-2" />
+                    <p className="text-sm font-semibold">Belum Ada Tim Kompetisi Terdaftar</p>
+                    <p className="text-xs text-blue-sail/50 mt-1">Isi Formulir pendaftaran kompetisi di menu utama untuk merekam data simulasi.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-sans border-collapse">
+                      <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                        <tr>
+                          <th className="p-4">Identitas Tim</th>
+                          <th className="p-4">Instansi</th>
+                          <th className="p-4">Anggota Tim</th>
+                          <th className="p-4">Kategori Lomba</th>
+                          <th className="p-4">Bukti Bayar</th>
+                          <th className="p-4">Berkas Karya</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y-2 divide-blue-sail/15">
+                        {competitionRegistrations.map(reg => {
+                          const comp = competitions.find(c => c.id === reg.category_id);
+                          return (
+                            <tr key={reg.id} className="hover:bg-gray-50/50">
+                              <td className="p-4 space-y-1">
+                                <p className="font-bold text-blue-sail uppercase">{reg.team_name}</p>
+                                <p className="font-medium text-blue-sail/70">Ketua: {reg.leader_name}</p>
+                                <p className="font-mono text-[10px] text-blue-sail/50">WA: {reg.contact}</p>
+                                <p className="font-mono text-[10px] text-blue-sail/50">{reg.email}</p>
+                              </td>
+                              <td className="p-4 font-semibold">
+                                {reg.institution}
+                              </td>
+                              <td className="p-4 max-w-[180px]">
+                                <p className="leading-relaxed text-blue-sail/85">{reg.members.join(', ') || 'Hanya Ketua'}</p>
+                              </td>
+                              <td className="p-4">
+                                <span className="bg-blue-sail/5 border border-blue-sail/20 text-blue-sail font-mono text-[10px] font-bold px-2.5 py-1 rounded-none uppercase tracking-wider inline-block">
+                                  {comp ? comp.title : 'Kategori Lomba'}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <button
+                                  onClick={() => alert(`Membuka simulasi berkas Bukti Pembayaran: ${reg.payment_proof_url}`)}
+                                  className="text-red-inferno hover:text-barbera font-mono font-bold flex items-center space-x-1 cursor-pointer"
+                                >
+                                  <Icon name="Camera" size={14} />
+                                  <span>Lihat Bukti</span>
+                                </button>
+                              </td>
+                              <td className="p-4">
+                                {reg.file_url ? (
+                                  <a
+                                    href={reg.file_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-blue-sail hover:text-red-inferno font-mono font-bold flex items-center space-x-1"
+                                  >
+                                    <Icon name="ExternalLink" size={14} />
+                                    <span>Google Drive</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-blue-sail/40 font-mono">None</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* SEWA BOOTH VENDOR DATABASE */}
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <h2 className="font-display font-black text-xl uppercase">PENGAJUAN SEWA BOOTH VENDOR</h2>
+                  <p className="text-xs text-blue-sail/60">Tinjau proposal brand thrift baru yang mengajukan sewa gerai bazar utama.</p>
+                </div>
+
+                <button
+                  id="vendor-export-csv"
+                  onClick={exportVendorCSV}
+                  className="bg-green-600 hover:bg-green-700 text-white font-display font-bold text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#2A4C9E] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  <Icon name="Download" size={14} className="stroke-[2.5px]" />
+                  <span>EKSPOR CSV BOOTH</span>
+                </button>
+              </div>
+
+              {/* Table Data */}
+              <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
+                {vendorApplications.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <Icon name="Store" size={40} className="text-blue-sail/30 mx-auto mb-2" />
+                    <p className="text-sm font-semibold">Belum Ada Vendor Booth Mengajukan</p>
+                    <p className="text-xs text-blue-sail/50 mt-1">Isi Formulir pendaftaran vendor di menu Thrift Bazar untuk merekam data simulasi.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-sans border-collapse">
+                      <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                        <tr>
+                          <th className="p-4">Brand Thrift / Pendaftar</th>
+                          <th className="p-4">Kategori Produk</th>
+                          <th className="p-4">Proposal / Deskripsi Katalog</th>
+                          <th className="p-4">WhatsApp Contact</th>
+                          <th className="p-4">Aksi Hubungi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y-2 divide-blue-sail/15">
+                        {vendorApplications.map(app => (
+                          <tr key={app.id} className="hover:bg-gray-50/50">
+                            <td className="p-4">
+                              <p className="font-bold text-blue-sail uppercase">{app.vendor_name}</p>
+                              <p className="text-[10px] text-blue-sail/50 font-mono mt-0.5">ID: {app.id}</p>
+                            </td>
+                            <td className="p-4">
+                              <span className="bg-red-inferno text-ballroom font-mono text-[9px] font-bold px-2.5 py-1 rounded-none border border-red-700 uppercase tracking-widest inline-block">
+                                {app.product_category}
+                              </span>
+                            </td>
+                            <td className="p-4 max-w-[280px]">
+                              <p className="leading-relaxed text-blue-sail/85 italic font-medium">"{app.description}"</p>
+                            </td>
+                            <td className="p-4 font-mono font-bold">
+                              {app.contact}
+                            </td>
+                            <td className="p-4">
+                              <a
+                                href={`https://wa.me/${app.contact}?text=Halo%20${encodeURIComponent(app.vendor_name)},%20kami%20dari%20logistik%20Panitia%20TSF%20Bazar%20terkait%20pengajuan%20booth.`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-[10px] px-3 py-1.5 rounded-none border border-blue-sail uppercase tracking-wider inline-block shadow-[2px_2px_0_0_#2A4C9E] cursor-pointer"
+                              >
+                                Chat WhatsApp
+                              </a>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* 4. SECTION TAB: THRIFT MANAGEMENT CRUD (PROD & VENDORS) */}
+        {activeTab === 'thrift' && (
+          <div className="space-y-8">
+            
+            {/* THRIFT PRODUCTS CRUD */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <h2 className="font-display font-black text-xl uppercase">MANAJEMEN KATALOG BARANG THRIFT</h2>
+                  <p className="text-xs text-blue-sail/60">Tambah produk baju balap vintage baru atau hapus item catalog.</p>
+                </div>
+
+                <button
+                  id="add-prod-btn"
+                  onClick={() => {
+                    setProdForm({ id: '', name: '', price: 150000, condition: '9/10', category: 'clothing', image_url: '', vendor_id: thriftVendors[0]?.id || 'v-1', status: 'available' });
+                    setIsProdModalOpen(true);
+                  }}
+                  className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-black text-xs uppercase px-5 py-2.5 rounded-none border-2 border-decor tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#BD1B1F] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  <Icon name="Plus" size={14} className="stroke-[3px]" />
+                  <span>TAMBAH CATALOG PRODUK</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {thriftProducts.map(prod => (
+                  <div key={prod.id} className="bg-white rounded-none border-4 border-blue-sail overflow-hidden flex flex-col justify-between shadow-[4px_4px_0_0_#2A4C9E] hover:shadow-[6px_6px_0_0_#2A4C9E] transition-all">
+                    <div className="h-40 overflow-hidden relative bg-gray-100 border-b-2 border-blue-sail">
+                      <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" />
+                      <div className="absolute top-2 right-2 bg-blue-sail text-decor text-[8px] font-mono font-bold px-2 py-0.5 rounded-none border border-decor/40 uppercase">
+                        {prod.category}
+                      </div>
+                    </div>
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-4 text-xs">
+                      <div>
+                        <h4 className="font-display font-bold text-sm text-blue-sail uppercase truncate">{prod.name}</h4>
+                        <p className="font-mono text-[10px] text-red-inferno font-bold mt-1">
+                          Rp {prod.price.toLocaleString('id-ID')}
+                        </p>
+                        <p className="text-[10px] text-blue-sail/60 mt-0.5">Kondisi: {prod.condition}</p>
+                        <p className="text-[10px] text-blue-sail/60">Status: {prod.status.toUpperCase()}</p>
+                      </div>
+
+                      <div className="border-t-2 border-blue-sail/10 pt-3 flex justify-end gap-1.5">
+                        <button
+                          onClick={() => {
+                            setProdForm(prod);
+                            setIsProdModalOpen(true);
+                          }}
+                          className="bg-blue-sail/5 hover:bg-blue-sail hover:text-ballroom p-2 text-blue-sail rounded-none border border-blue-sail transition-colors cursor-pointer"
+                        >
+                          <Icon name="Edit" size={12} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Yakin hapus produk "${prod.name}" dari katalog?`)) {
+                              deleteThriftProduct(prod.id);
+                            }
+                          }}
+                          className="bg-red-50 hover:bg-red-inferno hover:text-ballroom p-2 text-red-inferno rounded-none border border-red-inferno transition-colors cursor-pointer"
+                        >
+                          <Icon name="Trash2" size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* THRIFT VENDORS CRUD */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-t-4 border-blue-sail/15 pt-8">
+                <div className="space-y-1">
+                  <h2 className="font-display font-black text-xl uppercase">MANAJEMEN SELLER THRIFT BOOTH</h2>
+                  <p className="text-xs text-blue-sail/60">Tambah brand vintage tenant, set lokasi booth, dan kontak telepon seller.</p>
+                </div>
+
+                <button
+                  id="add-vendor-btn"
+                  onClick={() => {
+                    setVendorFormState({ id: '', vendor_name: '', booth_location: 'Booth Utama A-1', contact: '6281234567890', status: 'active' });
+                    setIsVendorModalOpen(true);
+                  }}
+                  className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-black text-xs uppercase px-5 py-2.5 rounded-none border-2 border-decor tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#BD1B1F] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  <Icon name="Plus" size={14} className="stroke-[3px]" />
+                  <span>TAMBAH MERCHANTS / VENDOR</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {thriftVendors.map(v => (
+                  <div key={v.id} className="bg-white p-5 rounded-none border-4 border-blue-sail flex flex-col justify-between items-start space-y-4 shadow-[4px_4px_0_0_#F6BB02] hover:shadow-[6px_6px_0_0_#F6BB02] transition-all text-xs">
+                    <div className="space-y-1.5">
+                      <h4 className="font-display font-bold text-sm text-blue-sail uppercase">{v.vendor_name}</h4>
+                      <p className="text-blue-sail/70 font-medium">Lokasi: <strong>{v.booth_location}</strong></p>
+                      <p className="font-mono text-[10px] text-blue-sail/60">Phone: {v.contact}</p>
+                      <p className="font-mono text-[10px] text-blue-sail/60">Status Booth: {v.status.toUpperCase()}</p>
+                    </div>
+
+                    <div className="border-t-2 border-blue-sail/10 pt-3 w-full flex justify-end gap-1.5">
+                      <button
+                        onClick={() => {
+                          setVendorFormState(v);
+                          setIsVendorModalOpen(true);
+                        }}
+                        className="bg-blue-sail/5 hover:bg-blue-sail hover:text-ballroom p-2 text-blue-sail rounded-none border border-blue-sail transition-colors cursor-pointer"
+                      >
+                        <Icon name="Edit" size={12} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Hapus vendor "${v.vendor_name}"? PERINGATAN: Semua produk di bawah vendor ini akan terhapus juga!`)) {
+                            deleteThriftVendor(v.id);
+                          }
+                        }}
+                        className="bg-red-50 hover:bg-red-inferno hover:text-ballroom p-2 text-red-inferno rounded-none border border-red-inferno transition-colors cursor-pointer"
+                      >
+                        <Icon name="Trash2" size={12} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* 5. SECTION TAB: DIVISIONS MANAGEMENT (CRUD) */}
+        {activeTab === 'divisions' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="space-y-1">
+                <h2 className="font-display font-black text-2xl uppercase">MANAJEMEN DIVISI PANITIA</h2>
+                <p className="text-xs text-blue-sail/60">Ubah divisi rekrutmen, kuota kepanitiaan, atau deskripsi tugas divisi secara dinamis.</p>
+              </div>
+
+              <button
+                id="add-div-btn"
+                onClick={() => {
+                  setDivForm({ id: '', name: '', description: '', quota: 10, icon_name: 'Users' });
+                  setIsDivModalOpen(true);
+                }}
+                className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-black text-xs uppercase px-5 py-2.5 rounded-none border-2 border-decor tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#BD1B1F] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
+                <Icon name="Plus" size={14} className="stroke-[3px]" />
+                <span>TAMBAH DIVISI BARU</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {divisions.map(div => (
+                <div key={div.id} className="bg-white p-5 rounded-none border-4 border-blue-sail flex flex-col justify-between items-start min-h-[16rem] h-auto shadow-[4px_4px_0_0_#BD1B1F] hover:shadow-[6px_6px_0_0_#BD1B1F] transition-all text-xs">
+                  <div className="space-y-2 w-full">
+                    <div className="flex items-center space-x-2">
+                      <div className="bg-blue-sail/5 text-blue-sail p-1.5 rounded-none border border-blue-sail/20">
+                        <Icon name={div.icon_name} size={16} />
+                      </div>
+                      <h4 className="font-display font-bold text-sm uppercase text-blue-sail truncate">{div.name}</h4>
+                    </div>
+                    <p className="line-clamp-3 leading-relaxed text-blue-sail/80 font-sans">{div.description}</p>
+                    
+                    {div.sub_divisions && div.sub_divisions.length > 0 && (
+                      <div className="pt-2 space-y-1">
+                        <p className="text-[10px] font-bold uppercase text-blue-sail/60 font-mono">Sub-Divisi:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {div.sub_divisions.map((sub, idx) => (
+                            <span key={idx} className="bg-blue-sail/5 text-blue-sail border border-blue-sail/15 text-[9px] px-1.5 py-0.5 font-sans font-medium">
+                              {sub}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t-2 border-blue-sail/10 pt-3 w-full flex items-center justify-between">
+                    <span className="font-mono text-[10px] font-bold text-red-inferno uppercase">Quota: {div.quota} Orang</span>
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => {
+                          setDivForm({ ...div, quota: div.quota });
+                          setIsDivModalOpen(true);
+                        }}
+                        className="bg-blue-sail/5 hover:bg-blue-sail hover:text-ballroom p-2 text-blue-sail rounded-none border border-blue-sail transition-colors cursor-pointer"
+                      >
+                        <Icon name="Edit" size={12} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Yakin hapus divisi "${div.name}"? Pelamar yang memilih divisi ini mungkin terganggu.`)) {
+                            deleteDivision(div.id);
+                          }
+                        }}
+                        className="bg-red-50 hover:bg-red-inferno hover:text-ballroom p-2 text-red-inferno rounded-none border border-red-inferno transition-colors cursor-pointer"
+                      >
+                        <Icon name="Trash2" size={12} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* MODAL: DIVISIA ADD/EDIT */}
+      {isDivModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn font-sans text-blue-sail">
+          <div className="bg-ballroom w-full max-w-md rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#2A4C9E] overflow-hidden">
+            <div className="bg-blue-sail text-ballroom p-5 flex justify-between items-center border-b-4 border-decor">
+              <h3 className="font-display font-black text-base uppercase tracking-tight text-decor">
+                {divForm.id ? 'Edit Divisi Panitia' : 'Tambah Divisi Baru'}
+              </h3>
+              <button onClick={() => setIsDivModalOpen(false)} className="text-ballroom hover:text-decor p-1 cursor-pointer">
+                <Icon name="X" size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleDivSubmit} className="p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wide">Nama Divisi *</label>
+                <input
+                  type="text"
+                  required
+                  value={divForm.name}
+                  onChange={e => setDivForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Contoh: Acara (Event Planner)"
+                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Quota Panitia *</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={divForm.quota}
+                    onChange={e => setDivForm(prev => ({ ...prev, quota: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Ikon Lucide *</label>
+                  <select
+                    value={divForm.icon_name}
+                    onChange={e => setDivForm(prev => ({ ...prev, icon_name: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  >
+                    <option value="CalendarRange">CalendarRange</option>
+                    <option value="MessageSquareShare">MessageSquareShare</option>
+                    <option value="Radio">Radio</option>
+                    <option value="BadgeDollarSign">BadgeDollarSign</option>
+                    <option value="Wrench">Wrench</option>
+                    <option value="Camera">Camera</option>
+                    <option value="ShieldCheck">ShieldCheck</option>
+                    <option value="Users">Users / Standard</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wide">Deskripsi Divisi *</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={divForm.description}
+                  onChange={e => setDivForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Isi tugas dan tanggung jawab divisi..."
+                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs py-3 rounded-none border-2 border-blue-sail tracking-wider shadow-[3px_3px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all uppercase mt-4 cursor-pointer"
+              >
+                SIMPAN PERUBAHAN
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: THRIFT PRODUCT ADD/EDIT */}
+      {isProdModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn font-sans text-blue-sail">
+          <div className="bg-ballroom w-full max-w-md rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#2A4C9E] overflow-hidden">
+            <div className="bg-blue-sail text-ballroom p-5 flex justify-between items-center border-b-4 border-decor">
+              <h3 className="font-display font-black text-base uppercase tracking-tight text-decor">
+                {prodForm.id ? 'Edit Produk Thrift' : 'Tambah Produk Thrift Baru'}
+              </h3>
+              <button onClick={() => setIsProdModalOpen(false)} className="text-ballroom hover:text-decor p-1 cursor-pointer">
+                <Icon name="X" size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleProdSubmit} className="p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wide">Nama Produk *</label>
+                <input
+                  type="text"
+                  required
+                  value={prodForm.name}
+                  onChange={e => setProdForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Contoh: Vintage Nascar T-Shirt XL"
+                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Harga (Rupiah) *</label>
+                  <input
+                    type="number"
+                    required
+                    value={prodForm.price}
+                    onChange={e => setProdForm(prev => ({ ...prev, price: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Kondisi (Quality) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={prodForm.condition}
+                    onChange={e => setProdForm(prev => ({ ...prev, condition: e.target.value }))}
+                    placeholder="Contoh: 9/10 Like New"
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Kategori Koleksi *</label>
+                  <select
+                    value={prodForm.category}
+                    onChange={e => setProdForm(prev => ({ ...prev, category: e.target.value as any }))}
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  >
+                    <option value="clothing">Pakaian / Clothing</option>
+                    <option value="accessories">Aksesoris / Accessories</option>
+                    <option value="shoes">Sepatu / Shoes</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Brand Seller *</label>
+                  <select
+                    value={prodForm.vendor_id}
+                    onChange={e => setProdForm(prev => ({ ...prev, vendor_id: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  >
+                    {thriftVendors.map(v => (
+                      <option key={v.id} value={v.id}>{v.vendor_name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Status Barang *</label>
+                  <select
+                    value={prodForm.status}
+                    onChange={e => setProdForm(prev => ({ ...prev, status: e.target.value as any }))}
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  >
+                    <option value="available">Tersedia / Available</option>
+                    <option value="sold">Terjual / Sold</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wide">Link URL Foto Produk</label>
+                <input
+                  type="url"
+                  value={prodForm.image_url}
+                  onChange={e => setProdForm(prev => ({ ...prev, image_url: e.target.value }))}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs py-3 rounded-none border-2 border-blue-sail tracking-wider shadow-[3px_3px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all uppercase mt-4 cursor-pointer"
+              >
+                SIMPAN CATALOG BARANG
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: THRIFT VENDOR ADD/EDIT */}
+      {isVendorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn font-sans text-blue-sail">
+          <div className="bg-ballroom w-full max-w-md rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#2A4C9E] overflow-hidden">
+            <div className="bg-blue-sail text-ballroom p-5 flex justify-between items-center border-b-4 border-decor">
+              <h3 className="font-display font-black text-base uppercase tracking-tight text-decor">
+                {vendorFormState.id ? 'Edit Brand Seller' : 'Tambah Seller Vendor Baru'}
+              </h3>
+              <button onClick={() => setIsVendorModalOpen(false)} className="text-ballroom hover:text-decor p-1 cursor-pointer">
+                <Icon name="X" size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleVendorSubmit} className="p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wide">Nama Brand / Vendor *</label>
+                <input
+                  type="text"
+                  required
+                  value={vendorFormState.vendor_name}
+                  onChange={e => setVendorFormState(prev => ({ ...prev, vendor_name: e.target.value }))}
+                  placeholder="Contoh: Veloce Vintage Co"
+                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Koordinat Booth *</label>
+                  <input
+                    type="text"
+                    required
+                    value={vendorFormState.booth_location}
+                    onChange={e => setVendorFormState(prev => ({ ...prev, booth_location: e.target.value }))}
+                    placeholder="Contoh: Booth Utama A-1"
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">No WA (Format: 628...)</label>
+                  <input
+                    type="text"
+                    required
+                    value={vendorFormState.contact}
+                    onChange={e => setVendorFormState(prev => ({ ...prev, contact: e.target.value }))}
+                    placeholder="Contoh: 62812345678"
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wide">Status Booth *</label>
+                <select
+                  value={vendorFormState.status}
+                  onChange={e => setVendorFormState(prev => ({ ...prev, status: e.target.value as any }))}
+                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                >
+                  <option value="active">Aktif Berjualan / Active</option>
+                  <option value="inactive">Tutup Sementara / Inactive</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs py-3 rounded-none border-2 border-blue-sail tracking-wider shadow-[3px_3px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all uppercase mt-4 cursor-pointer"
+              >
+                SIMPAN BRAND SELLER
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: STAFF APPLICANT DETAIL */}
+      {selectedApplicant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fadeIn font-sans text-blue-sail">
+          <div className="bg-ballroom w-full max-w-2xl rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#2A4C9E] overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="bg-blue-sail text-ballroom p-5 flex justify-between items-center border-b-4 border-decor shrink-0">
+              <div className="space-y-0.5">
+                <span className="bg-decor text-blue-sail font-mono text-[10px] font-bold px-1.5 py-0.5 border border-blue-sail uppercase">
+                  Detail Aplikasi Staff
+                </span>
+                <h3 className="font-display font-black text-lg uppercase tracking-tight text-white">
+                  {selectedApplicant.full_name}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setSelectedApplicant(null)} 
+                className="text-ballroom hover:text-decor p-1 cursor-pointer bg-blue-sail/20 hover:bg-blue-sail/40 transition-all rounded-none border border-transparent hover:border-ballroom"
+              >
+                <Icon name="X" size={22} />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="p-6 overflow-y-auto space-y-6 text-sm">
+              
+              {/* Section 1: Data Diri */}
+              <div className="space-y-3">
+                <h4 className="font-display font-extrabold text-xs text-red-inferno uppercase tracking-wider border-b border-blue-sail/10 pb-1 flex items-center space-x-1.5">
+                  <Icon name="User" size={14} />
+                  <span>A. DATA DIRI</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-3 border border-blue-sail/10">
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Nama Lengkap</p>
+                    <p className="font-semibold uppercase text-blue-sail text-xs">{selectedApplicant.full_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">NRP (NIM)</p>
+                    <p className="font-mono font-semibold text-xs text-blue-sail">{selectedApplicant.nim}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Departemen & Angkatan</p>
+                    <p className="font-semibold text-xs text-blue-sail">{selectedApplicant.department || selectedApplicant.major || '-'} ({selectedApplicant.batch || '2024'})</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Fakultas</p>
+                    <p className="font-semibold uppercase text-xs text-red-inferno">{selectedApplicant.faculty || 'FSAD'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Nomor WhatsApp</p>
+                    <p className="font-mono text-xs text-blue-sail font-semibold">{selectedApplicant.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Email Address</p>
+                    <p className="font-mono text-xs text-blue-sail">{selectedApplicant.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Instagram</p>
+                    <p className="font-mono text-xs text-blue-sail">@{selectedApplicant.instagram || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">CV / Berkas</p>
+                    {selectedApplicant.file_url ? (
+                      <a
+                        href={selectedApplicant.file_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
+                      >
+                        <Icon name="FileText" size={12} />
+                        <span>Buka Link CV/Portofolio</span>
+                      </a>
+                    ) : (
+                      <span className="text-blue-sail/40 font-mono text-xs">Belum diunggah</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: General Task */}
+              <div className="space-y-3">
+                <h4 className="font-display font-extrabold text-xs text-red-inferno uppercase tracking-wider border-b border-blue-sail/10 pb-1 flex items-center space-x-1.5">
+                  <Icon name="FileText" size={14} />
+                  <span>B. GENERAL TASK (PERTANYAAN UMUM)</span>
+                </h4>
+                <div className="space-y-3 bg-white p-4 border border-blue-sail/10">
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide leading-relaxed">
+                      1. Apa yang diketahui tentang TDC Summit Fest 2026?
+                    </p>
+                    <p className="text-xs text-blue-sail font-medium leading-relaxed mt-1 italic whitespace-pre-wrap">
+                      "{selectedApplicant.general_knowledge || selectedApplicant.motivation || '-'}"
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide leading-relaxed">
+                      2. Motivasi mendaftar sebagai bagian dari TDC Summit Fest 2026?
+                    </p>
+                    <p className="text-xs text-blue-sail font-medium leading-relaxed mt-1 italic whitespace-pre-wrap">
+                      "{selectedApplicant.general_motivation || selectedApplicant.motivation || '-'}"
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide leading-relaxed">
+                      3. Pengalaman dalam kepanitiaan atau organisasi (serta jobdesk)?
+                    </p>
+                    <p className="text-xs text-blue-sail font-medium leading-relaxed mt-1 italic whitespace-pre-wrap">
+                      "{selectedApplicant.experience || '-'}"
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide leading-relaxed">
+                      4. Sebutkan kelebihan & kekurangan diri
+                    </p>
+                    <p className="text-xs text-blue-sail font-medium leading-relaxed mt-1 italic whitespace-pre-wrap">
+                      "{selectedApplicant.strengths_weaknesses || '-'}"
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-blue-sail/5">
+                    <div>
+                      <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">
+                        5. Skala Komitmen (0-10)
+                      </p>
+                      <p className="text-xs font-mono font-bold text-red-inferno mt-0.5">
+                        {selectedApplicant.commitment_scale !== undefined ? `${selectedApplicant.commitment_scale}/10` : '10/10'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">
+                        6. Sudah Bayar IKOMA ITS?
+                      </p>
+                      <p className="text-xs font-bold text-blue-sail mt-0.5 uppercase">
+                        {selectedApplicant.paid_ikoma === 'yes' ? 'SUDAH BAYAR' : 'BELUM BAYAR'}
+                      </p>
+                      {selectedApplicant.paid_ikoma === 'yes' && selectedApplicant.ikoma_proof_url && (
+                        <a
+                          href={selectedApplicant.ikoma_proof_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-red-inferno hover:text-barbera font-mono text-[10px] font-bold flex items-center space-x-1 mt-1"
+                        >
+                          <Icon name="Image" size={10} />
+                          <span>Lihat Bukti IKOMA</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide leading-relaxed">
+                      7. Bentuk komitmen untuk TSF 2026
+                    </p>
+                    <p className="text-xs text-blue-sail font-medium leading-relaxed mt-1 italic whitespace-pre-wrap">
+                      "{selectedApplicant.commitment_form || '-'}"
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide leading-relaxed">
+                      8. Kesibukan saat ini dan 5 bulan ke depan
+                    </p>
+                    <p className="text-xs text-blue-sail font-medium leading-relaxed mt-1 italic whitespace-pre-wrap">
+                      "{selectedApplicant.busy_schedule || '-'}"
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide leading-relaxed">
+                      9. Memiliki Relasi Kenalan / Perusahaan?
+                    </p>
+                    <p className="text-xs text-blue-sail font-medium leading-relaxed mt-1 italic whitespace-pre-wrap">
+                      "{selectedApplicant.relations || '-'}"
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Division Tasks */}
+              <div className="space-y-4">
+                <h4 className="font-display font-extrabold text-xs text-red-inferno uppercase tracking-wider border-b border-blue-sail/10 pb-1 flex items-center space-x-1.5">
+                  <Icon name="Award" size={14} />
+                  <span>C. DIVISION TASK (TUGAS DIVISI SPESIFIK)</span>
+                </h4>
+
+                {/* Priority 1 Task */}
+                <div className="space-y-3 bg-blue-sail/5 p-4 border border-blue-sail/10">
+                  <div className="flex items-center space-x-2 border-b border-blue-sail/10 pb-2">
+                    <span className="bg-decor text-blue-sail font-mono text-[10px] font-bold px-1.5 py-0.5 border border-blue-sail">
+                      PRIORITAS 1
+                    </span>
+                    <span className="text-xs font-bold font-mono text-blue-sail uppercase tracking-wide">
+                      {selectedApplicant.division_priority_1}
+                    </span>
+                  </div>
+                  <div className="mt-2">
+                    <SerializedAnswersViewer serializedText={selectedApplicant.div_task_answer_1} />
+                  </div>
+                </div>
+
+                {/* Priority 2 Task */}
+                <div className="space-y-3 bg-blue-sail/5 p-4 border border-blue-sail/10">
+                  <div className="flex items-center space-x-2 border-b border-blue-sail/10 pb-2">
+                    <span className="bg-decor text-blue-sail font-mono text-[10px] font-bold px-1.5 py-0.5 border border-blue-sail">
+                      PRIORITAS 2
+                    </span>
+                    <span className="text-xs font-bold font-mono text-blue-sail uppercase tracking-wide">
+                      {selectedApplicant.division_priority_2}
+                    </span>
+                  </div>
+                  <div className="mt-2">
+                    <SerializedAnswersViewer serializedText={selectedApplicant.div_task_answer_2} />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-blue-sail/5 p-4 border-t border-blue-sail/10 flex justify-between items-center shrink-0">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-bold text-blue-sail font-mono">STATUS SELEKSI:</span>
+                <select
+                  value={selectedApplicant.status}
+                  onChange={e => {
+                    updateStaffApplicationStatus(selectedApplicant.id, e.target.value as any);
+                    setSelectedApplicant(prev => ({ ...prev, status: e.target.value }));
+                  }}
+                  className={`px-3 py-1 text-xs font-bold uppercase rounded-none border-2 outline-none font-mono ${
+                    selectedApplicant.status === 'accepted' 
+                      ? 'bg-green-50 border-green-400 text-green-700 focus:shadow-[2px_2px_0_0_#15803d]' 
+                      : selectedApplicant.status === 'rejected'
+                        ? 'bg-red-50 border-red-400 text-red-600 focus:shadow-[2px_2px_0_0_#b91c1c]'
+                        : 'bg-yellow-50 border-yellow-400 text-yellow-700 focus:shadow-[2px_2px_0_0_#ca8a04]'
+                  }`}
+                >
+                  <option value="pending">PENDING</option>
+                  <option value="accepted">ACCEPTED</option>
+                  <option value="rejected">REJECTED</option>
+                </select>
+              </div>
+              <button
+                onClick={() => setSelectedApplicant(null)}
+                className="bg-blue-sail hover:bg-blue-sail/95 text-white font-display font-black text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail transition-all cursor-pointer"
+              >
+                TUTUP DETAIL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
