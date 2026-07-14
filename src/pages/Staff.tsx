@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
-import { Division } from '../types';
+import { Division, FormFieldConfig, QuestionConfig } from '../types';
 
 export interface Question {
   id: string;
@@ -24,7 +24,7 @@ export const DIVISION_QUESTIONS: Record<string, Question[]> = {
     { id: 'q4', text: 'Study Case: Setelah seluruh tim melakukan pitching, panitia menemukan adanya perbedaan skor yang sangat jauh dari salah satu juri dibanding dua juri lainnya pada beberapa peserta. Akibatnya, muncul perubahan besar pada peringkat akhir. Salah satu juri juga telah meninggalkan venue sehingga tidak dapat langsung dimintai klarifikasi, sedangkan pengumuman pemenang dijadwalkan dalam waktu 30 menit. Di sisi lain, peserta mulai menanyakan kapan hasil akan diumumkan. Sebagai Staff Divisi Kompetisi BPC, bagaimana langkah yang akan kamu ambil untuk menangani situasi tersebut?', type: 'text' },
     { id: 'q5', text: 'Study Case: Sebagai bagian dari divisi Event Competition, kamu dihadapkan pada situasi dimana H-1 bulan acara, tim kamu masih belum mendapatkan case collaborator untuk lomba yang menjadi core event. Beberapa collaborator yang sebelumnya dijanjikan tiba-tiba membatalkan komitmennya secara sepihak, sementara panitia inti sudah mengumumkan jadwal ke seluruh peserta dan sponsor sudah mengaitkan nama brand mereka dengan case tersebut. Tanpa case ini, seluruh rangkaian kompetisi terancam tidak bisa berjalan sesuai jadwal, dan risiko reputasi acara di mata peserta maupun sponsor sangat tinggi. Apa langkah konkret pertama yang akan kamu ambil dalam 24 jam ke depan, dan bagaimana kamu menyusun contingency plan jika case collaborator benar-benar tidak bisa didapatkan tepat waktu? Pihak mana saja yang perlu dilibatkan di setiap tahap keputusan, dan bagaimana kamu membagi tanggung jawab agar tidak terjadi miskomunikasi antar divisi?', type: 'text' }
   ],
-  'Sub Divisi Non Competition': [
+  'Sub Divisi Event - Non Competition': [
     { id: 'q1', text: 'Apa yang kamu ketahui tentang sub-divisi event non competition ini?', type: 'text' },
     { id: 'q2', text: 'Ceritakan pengalaman kamu yang relevan dengan sub-divisi non competition ini, termasuk peran spesifikmu, tanggung jawab, dan lain sebagainya.', type: 'text' },
     { id: 'q3', text: 'Jika kamu bergabung sebagai staff divisi ini, ide atau inovasi apa yang ingin kamu implementasikan?', type: 'text' },
@@ -118,9 +118,32 @@ export const DIVISION_QUESTIONS: Record<string, Question[]> = {
   ]
 };
 
+const DIVISION_TASK_KEY_ALIASES: Record<string, string> = {
+  'Sub Divisi Non Competition': 'Sub Divisi Event - Non Competition'
+};
+
+const DIVISION_CONTENT_KEY_ALIASES: Record<string, string> = {
+  'Sub Divisi Non Competition': 'Sub Divisi Event - Non Competition'
+};
+
+const DATA_DIRI_FIELD_IDS = new Set(['fullName', 'nim', 'faculty', 'department', 'phone', 'email']);
+const GENERAL_TASK_FIELD_IDS = new Set([
+  'generalKnowledge',
+  'generalMotivation',
+  'experience',
+  'strengthsWeaknesses',
+  'commitmentScale',
+  'paidIkoma',
+  'commitmentForm',
+  'busySchedule',
+  'relations'
+]);
+const BERKAS_FIELD_IDS = new Set(['ktmKrsLink', 'cvLink', 'repostLink', 'twibbonLink', 'igFollowLink', 'tiktokFollowLink']);
+
 export const getDivisionQuestions = (priorityName: string): Question[] => {
   if (!priorityName) return [];
-  return DIVISION_QUESTIONS[priorityName] || DEFAULT_QUESTIONS;
+  const normalizedKey = DIVISION_TASK_KEY_ALIASES[priorityName] || priorityName;
+  return DIVISION_QUESTIONS[normalizedKey] || DEFAULT_QUESTIONS;
 };
 
 export const parseQuestionText = (text: string) => {
@@ -284,7 +307,7 @@ export const DIVISION_CONTENT: Record<string, DivDetail> = {
     ],
     skills: 'Ketelitian, pemikiran terstruktur, mampu berkoordinasi dengan juri/mitra profesional secara taktis.'
   },
-  'Sub Divisi Non Competition': {
+  'Sub Divisi Event - Non Competition': {
     tugasPokok: 'Sub Divisi yang bertanggung jawab dalam pembuatan konsep dan teknis acara Event Non Competition selama kegiatan TSF 2026',
     jobdesk: [
       'Menyusun konsep, juklak-juknis, alur, rundown, dan kebutuhan acara untuk seluruh rangkaian kegiatan non-competition (Pre Event dan Closing)',
@@ -442,7 +465,8 @@ export const DIVISION_CONTENT: Record<string, DivDetail> = {
 };
 
 export const getNormalizedContent = (name: string): DivDetail => {
-  const normalized = name.toLowerCase().replace(/\s+/g, ' ').trim();
+  const aliasName = DIVISION_CONTENT_KEY_ALIASES[name] || name;
+  const normalized = aliasName.toLowerCase().replace(/\s+/g, ' ').trim();
   const matchedKey = Object.keys(DIVISION_CONTENT).find(key => {
     return key.toLowerCase().replace(/\s+/g, ' ').trim() === normalized;
   });
@@ -458,11 +482,6 @@ export const getNormalizedContent = (name: string): DivDetail => {
 
 export const Staff: React.FC = () => {
   const { phases, divisions, addStaffApplication, formQuestions } = useApp();
-
-  const getDivisionQuestions = (priorityName: string): Question[] => {
-    if (!priorityName) return [];
-    return formQuestions?.divisionTasks?.[priorityName] || DEFAULT_QUESTIONS;
-  };
 
   // Find recruitment phase info
   const recruitPhase = phases.find(p => p.name === 'staff_recruitment') || {
@@ -527,10 +546,30 @@ export const Staff: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [customFormAnswers, setCustomFormAnswers] = useState<Record<string, string>>({});
 
   // Dynamic Division Tasks answers
   const [answersP1, setAnswersP1] = useState<Record<string, string>>({});
   const [answersP2, setAnswersP2] = useState<Record<string, string>>({});
+
+  const getCustomAnswerKey = (section: 'dataDiri' | 'generalTask' | 'berkas', id: string) => `${section}:${id}`;
+
+  const getCustomAnswerValue = (section: 'dataDiri' | 'generalTask' | 'berkas', id: string) => {
+    return customFormAnswers[getCustomAnswerKey(section, id)] || '';
+  };
+
+  const setCustomAnswerValue = (section: 'dataDiri' | 'generalTask' | 'berkas', id: string, value: string) => {
+    setCustomFormAnswers(prev => ({
+      ...prev,
+      [getCustomAnswerKey(section, id)]: value
+    }));
+  };
+
+  const getDivisionQuestions = (priorityName: string): Question[] => {
+    if (!priorityName) return [];
+    const normalizedKey = DIVISION_TASK_KEY_ALIASES[priorityName] || priorityName;
+    return formQuestions?.divisionTasks?.[normalizedKey] || DEFAULT_QUESTIONS;
+  };
 
   const handleAnswersP1Change = (qId: string, value: string) => {
     setAnswersP1(prev => {
@@ -621,11 +660,23 @@ export const Staff: React.FC = () => {
       errors.email = 'Format email tidak valid';
     }
 
+    const customDataDiriFields = (formQuestions?.dataDiri || []).filter(field => !DATA_DIRI_FIELD_IDS.has(field.id));
+    customDataDiriFields.forEach(field => {
+      if (!getCustomAnswerValue('dataDiri', field.id).trim()) {
+        errors[`dataDiri_${field.id}`] = 'Jawaban wajib diisi';
+      }
+    });
+
     setFormErrors(prev => {
       const cleanErrors = { ...prev };
       // Remove step 1 keys from previous errors so we overwrite them correctly
       const step1Keys = ['fullName', 'nim', 'faculty', 'department', 'phone', 'email'];
       step1Keys.forEach(k => delete cleanErrors[k]);
+      Object.keys(cleanErrors).forEach(k => {
+        if (k.startsWith('dataDiri_')) {
+          delete cleanErrors[k];
+        }
+      });
       return { ...cleanErrors, ...errors };
     });
 
@@ -645,6 +696,13 @@ export const Staff: React.FC = () => {
       errors.ikomaProofUrl = 'Bukti pembayaran IKOMA wajib diunggah';
     }
 
+    const customGeneralTaskFields = (formQuestions?.generalTask || []).filter(q => !GENERAL_TASK_FIELD_IDS.has(q.id));
+    customGeneralTaskFields.forEach(q => {
+      if (q.required !== false && !getCustomAnswerValue('generalTask', q.id).trim()) {
+        errors[`generalTask_${q.id}`] = 'Jawaban wajib diisi';
+      }
+    });
+
     setFormErrors(prev => {
       const cleanErrors = { ...prev };
       const step2Keys = [
@@ -652,6 +710,11 @@ export const Staff: React.FC = () => {
         'commitmentForm', 'busySchedule', 'relations', 'ikomaProofUrl'
       ];
       step2Keys.forEach(k => delete cleanErrors[k]);
+      Object.keys(cleanErrors).forEach(k => {
+        if (k.startsWith('generalTask_')) {
+          delete cleanErrors[k];
+        }
+      });
       return { ...cleanErrors, ...errors };
     });
 
@@ -747,10 +810,22 @@ export const Staff: React.FC = () => {
       }
     });
 
+    const customBerkasFields = (formQuestions?.berkas || []).filter(field => !BERKAS_FIELD_IDS.has(field.id));
+    customBerkasFields.forEach(field => {
+      if (field.required !== false && !getCustomAnswerValue('berkas', field.id).trim()) {
+        errors[`berkas_${field.id}`] = 'Jawaban wajib diisi';
+      }
+    });
+
     setFormErrors(prev => {
       const cleanErrors = { ...prev };
       const step5Keys = ['fileUrl', 'ktmKrsLink', 'cvLink', 'repostLink', 'twibbonLink', 'igFollowLink', 'tiktokFollowLink'];
       step5Keys.forEach(k => delete cleanErrors[k]);
+      Object.keys(cleanErrors).forEach(k => {
+        if (k.startsWith('berkas_')) {
+          delete cleanErrors[k];
+        }
+      });
       return { ...cleanErrors, ...errors };
     });
 
@@ -849,6 +924,7 @@ export const Staff: React.FC = () => {
         tiktok_follow_link: formData.tiktokFollowLink,
         div_task_answer_1: formData.divTaskAnswer1,
         div_task_answer_2: formData.divTaskAnswer2,
+        custom_form_answers: customFormAnswers,
         // General Task fields
         general_knowledge: formData.generalKnowledge,
         general_motivation: formData.generalMotivation,
@@ -899,6 +975,7 @@ export const Staff: React.FC = () => {
       });
       setUploadedFileName('');
       setIkomaUploadedFileName('');
+      setCustomFormAnswers({});
       setCurrentStep(1);
       setFormErrors({});
     }, 1200);
@@ -1498,6 +1575,30 @@ export const Staff: React.FC = () => {
                         </div>
                       </div>
 
+                      {(formQuestions?.dataDiri || []).some(field => !DATA_DIRI_FIELD_IDS.has(field.id)) && (
+                        <div className="space-y-4 pt-2 border-t border-blue-sail/10">
+                          <h5 className="font-display font-extrabold text-xs uppercase tracking-wider text-red-inferno">Field Tambahan Data Diri</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {(formQuestions?.dataDiri || []).filter(field => !DATA_DIRI_FIELD_IDS.has(field.id)).map(field => (
+                              <div key={field.id} className="space-y-1.5">
+                                <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                  {field.label}{field.required !== false ? ' *' : ''}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getCustomAnswerValue('dataDiri', field.id)}
+                                  onChange={e => setCustomAnswerValue('dataDiri', field.id, e.target.value)}
+                                  placeholder={field.placeholder || 'Isi jawaban di sini...'}
+                                  className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors[`dataDiri_${field.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                    }`}
+                                />
+                                {formErrors[`dataDiri_${field.id}`] && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors[`dataDiri_${field.id}`]}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Step 1 Control Button */}
                       <div className="pt-4 flex justify-end">
                         <button
@@ -1741,6 +1842,44 @@ export const Staff: React.FC = () => {
                         />
                         {formErrors.relations && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.relations}</p>}
                       </div>
+
+                      {(formQuestions?.generalTask || []).some(q => !GENERAL_TASK_FIELD_IDS.has(q.id)) && (
+                        <div className="space-y-4 pt-2 border-t border-blue-sail/10">
+                          <h5 className="font-display font-extrabold text-xs uppercase tracking-wider text-red-inferno">Pertanyaan Tambahan General Task</h5>
+                          <div className="space-y-4">
+                            {(formQuestions?.generalTask || []).filter(q => !GENERAL_TASK_FIELD_IDS.has(q.id)).map(q => (
+                              <div key={q.id} className="space-y-1.5">
+                                <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                  {q.text}{q.required !== false ? ' *' : ''}
+                                </label>
+                                {q.type === 'select' ? (
+                                  <select
+                                    value={getCustomAnswerValue('generalTask', q.id)}
+                                    onChange={e => setCustomAnswerValue('generalTask', q.id, e.target.value)}
+                                    className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${formErrors[`generalTask_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                      }`}
+                                  >
+                                    <option value="">-- Pilih Jawaban --</option>
+                                    {q.options?.map((opt, idx) => (
+                                      <option key={idx} value={opt}>{opt}</option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <textarea
+                                    rows={3}
+                                    value={getCustomAnswerValue('generalTask', q.id)}
+                                    onChange={e => setCustomAnswerValue('generalTask', q.id, e.target.value)}
+                                    placeholder={q.placeholder || 'Tuliskan jawaban Anda di sini...'}
+                                    className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors[`generalTask_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                      }`}
+                                  />
+                                )}
+                                {formErrors[`generalTask_${q.id}`] && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors[`generalTask_${q.id}`]}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Step 2 Control Buttons */}
                       <div className="pt-4 flex justify-between items-center">
@@ -2136,6 +2275,30 @@ export const Staff: React.FC = () => {
                           {formErrors.tiktokFollowLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.tiktokFollowLink}</p>}
                         </div>
                       </div>
+
+                      {(formQuestions?.berkas || []).some(field => !BERKAS_FIELD_IDS.has(field.id)) && (
+                        <div className="space-y-4 pt-2 border-t border-blue-sail/10">
+                          <h5 className="font-display font-extrabold text-xs uppercase tracking-wider text-red-inferno">Berkas Tambahan</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-sail/5 p-4 border border-blue-sail/10">
+                            {(formQuestions?.berkas || []).filter(field => !BERKAS_FIELD_IDS.has(field.id)).map(field => (
+                              <div key={field.id} className="space-y-1.5">
+                                <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
+                                  {field.label}{field.required !== false ? ' *' : ''}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getCustomAnswerValue('berkas', field.id)}
+                                  onChange={e => setCustomAnswerValue('berkas', field.id, e.target.value)}
+                                  placeholder={field.placeholder || 'Contoh: drive.google.com/...'}
+                                  className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors[`berkas_${field.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                    }`}
+                                />
+                                {formErrors[`berkas_${field.id}`] && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors[`berkas_${field.id}`]}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Section D: Agreement & Submit */}
                       <div className="pt-6 border-t border-blue-sail/10 space-y-4">

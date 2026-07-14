@@ -112,6 +112,24 @@ export const Admin: React.FC = () => {
   const [localFormConfig, setLocalFormConfig] = useState<FormQuestionsConfig | null>(null);
   const [selectedConfigDivision, setSelectedConfigDivision] = useState<string>('');
 
+  const getSelectableDivisionTaskKeys = () => {
+    const keys = new Set<string>();
+
+    divisions.forEach(div => {
+      if (div.sub_divisions && div.sub_divisions.length > 0) {
+        div.sub_divisions.forEach(sub => keys.add(sub));
+      } else {
+        keys.add(div.name);
+      }
+    });
+
+    if (localFormConfig) {
+      Object.keys(localFormConfig.divisionTasks).forEach(key => keys.add(key));
+    }
+
+    return Array.from(keys);
+  };
+
   useEffect(() => {
     if (formQuestions) {
       setLocalFormConfig(JSON.parse(JSON.stringify(formQuestions)));
@@ -119,13 +137,13 @@ export const Admin: React.FC = () => {
   }, [formQuestions, activeTab]);
 
   useEffect(() => {
-    if (localFormConfig && !selectedConfigDivision) {
-      const keys = Object.keys(localFormConfig.divisionTasks);
-      if (keys.length > 0) {
-        setSelectedConfigDivision(keys[0]);
-      }
+    if (!localFormConfig) return;
+
+    const keys = getSelectableDivisionTaskKeys();
+    if (!selectedConfigDivision || !keys.includes(selectedConfigDivision)) {
+      setSelectedConfigDivision(keys[0] || '');
     }
-  }, [localFormConfig]);
+  }, [localFormConfig, divisions, selectedConfigDivision]);
 
   const handleDataDiriChange = (id: string, field: 'label' | 'placeholder', value: string) => {
     if (!localFormConfig) return;
@@ -138,6 +156,29 @@ export const Admin: React.FC = () => {
         return item;
       });
       return { ...prev, dataDiri: updated };
+    });
+  };
+
+  const handleAddDataDiriField = () => {
+    if (!localFormConfig) return;
+    const newField = {
+      id: `custom-${Date.now()}`,
+      label: 'Pertanyaan baru',
+      placeholder: 'Isi jawaban di sini...',
+      required: true
+    };
+
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      return { ...prev, dataDiri: [...prev.dataDiri, newField] };
+    });
+  };
+
+  const handleDeleteDataDiriField = (id: string) => {
+    if (!localFormConfig) return;
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      return { ...prev, dataDiri: prev.dataDiri.filter(item => item.id !== id) };
     });
   };
 
@@ -155,6 +196,30 @@ export const Admin: React.FC = () => {
     });
   };
 
+  const handleAddGeneralTaskQuestion = () => {
+    if (!localFormConfig) return;
+    const newQuestion: QuestionConfig = {
+      id: `custom-${Date.now()}`,
+      text: 'Pertanyaan baru...',
+      type: 'text',
+      placeholder: 'Tuliskan jawaban Anda di sini...',
+      required: true
+    };
+
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      return { ...prev, generalTask: [...prev.generalTask, newQuestion] };
+    });
+  };
+
+  const handleDeleteGeneralTaskQuestion = (id: string) => {
+    if (!localFormConfig) return;
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      return { ...prev, generalTask: prev.generalTask.filter(item => item.id !== id) };
+    });
+  };
+
   const handleBerkasChange = (id: string, field: 'label' | 'placeholder', value: string) => {
     if (!localFormConfig) return;
     setLocalFormConfig(prev => {
@@ -166,6 +231,29 @@ export const Admin: React.FC = () => {
         return item;
       });
       return { ...prev, berkas: updated };
+    });
+  };
+
+  const handleAddBerkasField = () => {
+    if (!localFormConfig) return;
+    const newField = {
+      id: `custom-${Date.now()}`,
+      label: 'Berkas tambahan',
+      placeholder: 'Contoh: drive.google.com/...',
+      required: true
+    };
+
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      return { ...prev, berkas: [...prev.berkas, newField] };
+    });
+  };
+
+  const handleDeleteBerkasField = (id: string) => {
+    if (!localFormConfig) return;
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      return { ...prev, berkas: prev.berkas.filter(item => item.id !== id) };
     });
   };
 
@@ -1194,16 +1282,36 @@ export const Admin: React.FC = () => {
               {/* DATA DIRI SUB-TAB */}
               {formSubTab === 'dataDiri' && (
                 <div className="space-y-6">
-                  <h3 className="font-display font-black text-sm uppercase tracking-wide border-b border-blue-sail/10 pb-2 flex items-center gap-1.5 text-red-inferno">
-                    <Icon name="User" size={16} />
-                    <span>Konfigurasi Form Data Diri</span>
-                  </h3>
+                  <div className="flex items-center justify-between gap-3 border-b border-blue-sail/10 pb-2">
+                    <h3 className="font-display font-black text-sm uppercase tracking-wide flex items-center gap-1.5 text-red-inferno">
+                      <Icon name="User" size={16} />
+                      <span>Konfigurasi Form Data Diri</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={handleAddDataDiriField}
+                      className="bg-blue-sail hover:bg-barbera text-white font-mono font-bold text-[10px] uppercase px-3 py-1.5 rounded-none border border-blue-sail tracking-wide flex items-center space-x-1 transition-all cursor-pointer"
+                    >
+                      <Icon name="Plus" size={12} className="stroke-[3px]" />
+                      <span>Tambah Field</span>
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {localFormConfig.dataDiri.map(field => (
                       <div key={field.id} className="space-y-3 bg-blue-sail/[0.02] p-4 border border-blue-sail/15">
                         <div className="flex justify-between items-center border-b border-blue-sail/10 pb-1.5">
                           <span className="font-mono font-bold text-red-inferno uppercase text-[10px]">ID: {field.id}</span>
-                          <span className="bg-blue-sail/10 px-2 py-0.5 font-bold uppercase text-[9px]">Field Standar</span>
+                          <div className="flex items-center gap-2">
+                            <span className="bg-blue-sail/10 px-2 py-0.5 font-bold uppercase text-[9px]">Field</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDataDiriField(field.id)}
+                              className="bg-red-inferno/10 hover:bg-red-inferno text-red-inferno hover:text-white p-1 rounded-none border border-red-inferno transition-all cursor-pointer"
+                              title="Hapus Field"
+                            >
+                              <Icon name="Trash2" size={12} />
+                            </button>
+                          </div>
                         </div>
                         
                         <div className="space-y-1">
@@ -1234,20 +1342,36 @@ export const Admin: React.FC = () => {
               {/* GENERAL TASK SUB-TAB */}
               {formSubTab === 'generalTask' && (
                 <div className="space-y-6">
-                  <h3 className="font-display font-black text-sm uppercase tracking-wide border-b border-blue-sail/10 pb-2 flex items-center gap-1.5 text-red-inferno">
-                    <Icon name="FileQuestion" size={16} />
-                    <span>Konfigurasi Form General Task</span>
-                  </h3>
+                  <div className="flex items-center justify-between gap-3 border-b border-blue-sail/10 pb-2">
+                    <h3 className="font-display font-black text-sm uppercase tracking-wide flex items-center gap-1.5 text-red-inferno">
+                      <Icon name="FileQuestion" size={16} />
+                      <span>Konfigurasi Form General Task</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={handleAddGeneralTaskQuestion}
+                      className="bg-blue-sail hover:bg-barbera text-white font-mono font-bold text-[10px] uppercase px-3 py-1.5 rounded-none border border-blue-sail tracking-wide flex items-center space-x-1 transition-all cursor-pointer"
+                    >
+                      <Icon name="Plus" size={12} className="stroke-[3px]" />
+                      <span>Tambah Soal</span>
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {localFormConfig.generalTask.map((q, idx) => (
                       <div key={q.id} className="space-y-3 bg-blue-sail/[0.02] p-4 border border-blue-sail/15">
                         <div className="flex justify-between items-center border-b border-blue-sail/10 pb-1.5">
                           <span className="font-mono font-bold text-red-inferno uppercase text-[10px]">No. {idx + 1} (ID: {q.id})</span>
-                          {q.id === 'commitmentScale' || q.id === 'paidIkoma' ? (
-                            <span className="bg-red-inferno/10 text-red-inferno px-2 py-0.5 font-bold uppercase text-[9px]">Custom Input</span>
-                          ) : (
-                            <span className="bg-blue-sail/10 px-2 py-0.5 font-bold uppercase text-[9px]">Textarea</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <span className="bg-blue-sail/10 px-2 py-0.5 font-bold uppercase text-[9px]">Soal</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteGeneralTaskQuestion(q.id)}
+                              className="bg-red-inferno/10 hover:bg-red-inferno text-red-inferno hover:text-white p-1 rounded-none border border-red-inferno transition-all cursor-pointer"
+                              title="Hapus Soal"
+                            >
+                              <Icon name="Trash2" size={12} />
+                            </button>
+                          </div>
                         </div>
 
                         <div className="space-y-1">
@@ -1280,16 +1404,36 @@ export const Admin: React.FC = () => {
               {/* BERKAS SUB-TAB */}
               {formSubTab === 'berkas' && (
                 <div className="space-y-6">
-                  <h3 className="font-display font-black text-sm uppercase tracking-wide border-b border-blue-sail/10 pb-2 flex items-center gap-1.5 text-red-inferno">
-                    <Icon name="FileText" size={16} />
-                    <span>Konfigurasi Form Unggah Berkas</span>
-                  </h3>
+                  <div className="flex items-center justify-between gap-3 border-b border-blue-sail/10 pb-2">
+                    <h3 className="font-display font-black text-sm uppercase tracking-wide flex items-center gap-1.5 text-red-inferno">
+                      <Icon name="FileText" size={16} />
+                      <span>Konfigurasi Form Unggah Berkas</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={handleAddBerkasField}
+                      className="bg-blue-sail hover:bg-barbera text-white font-mono font-bold text-[10px] uppercase px-3 py-1.5 rounded-none border border-blue-sail tracking-wide flex items-center space-x-1 transition-all cursor-pointer"
+                    >
+                      <Icon name="Plus" size={12} className="stroke-[3px]" />
+                      <span>Tambah Berkas</span>
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {localFormConfig.berkas.map(field => (
                       <div key={field.id} className="space-y-3 bg-blue-sail/[0.02] p-4 border border-blue-sail/15">
                         <div className="flex justify-between items-center border-b border-blue-sail/10 pb-1.5">
                           <span className="font-mono font-bold text-red-inferno uppercase text-[10px]">ID: {field.id}</span>
-                          <span className="bg-blue-sail/10 px-2 py-0.5 font-bold uppercase text-[9px]">Link Drive Input</span>
+                          <div className="flex items-center gap-2">
+                            <span className="bg-blue-sail/10 px-2 py-0.5 font-bold uppercase text-[9px]">Input</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBerkasField(field.id)}
+                              className="bg-red-inferno/10 hover:bg-red-inferno text-red-inferno hover:text-white p-1 rounded-none border border-red-inferno transition-all cursor-pointer"
+                              title="Hapus Input"
+                            >
+                              <Icon name="Trash2" size={12} />
+                            </button>
+                          </div>
                         </div>
 
                         <div className="space-y-1">
@@ -1335,11 +1479,20 @@ export const Admin: React.FC = () => {
                       >
                         <option value="">-- Pilih --</option>
                         {divisions.map(d => (
-                          <option key={d.id} value={d.name}>{d.name}</option>
+                          d.sub_divisions && d.sub_divisions.length > 0 ? (
+                            <optgroup key={d.id} label={d.name}>
+                              {d.sub_divisions.map(sub => (
+                                <option key={sub} value={sub}>{sub}</option>
+                              ))}
+                            </optgroup>
+                          ) : (
+                            <option key={d.id} value={d.name}>{d.name}</option>
+                          )
                         ))}
                         {/* Fallback to keys in config if they are not in divisions */}
                         {Object.keys(localFormConfig.divisionTasks).map(key => {
-                          if (!divisions.some(d => d.name === key)) {
+                          const isSelectable = divisions.some(d => d.name === key || (d.sub_divisions || []).includes(key));
+                          if (!isSelectable) {
                             return <option key={key} value={key}>{key}</option>;
                           }
                           return null;

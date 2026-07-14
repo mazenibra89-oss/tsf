@@ -10,7 +10,8 @@ import {
   ThriftProduct,
   ThriftVendor,
   VendorApplication,
-  FormQuestionsConfig
+  FormQuestionsConfig,
+  QuestionConfig
 } from '../types';
 
 interface AppContextType extends AppState {
@@ -113,7 +114,7 @@ const SEED_DIVISIONS: Division[] = [
     icon_name: 'CalendarRange',
     sub_divisions: [
       'Sub Divisi Event - Competition',
-      'Sub Divisi Non Competition'
+      'Sub Divisi Event - Non Competition'
     ]
   },
   {
@@ -211,7 +212,7 @@ const SEED_FORM_QUESTIONS: FormQuestionsConfig = {
       { id: 'q4', text: 'Study Case: Setelah seluruh tim melakukan pitching, panitia menemukan adanya perbedaan skor yang sangat jauh dari salah satu juri dibanding dua juri lainnya pada beberapa peserta. Akibatnya, muncul perubahan besar pada peringkat akhir. Salah satu juri juga telah meninggalkan venue sehingga tidak dapat langsung dimintai klarifikasi, sedangkan pengumuman pemenang dijadwalkan dalam waktu 30 menit. Di sisi lain, peserta mulai menanyakan kapan hasil akan diumumkan. Sebagai Staff Divisi Kompetisi BPC, bagaimana langkah yang akan kamu ambil untuk menangani situasi tersebut?', type: 'text' },
       { id: 'q5', text: 'Study Case: Sebagai bagian dari divisi Event Competition, kamu dihadapkan pada situasi dimana H-1 bulan acara, tim kamu masih belum mendapatkan case collaborator untuk lomba yang menjadi core event. Beberapa collaborator yang sebelumnya dijanjikan tiba-tiba membatalkan komitmennya secara sepihak, sementara panitia inti sudah mengumumkan jadwal ke seluruh peserta dan sponsor sudah mengaitkan nama brand mereka dengan case tersebut. Tanpa case ini, seluruh rangkaian kompetisi terancam tidak bisa berjalan sesuai jadwal, dan risiko reputasi acara di mata peserta maupun sponsor sangat tinggi. Apa langkah konkret pertama yang akan kamu ambil dalam 24 jam ke depan, dan bagaimana kamu menyusun contingency plan jika case collaborator benar-benar tidak bisa didapatkan tepat waktu? Pihak mana saja yang perlu dilibatkan di setiap tahap keputusan, dan bagaimana kamu membagi tanggung jawab agar tidak terjadi miskomunikasi antar divisi?', type: 'text' }
     ],
-    'Sub Divisi Non Competition': [
+    'Sub Divisi Event - Non Competition': [
       { id: 'q1', text: 'Apa yang kamu ketahui tentang sub-divisi event non competition ini?', type: 'text' },
       { id: 'q2', text: 'Ceritakan pengalaman kamu yang relevan dengan sub-divisi non competition ini, termasuk peran spesifikmu, tanggung jawab, dan lain sebagainya.', type: 'text' },
       { id: 'q3', text: 'Jika kamu bergabung sebagai staff divisi ini, ide atau inovasi apa yang ingin kamu implementasikan?', type: 'text' },
@@ -304,6 +305,24 @@ const SEED_FORM_QUESTIONS: FormQuestionsConfig = {
       { id: 'q3', text: 'Study Case: Bahan dekorasi utama mengalami keterlambatan pengiriman oleh kurir, sedangkan gladi resih akan dimulai 3 jam lagi. Bagaimana kamu menyiasatinya?', type: 'text' }
     ]
   }
+};
+
+const DIVISION_TASK_KEY_ALIASES: Record<string, string> = {
+  'Sub Divisi Non Competition': 'Sub Divisi Event - Non Competition'
+};
+
+const normalizeFormQuestions = (config: FormQuestionsConfig): FormQuestionsConfig => {
+  const divisionTasks: Record<string, QuestionConfig[]> = {};
+
+  Object.entries(config.divisionTasks || {}).forEach(([key, questions]) => {
+    const normalizedKey = DIVISION_TASK_KEY_ALIASES[key] || key;
+    divisionTasks[normalizedKey] = questions;
+  });
+
+  return {
+    ...config,
+    divisionTasks
+  };
 };
 
 const SEED_SUB_EVENTS: SubEvent[] = [
@@ -547,7 +566,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...parsed,
           phases: mergedPhases.length > 0 ? mergedPhases : SEED_PHASES,
           divisions: SEED_DIVISIONS,
-          formQuestions: parsed.formQuestions || SEED_FORM_QUESTIONS
+          formQuestions: parsed.formQuestions ? normalizeFormQuestions(parsed.formQuestions) : normalizeFormQuestions(SEED_FORM_QUESTIONS)
         };
       } catch (e) {
         console.error('Failed to parse local storage tsf_state:', e);
@@ -563,7 +582,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       thriftProducts: SEED_PRODUCTS,
       thriftVendors: SEED_VENDORS,
       vendorApplications: [],
-      formQuestions: SEED_FORM_QUESTIONS
+      formQuestions: normalizeFormQuestions(SEED_FORM_QUESTIONS)
     };
   });
 
@@ -582,14 +601,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       thriftProducts: SEED_PRODUCTS,
       thriftVendors: SEED_VENDORS,
       vendorApplications: [],
-      formQuestions: SEED_FORM_QUESTIONS
+      formQuestions: normalizeFormQuestions(SEED_FORM_QUESTIONS)
     });
   };
 
   const updateFormQuestions = (config: FormQuestionsConfig) => {
     setState(prev => ({
       ...prev,
-      formQuestions: config
+      formQuestions: normalizeFormQuestions(config)
     }));
   };
 

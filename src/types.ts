@@ -57,6 +57,7 @@ export interface StaffApplication {
   ikoma_proof_url?: string;
   div_task_answer_1?: string;
   div_task_answer_2?: string;
+  custom_form_answers?: Record<string, string>;
   status: 'pending' | 'accepted' | 'rejected';
   submitted_at: string;
 }
