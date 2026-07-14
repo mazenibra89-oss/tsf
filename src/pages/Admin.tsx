@@ -243,6 +243,10 @@ export const Admin: React.FC = () => {
   // Active sub-dashboard section tab state
   const [activeTab, setActiveTab] = useState<'overview' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control'>('overview');
 
+  // Staff Applications Filtering States
+  const [filterDivision, setFilterDivision] = useState<string>('');
+  const [filterPriority, setFilterPriority] = useState<string>('');
+
   // Form Questions Config states
   const [formSubTab, setFormSubTab] = useState<'dataDiri' | 'generalTask' | 'berkas' | 'divisionTasks'>('dataDiri');
   const [localFormConfig, setLocalFormConfig] = useState<FormQuestionsConfig | null>(null);
@@ -682,6 +686,19 @@ export const Admin: React.FC = () => {
   // Find active phase
   const activePhase = phases.find(p => p.status === 'active');
 
+  const filteredStaffApplications = staffApplications.filter(app => {
+    if (filterDivision) {
+      if (filterPriority === 'p1') {
+        return app.division_priority_1 === filterDivision;
+      } else if (filterPriority === 'p2') {
+        return app.division_priority_2 === filterDivision;
+      } else {
+        return app.division_priority_1 === filterDivision || app.division_priority_2 === filterDivision;
+      }
+    }
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-ballroom font-sans text-blue-sail flex flex-col lg:flex-row">
       
@@ -903,6 +920,79 @@ export const Admin: React.FC = () => {
               </button>
             </div>
 
+            {/* Filter Bar */}
+            {staffApplications.length > 0 && (
+              <div className="bg-ballroom p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-col md:flex-row md:items-end gap-4 text-blue-sail">
+                <div className="flex-1 space-y-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-sail/70">
+                    Filter Divisi / Subdivisi:
+                  </label>
+                  <select
+                    value={filterDivision}
+                    onChange={e => {
+                      setFilterDivision(e.target.value);
+                      if (!e.target.value) {
+                        setFilterPriority('');
+                      }
+                    }}
+                    className="w-full px-3 py-2.5 text-xs bg-white border-2 border-blue-sail rounded-none font-semibold outline-none focus:shadow-[2px_2px_0_0_#2A4C9E] cursor-pointer"
+                  >
+                    <option value="">-- Tampilkan Semua Divisi / Subdivisi --</option>
+                    {divisions.map(d => {
+                      if (d.sub_divisions && d.sub_divisions.length > 0) {
+                        return (
+                          <optgroup key={d.id} label={d.name} className="font-mono font-bold text-[10px] uppercase bg-ballroom text-blue-sail">
+                            {d.sub_divisions.map((sub, idx) => (
+                              <option key={`${d.id}-${idx}`} value={sub} className="font-sans normal-case text-xs bg-white text-blue-sail">
+                                {sub}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      } else {
+                        return (
+                          <option key={d.id} value={d.name} className="font-sans font-semibold text-xs">
+                            {d.name}
+                          </option>
+                        );
+                      }
+                    })}
+                  </select>
+                </div>
+
+                <div className="w-full md:w-64 space-y-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-sail/70">
+                    Prioritas Pilihan:
+                  </label>
+                  <select
+                    value={filterPriority}
+                    onChange={e => setFilterPriority(e.target.value)}
+                    disabled={!filterDivision}
+                    className="w-full px-3 py-2.5 text-xs bg-white border-2 border-blue-sail rounded-none font-semibold outline-none focus:shadow-[2px_2px_0_0_#2A4C9E] cursor-pointer disabled:bg-gray-100 disabled:border-blue-sail/20 disabled:text-blue-sail/30 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Tampilkan Semua (Pilihan 1 & 2)</option>
+                    <option value="p1">Hanya Pilihan 1</option>
+                    <option value="p2">Hanya Pilihan 2</option>
+                  </select>
+                </div>
+
+                {/* Reset Button */}
+                {(filterDivision || filterPriority) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterDivision('');
+                      setFilterPriority('');
+                    }}
+                    className="bg-red-inferno hover:bg-barbera text-white font-mono font-bold text-[10px] uppercase px-4 py-2.5 rounded-none border border-red-inferno tracking-wide flex items-center justify-center space-x-1.5 transition-all shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer h-[38px] shrink-0"
+                  >
+                    <Icon name="XCircle" size={14} />
+                    <span>Reset Filter</span>
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Table data */}
             <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
               {staffApplications.length === 0 ? (
@@ -910,6 +1000,23 @@ export const Admin: React.FC = () => {
                   <Icon name="Users" size={40} className="text-blue-sail/30 mx-auto mb-2" />
                   <p className="text-sm font-semibold">Belum Ada Pelamar Staff Terdaftar</p>
                   <p className="text-xs text-blue-sail/50 mt-1">Coba isi Formulir Pendaftaran Staff di menu utama untuk merekam data simulasi.</p>
+                </div>
+              ) : filteredStaffApplications.length === 0 ? (
+                <div className="p-12 text-center text-blue-sail">
+                  <Icon name="Search" size={40} className="text-blue-sail/30 mx-auto mb-2" />
+                  <p className="text-sm font-semibold">Tidak ada pelamar yang cocok</p>
+                  <p className="text-xs text-blue-sail/50 mt-1">Gunakan tombol 'Reset Filter' untuk melihat seluruh pelamar kembali.</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterDivision('');
+                      setFilterPriority('');
+                    }}
+                    className="mt-4 bg-blue-sail hover:bg-red-inferno text-white font-mono font-bold text-[10px] uppercase px-4 py-2 rounded-none border border-blue-sail transition-all shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer inline-flex items-center space-x-1"
+                  >
+                    <Icon name="XCircle" size={12} />
+                    <span>Reset Filter</span>
+                  </button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -925,7 +1032,7 @@ export const Admin: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y-2 divide-blue-sail/15">
-                      {staffApplications.map(app => (
+                      {filteredStaffApplications.map(app => (
                         <tr key={app.id} className="hover:bg-gray-50/50">
                           <td className="p-4 space-y-1 max-w-[180px]">
                             <p className="font-bold text-blue-sail uppercase">{app.full_name}</p>
