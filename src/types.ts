@@ -144,6 +144,29 @@ export interface VendorApplication {
   submitted_at: string;
 }
 
+export interface FormFieldConfig {
+  id: string;
+  label: string;
+  placeholder?: string;
+  required: boolean;
+}
+
+export interface QuestionConfig {
+  id: string;
+  text: string;
+  type: 'text' | 'select';
+  options?: string[];
+  placeholder?: string;
+  required?: boolean;
+}
+
+export interface FormQuestionsConfig {
+  dataDiri: FormFieldConfig[];
+  generalTask: QuestionConfig[];
+  berkas: FormFieldConfig[];
+  divisionTasks: Record<string, QuestionConfig[]>;
+}
+
 export interface AppState {
   phases: EventPhase[];
   divisions: Division[];
@@ -154,4 +177,6 @@ export interface AppState {
   thriftProducts: ThriftProduct[];
   thriftVendors: ThriftVendor[];
   vendorApplications: VendorApplication[];
+  formQuestions?: FormQuestionsConfig;
 }
+

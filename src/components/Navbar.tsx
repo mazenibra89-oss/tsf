@@ -18,7 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
   // Determine dynamic CTA button text and destination
   let ctaText = 'Daftar Staff TSF';
   let ctaPage = 'staff';
-  
+
   if (activePhase) {
     switch (activePhase.name) {
       case 'staff_recruitment':
@@ -58,16 +58,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18">
           {/* Logo & Brand */}
-          <button 
+          <button
             id="nav-logo"
             onClick={() => handleNavClick('home')}
             className="flex items-center space-x-2 group focus:outline-none"
           >
             <div className="relative bg-decor px-3 py-1 rounded-none transform group-hover:scale-105 transition-transform skew-x-[-10deg] border-2 border-blue-sail flex items-center justify-center min-w-[80px] h-9">
-              <img 
-                src={tsfProfileLogo} 
-                alt="TSF Logo" 
-                className="absolute h-12 w-auto object-contain skew-x-[10deg] z-10" 
+              <img
+                src={tsfProfileLogo}
+                alt="TSF Logo"
+                className="absolute h-12 w-auto object-contain skew-x-[10deg] z-10"
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -99,16 +99,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
                   id={`nav-link-${item.id}`}
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`px-3 py-2 text-sm font-display font-semibold transition-all duration-200 uppercase tracking-wider relative group ${
-                    isActive 
-                      ? 'text-decor font-extrabold' 
+                  className={`px-3 py-2 text-sm font-display font-semibold transition-all duration-200 uppercase tracking-wider relative group ${isActive
+                      ? 'text-decor font-extrabold'
                       : 'text-ballroom/90 hover:text-decor'
-                  }`}
+                    }`}
                 >
                   {item.label}
-                  <span className={`absolute bottom-0 left-3 right-3 h-1 bg-decor transition-all duration-300 ${
-                    isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-70'
-                  }`} />
+                  <span className={`absolute bottom-0 left-3 right-3 h-1 bg-decor transition-all duration-300 ${isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-70'
+                    }`} />
                 </button>
               );
             })}
@@ -124,10 +122,32 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
               <span>{ctaText}</span>
               <Icon name="ArrowRight" size={14} className="stroke-[3px]" />
             </button>
+
+            <button
+              id="nav-admin"
+              onClick={() => handleNavClick('admin')}
+              className={`p-2.5 rounded-none transition-all duration-150 border-2 ${currentPage === 'admin'
+                  ? 'bg-barbera border-decor text-decor'
+                  : 'bg-blue-sail hover:bg-barbera border-ballroom/20 text-ballroom/80 hover:text-ballroom'
+                }`}
+              title="Admin CMS Panel"
+            >
+              <Icon name="Sliders" size={18} />
+            </button>
           </div>
 
           {/* Mobile hamburger button */}
           <div className="flex items-center space-x-2 lg:hidden">
+            <button
+              id="nav-admin-mobile"
+              onClick={() => handleNavClick('admin')}
+              className={`p-2 rounded-none border-2 ${currentPage === 'admin'
+                  ? 'bg-barbera border-decor text-decor'
+                  : 'bg-blue-sail border-ballroom/20 text-ballroom'
+                }`}
+            >
+              <Icon name="Sliders" size={16} />
+            </button>
             <button
               id="nav-hamburger"
               onClick={() => setIsOpen(!isOpen)}
@@ -164,17 +184,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
                   id={`nav-mobile-link-${item.id}`}
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`block w-full text-left px-4 py-3 text-base font-display font-bold uppercase tracking-wider rounded-none ${
-                    isActive 
-                      ? 'bg-barbera text-decor border-l-4 border-decor' 
+                  className={`block w-full text-left px-4 py-3 text-base font-display font-bold uppercase tracking-wider rounded-none ${isActive
+                      ? 'bg-barbera text-decor border-l-4 border-decor'
                       : 'text-ballroom hover:bg-barbera/55 hover:text-decor'
-                  }`}
+                    }`}
                 >
                   {item.label}
                 </button>
               );
             })}
-            
+
             <div className="pt-4 pb-2 px-4 border-t border-ballroom/10">
               <button
                 id="nav-mobile-cta"

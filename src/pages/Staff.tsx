@@ -145,18 +145,18 @@ export const parseQuestionText = (text: string) => {
 
   // Now, let's separate context from the actual questions.
   const sentenceParts = introText.split(/(\. |\? |\! )/);
-  
+
   const sentences: { text: string; isQuestion: boolean }[] = [];
-  
+
   for (let i = 0; i < sentenceParts.length; i += 2) {
     const part = sentenceParts[i]?.trim();
     if (!part) continue;
     const punct = sentenceParts[i + 1] || '';
     const fullSentence = part + punct;
-    
-    const isQuestion = fullSentence.trim().endsWith('?') || 
-                       /^(bagaimana|apa|sebutkan|rancang|jelaskan|tindakan|keputusan|pihak|menurut|ceritakan|apakah|berapa)/i.test(fullSentence.trim());
-    
+
+    const isQuestion = fullSentence.trim().endsWith('?') ||
+      /^(bagaimana|apa|sebutkan|rancang|jelaskan|tindakan|keputusan|pihak|menurut|ceritakan|apakah|berapa)/i.test(fullSentence.trim());
+
     sentences.push({ text: fullSentence.trim(), isQuestion });
   }
 
@@ -457,8 +457,13 @@ export const getNormalizedContent = (name: string): DivDetail => {
 };
 
 export const Staff: React.FC = () => {
-  const { phases, divisions, addStaffApplication } = useApp();
-  
+  const { phases, divisions, addStaffApplication, formQuestions } = useApp();
+
+  const getDivisionQuestions = (priorityName: string): Question[] => {
+    if (!priorityName) return [];
+    return formQuestions?.divisionTasks?.[priorityName] || DEFAULT_QUESTIONS;
+  };
+
   // Find recruitment phase info
   const recruitPhase = phases.find(p => p.name === 'staff_recruitment') || {
     status: 'active',
@@ -673,7 +678,7 @@ export const Staff: React.FC = () => {
 
   const validateStep4 = () => {
     const errors: Record<string, string> = {};
-    
+
     const questions1 = getDivisionQuestions(formData.priority1);
     questions1.forEach(q => {
       const val = answersP1[q.id]?.trim() || '';
@@ -819,7 +824,7 @@ export const Staff: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    
+
     // Simulate API request delay
     setTimeout(() => {
       addStaffApplication({
@@ -911,15 +916,14 @@ export const Staff: React.FC = () => {
   return (
     <div className="asphalt-texture min-h-screen py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* 1. HERO SECTION STAFF */}
         <section className="bg-blue-sail text-ballroom rounded-none border-4 border-decor p-8 sm:p-12 mb-12 relative overflow-hidden shadow-[6px_6px_0_0_#BD1B1F]">
           <div className="absolute inset-0 grid-pattern opacity-10" />
           <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="space-y-4 text-center md:text-left max-w-2xl">
-              <span className={`inline-block font-mono text-xs font-bold px-3 py-1 rounded-none border border-current uppercase tracking-wider ${
-                isClosed ? 'bg-red-inferno text-ballroom' : 'bg-decor text-blue-sail animate-pulse'
-              }`}>
+              <span className={`inline-block font-mono text-xs font-bold px-3 py-1 rounded-none border border-current uppercase tracking-wider ${isClosed ? 'bg-red-inferno text-ballroom' : 'bg-decor text-blue-sail animate-pulse'
+                }`}>
                 {isClosed ? 'Pendaftaran Ditutup' : 'Pendaftaran Dibuka'}
               </span>
               <h1 className="font-display font-black text-4xl sm:text-5xl uppercase tracking-tight">
@@ -972,7 +976,7 @@ export const Staff: React.FC = () => {
                     onChange={(e) => {
                       setDivSearchQuery(e.target.value);
                       // Clear selection if current selection is filtered out
-                      const matches = divisions.filter(d => 
+                      const matches = divisions.filter(d =>
                         d.name.toLowerCase().includes(e.target.value.toLowerCase()) ||
                         d.description.toLowerCase().includes(e.target.value.toLowerCase())
                       );
@@ -995,8 +999,8 @@ export const Staff: React.FC = () => {
               {/* Division buttons vertical scroll box */}
               <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible md:overflow-y-auto gap-2 md:max-h-[300px] no-scrollbar pb-2 md:pb-0">
                 {divisions
-                  .filter(d => 
-                    d.name.toLowerCase().includes(divSearchQuery.toLowerCase()) || 
+                  .filter(d =>
+                    d.name.toLowerCase().includes(divSearchQuery.toLowerCase()) ||
                     d.description.toLowerCase().includes(divSearchQuery.toLowerCase())
                   )
                   .map((div) => {
@@ -1006,15 +1010,13 @@ export const Staff: React.FC = () => {
                         type="button"
                         key={div.id}
                         onClick={() => setActiveDivInfoId(div.id)}
-                        className={`flex items-center space-x-2.5 px-3 py-2 border-2 text-left shrink-0 transition-all cursor-pointer font-sans text-xs font-extrabold ${
-                          isActive 
-                            ? 'bg-blue-sail text-white border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]' 
+                        className={`flex items-center space-x-2.5 px-3 py-2 border-2 text-left shrink-0 transition-all cursor-pointer font-sans text-xs font-extrabold ${isActive
+                            ? 'bg-blue-sail text-white border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]'
                             : 'bg-white text-blue-sail border-blue-sail/20 hover:border-blue-sail/40 hover:bg-blue-sail/5'
-                        }`}
+                          }`}
                       >
-                        <span className={`w-6 h-6 flex items-center justify-center border shrink-0 transition-colors ${
-                          isActive ? 'bg-decor text-blue-sail border-blue-sail' : 'bg-blue-sail/5 text-blue-sail border-blue-sail/10'
-                        }`}>
+                        <span className={`w-6 h-6 flex items-center justify-center border shrink-0 transition-colors ${isActive ? 'bg-decor text-blue-sail border-blue-sail' : 'bg-blue-sail/5 text-blue-sail border-blue-sail/10'
+                          }`}>
                           <Icon name={div.icon_name} size={13} />
                         </span>
                         <div className="truncate pr-1">
@@ -1071,11 +1073,10 @@ export const Staff: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setActiveSubDivTab('Overview')}
-                          className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
-                            activeSubDivTab === 'Overview'
+                          className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${activeSubDivTab === 'Overview'
                               ? 'bg-blue-sail text-white border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]'
                               : 'bg-white text-blue-sail hover:bg-blue-sail/10 border-blue-sail/15'
-                          }`}
+                            }`}
                         >
                           Overview
                         </button>
@@ -1087,11 +1088,10 @@ export const Staff: React.FC = () => {
                               type="button"
                               key={idx}
                               onClick={() => setActiveSubDivTab(sub)}
-                              className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
-                                isSelected
+                              className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${isSelected
                                   ? 'bg-blue-sail text-white border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]'
                                   : 'bg-white text-blue-sail hover:bg-blue-sail/10 border-blue-sail/15'
-                              }`}
+                                }`}
                             >
                               {displayLabel}
                             </button>
@@ -1180,7 +1180,7 @@ export const Staff: React.FC = () => {
         {/* 3. RECRUITMENT REGISTRATION FORM SECTION */}
         <section id="staff-form-section" className="max-w-4xl mx-auto scroll-mt-20">
           <div className="bg-ballroom rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#2A4C9E] overflow-hidden">
-            
+
             {/* Header Form */}
             <div className="bg-blue-sail text-ballroom p-6 sm:p-8 border-b-4 border-decor relative">
               <div className="absolute inset-0 grid-pattern opacity-10" />
@@ -1232,32 +1232,31 @@ export const Staff: React.FC = () => {
             ) : (
               /* FORM COMPONENT WITH WIZARD WORKFLOW */
               <div className="flex flex-col">
-                
+
                 {/* Wizard Step Progress Tracker */}
                 <div className="bg-blue-sail/5 border-b-4 border-blue-sail/10 p-5 sm:p-6 font-mono text-xs text-blue-sail">
                   <div className="flex items-center justify-between max-w-2xl mx-auto relative">
-                    
+
                     {/* Connecting background line */}
                     <div className="absolute left-[6%] right-[6%] top-[14px] h-[3px] bg-blue-sail/20 -z-1" />
-                    <div 
-                      className="absolute left-[6%] top-[14px] h-[3px] bg-decor transition-all duration-300 -z-1" 
+                    <div
+                      className="absolute left-[6%] top-[14px] h-[3px] bg-decor transition-all duration-300 -z-1"
                       style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '25%' : currentStep === 3 ? '50%' : currentStep === 4 ? '75%' : '100%' }}
                     />
 
                     {/* Step 1 button */}
-                    <button 
+                    <button
                       type="button"
                       onClick={() => currentStep > 1 && setCurrentStep(1)}
                       disabled={currentStep === 1}
                       className="flex flex-col items-center space-y-2 focus:outline-none relative group"
                     >
-                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${
-                        currentStep === 1 
-                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]' 
-                          : currentStep > 1 
-                            ? 'border-blue-sail bg-blue-sail text-ballroom font-bold cursor-pointer hover:bg-decor hover:text-blue-sail' 
+                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${currentStep === 1
+                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]'
+                          : currentStep > 1
+                            ? 'border-blue-sail bg-blue-sail text-ballroom font-bold cursor-pointer hover:bg-decor hover:text-blue-sail'
                             : 'border-blue-sail/30 bg-ballroom text-blue-sail/40'
-                      }`}>
+                        }`}>
                         1
                       </span>
                       <span className={`text-[10px] uppercase font-display font-semibold ${currentStep === 1 ? 'text-red-inferno font-black' : 'text-blue-sail/60'}`}>
@@ -1266,7 +1265,7 @@ export const Staff: React.FC = () => {
                     </button>
 
                     {/* Step 2 button (General Task) */}
-                    <button 
+                    <button
                       type="button"
                       onClick={() => {
                         if (currentStep > 2) {
@@ -1278,13 +1277,12 @@ export const Staff: React.FC = () => {
                       disabled={currentStep === 2}
                       className="flex flex-col items-center space-y-2 focus:outline-none relative group"
                     >
-                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${
-                        currentStep === 2 
-                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]' 
-                          : currentStep > 2 
-                            ? 'border-blue-sail bg-blue-sail text-ballroom font-bold cursor-pointer hover:bg-decor hover:text-blue-sail' 
+                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${currentStep === 2
+                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]'
+                          : currentStep > 2
+                            ? 'border-blue-sail bg-blue-sail text-ballroom font-bold cursor-pointer hover:bg-decor hover:text-blue-sail'
                             : 'border-blue-sail/30 bg-ballroom text-blue-sail/40'
-                      }`}>
+                        }`}>
                         2
                       </span>
                       <span className={`text-[10px] uppercase font-display font-semibold ${currentStep === 2 ? 'text-red-inferno font-black' : 'text-blue-sail/60'}`}>
@@ -1293,7 +1291,7 @@ export const Staff: React.FC = () => {
                     </button>
 
                     {/* Step 3 button (Pilih Divisi) */}
-                    <button 
+                    <button
                       type="button"
                       onClick={() => {
                         if (currentStep > 3) {
@@ -1307,13 +1305,12 @@ export const Staff: React.FC = () => {
                       disabled={currentStep === 3}
                       className="flex flex-col items-center space-y-2 focus:outline-none relative group"
                     >
-                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${
-                        currentStep === 3 
-                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]' 
-                          : currentStep > 3 
-                            ? 'border-blue-sail bg-blue-sail text-ballroom font-bold cursor-pointer hover:bg-decor hover:text-blue-sail' 
+                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${currentStep === 3
+                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]'
+                          : currentStep > 3
+                            ? 'border-blue-sail bg-blue-sail text-ballroom font-bold cursor-pointer hover:bg-decor hover:text-blue-sail'
                             : 'border-blue-sail/30 bg-ballroom text-blue-sail/40'
-                      }`}>
+                        }`}>
                         3
                       </span>
                       <span className={`text-[10px] uppercase font-display font-semibold ${currentStep === 3 ? 'text-red-inferno font-black' : 'text-blue-sail/60'}`}>
@@ -1322,7 +1319,7 @@ export const Staff: React.FC = () => {
                     </button>
 
                     {/* Step 4 button (Division Task) */}
-                    <button 
+                    <button
                       type="button"
                       onClick={() => {
                         if (currentStep > 4) {
@@ -1338,13 +1335,12 @@ export const Staff: React.FC = () => {
                       disabled={currentStep === 4}
                       className="flex flex-col items-center space-y-2 focus:outline-none relative group"
                     >
-                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${
-                        currentStep === 4 
-                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]' 
-                          : currentStep > 4 
-                            ? 'border-blue-sail bg-blue-sail text-ballroom font-bold cursor-pointer hover:bg-decor hover:text-blue-sail' 
+                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${currentStep === 4
+                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]'
+                          : currentStep > 4
+                            ? 'border-blue-sail bg-blue-sail text-ballroom font-bold cursor-pointer hover:bg-decor hover:text-blue-sail'
                             : 'border-blue-sail/30 bg-ballroom text-blue-sail/40'
-                      }`}>
+                        }`}>
                         4
                       </span>
                       <span className={`text-[10px] uppercase font-display font-semibold ${currentStep === 4 ? 'text-red-inferno font-black' : 'text-blue-sail/60'}`}>
@@ -1353,7 +1349,7 @@ export const Staff: React.FC = () => {
                     </button>
 
                     {/* Step 5 button (Berkas & Kirim) */}
-                    <button 
+                    <button
                       type="button"
                       onClick={() => {
                         if (currentStep === 4 && validateStep4()) {
@@ -1369,11 +1365,10 @@ export const Staff: React.FC = () => {
                       disabled={currentStep === 5}
                       className="flex flex-col items-center space-y-2 focus:outline-none relative group"
                     >
-                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${
-                        currentStep === 5 
-                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]' 
+                      <span className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${currentStep === 5
+                          ? 'border-decor bg-decor text-blue-sail font-black shadow-[2px_2px_0_0_#2A4C9E]'
                           : 'border-blue-sail/30 bg-ballroom text-blue-sail/40'
-                      }`}>
+                        }`}>
                         5
                       </span>
                       <span className={`text-[10px] uppercase font-display font-semibold ${currentStep === 5 ? 'text-red-inferno font-black' : 'text-blue-sail/60'}`}>
@@ -1385,7 +1380,7 @@ export const Staff: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 font-sans">
-                  
+
                   {/* STEP 1: DATA DIRI PELAMAR */}
                   {currentStep === 1 && (
                     <div className="space-y-4 animate-fadeIn">
@@ -1393,38 +1388,36 @@ export const Staff: React.FC = () => {
                         <Icon name="User" size={16} />
                         <span>A. Data Diri Pelamar</span>
                       </h4>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {/* Full Name */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Nama Lengkap *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.dataDiri.find(f => f.id === 'fullName')?.label || 'Nama Lengkap'} *</label>
                           <input
                             id="staff-fullName"
                             name="fullName"
                             type="text"
                             value={formData.fullName}
                             onChange={e => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                            placeholder="Nama lengkap sesuai KTM/KTP"
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.fullName ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.dataDiri.find(f => f.id === 'fullName')?.placeholder || 'Nama lengkap sesuai KTM/KTP'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.fullName ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.fullName && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.fullName}</p>}
                         </div>
 
                         {/* NRP */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">NRP *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.dataDiri.find(f => f.id === 'nim')?.label || 'NRP'} *</label>
                           <input
                             id="staff-nim"
                             name="nim"
                             type="text"
                             value={formData.nim}
                             onChange={e => setFormData(prev => ({ ...prev, nim: e.target.value }))}
-                            placeholder="Contoh: 5025211044"
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.nim ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.dataDiri.find(f => f.id === 'nim')?.placeholder || 'Contoh: 5025211044'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.nim ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.nim && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.nim}</p>}
                         </div>
@@ -1433,16 +1426,15 @@ export const Staff: React.FC = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {/* Fakultas */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Fakultas *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.dataDiri.find(f => f.id === 'faculty')?.label || 'Fakultas'} *</label>
                           <select
                             id="staff-faculty"
                             value={formData.faculty}
                             onChange={e => setFormData(prev => ({ ...prev, faculty: e.target.value }))}
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${
-                              formErrors.faculty ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${formErrors.faculty ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           >
-                            <option value="">-- Pilih Fakultas --</option>
+                            <option value="">{formQuestions?.dataDiri.find(f => f.id === 'faculty')?.placeholder || '-- Pilih Fakultas --'}</option>
                             <option value="FSAD">FSAD (Fakultas Sains dan Analitika Data)</option>
                             <option value="FTIRS">FTIRS (Fakultas Teknologi Industri dan Rekayasa Sistem)</option>
                             <option value="FTSPK">FTSPK (Fakultas Teknik Sipil, Perencanaan, dan Kebumian)</option>
@@ -1457,17 +1449,16 @@ export const Staff: React.FC = () => {
 
                         {/* Departemen */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Departemen *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.dataDiri.find(f => f.id === 'department')?.label || 'Departemen'} *</label>
                           <input
                             id="staff-department"
                             name="department"
                             type="text"
                             value={formData.department}
                             onChange={e => setFormData(prev => ({ ...prev, department: e.target.value, major: e.target.value }))}
-                            placeholder="Contoh: Teknik Informatika"
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.department ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.dataDiri.find(f => f.id === 'department')?.placeholder || 'Contoh: Teknik Informatika'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.department ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.department && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.department}</p>}
                         </div>
@@ -1476,34 +1467,32 @@ export const Staff: React.FC = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {/* No. WA */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">No. WA (WhatsApp) *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.dataDiri.find(f => f.id === 'phone')?.label || 'No. WA (WhatsApp)'} *</label>
                           <input
                             id="staff-phone"
                             name="phone"
                             type="text"
                             value={formData.phone}
                             onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                            placeholder="Contoh: 08123456789"
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.phone ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.dataDiri.find(f => f.id === 'phone')?.placeholder || 'Contoh: 08123456789'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.phone ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.phone && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.phone}</p>}
                         </div>
 
                         {/* Email */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Email *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.dataDiri.find(f => f.id === 'email')?.label || 'Email'} *</label>
                           <input
                             id="staff-email"
                             name="email"
                             type="email"
                             value={formData.email}
                             onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                            placeholder="Contoh: mazen@student.ac.id"
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.email ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.dataDiri.find(f => f.id === 'email')?.placeholder || 'Contoh: mazen@student.ac.id'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.email ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.email && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.email}</p>}
                         </div>
@@ -1534,17 +1523,16 @@ export const Staff: React.FC = () => {
                       {/* Q1: Apa yang kamu ketahui tentang TDC Summit Fest 2026? */}
                       <div className="space-y-1.5">
                         <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          1. Apa yang kamu ketahui tentang TDC Summit Fest 2026? *
+                          1. {formQuestions?.generalTask.find(q => q.id === 'generalKnowledge')?.text || 'Apa yang kamu ketahui tentang TDC Summit Fest 2026?'} *
                         </label>
                         <textarea
                           id="general-knowledge"
                           rows={3}
                           value={formData.generalKnowledge}
                           onChange={e => setFormData(prev => ({ ...prev, generalKnowledge: e.target.value }))}
-                          placeholder="Jelaskan pemahaman singkat kamu tentang acara ini..."
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                            formErrors.generalKnowledge ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                          }`}
+                          placeholder={formQuestions?.generalTask.find(q => q.id === 'generalKnowledge')?.placeholder || 'Jelaskan pemahaman singkat kamu tentang acara ini...'}
+                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.generalKnowledge ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
                         />
                         {formErrors.generalKnowledge && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.generalKnowledge}</p>}
                       </div>
@@ -1552,17 +1540,16 @@ export const Staff: React.FC = () => {
                       {/* Q2: Apa motivasi kamu mendaftar Sebagai bagian dari TDC Summit Fest 2026? */}
                       <div className="space-y-1.5">
                         <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          2. Apa motivasi kamu mendaftar Sebagai bagian dari TDC Summit Fest 2026? *
+                          2. {formQuestions?.generalTask.find(q => q.id === 'generalMotivation')?.text || 'Apa motivasi kamu mendaftar Sebagai bagian dari TDC Summit Fest 2026?'} *
                         </label>
                         <textarea
                           id="general-motivation"
                           rows={3}
                           value={formData.generalMotivation}
                           onChange={e => setFormData(prev => ({ ...prev, generalMotivation: e.target.value }))}
-                          placeholder="Jelaskan ketertarikan, motivasi, dan apa yang ingin kamu capai..."
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                            formErrors.generalMotivation ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                          }`}
+                          placeholder={formQuestions?.generalTask.find(q => q.id === 'generalMotivation')?.placeholder || 'Jelaskan ketertarikan, motivasi, dan apa yang ingin kamu capai...'}
+                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.generalMotivation ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
                         />
                         {formErrors.generalMotivation && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.generalMotivation}</p>}
                       </div>
@@ -1570,17 +1557,16 @@ export const Staff: React.FC = () => {
                       {/* Q3: Kepanitiaan / Organisasi Experience */}
                       <div className="space-y-1.5">
                         <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          3. Apakah kamu memiliki pengalaman dalam kepanitiaan atau organisasi? jika iya, sebutkan & jelaskan secara singkat jobdesk kamu *
+                          3. {formQuestions?.generalTask.find(q => q.id === 'experience')?.text || 'Apakah kamu memiliki pengalaman dalam kepanitiaan atau organisasi? jika iya, sebutkan & jelaskan secara singkat jobdesk kamu'} *
                         </label>
                         <textarea
                           id="general-experience"
                           rows={3}
                           value={formData.experience}
                           onChange={e => setFormData(prev => ({ ...prev, experience: e.target.value }))}
-                          placeholder="Sebutkan nama kepanitian/organisasi beserta tugas/jobdesk kamu. Jika belum ada, tuliskan 'Tidak ada'..."
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                            formErrors.experience ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                          }`}
+                          placeholder={formQuestions?.generalTask.find(q => q.id === 'experience')?.placeholder || 'Sebutkan nama kepanitian/organisasi beserta tugas/jobdesk kamu. Jika belum ada, tuliskan \'Tidak ada\'...'}
+                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.experience ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
                         />
                         {formErrors.experience && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.experience}</p>}
                       </div>
@@ -1588,17 +1574,16 @@ export const Staff: React.FC = () => {
                       {/* Q4: Kelebihan & Kekurangan */}
                       <div className="space-y-1.5">
                         <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          4. Sebutkan kelebihan & kekurangan kamu *
+                          4. {formQuestions?.generalTask.find(q => q.id === 'strengthsWeaknesses')?.text || 'Sebutkan kelebihan & kekurangan kamu'} *
                         </label>
                         <textarea
                           id="general-strengths-weaknesses"
                           rows={3}
                           value={formData.strengthsWeaknesses}
                           onChange={e => setFormData(prev => ({ ...prev, strengthsWeaknesses: e.target.value }))}
-                          placeholder="Jelaskan secara realistis kelebihan dan kekurangan yang kamu miliki..."
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                            formErrors.strengthsWeaknesses ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                          }`}
+                          placeholder={formQuestions?.generalTask.find(q => q.id === 'strengthsWeaknesses')?.placeholder || 'Jelaskan secara realistis kelebihan dan kekurangan yang kamu miliki...'}
+                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.strengthsWeaknesses ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
                         />
                         {formErrors.strengthsWeaknesses && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.strengthsWeaknesses}</p>}
                       </div>
@@ -1607,7 +1592,7 @@ export const Staff: React.FC = () => {
                         {/* Q5: Commitment Scale (0-10) */}
                         <div className="space-y-1.5 bg-blue-sail/[0.02] p-4 border-2 border-blue-sail/10">
                           <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                            5. Komitment kamu untuk TDC Summit Fest 2026 (Skala 0-10) *
+                            5. {formQuestions?.generalTask.find(q => q.id === 'commitmentScale')?.text || 'Komitment kamu untuk TDC Summit Fest 2026 (Skala 0-10)'} *
                           </label>
                           <div className="pt-2 px-2">
                             <input
@@ -1634,7 +1619,7 @@ export const Staff: React.FC = () => {
                         <div className="space-y-1.5 bg-blue-sail/[0.02] p-4 border-2 border-blue-sail/10 flex flex-col justify-between">
                           <div>
                             <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                              9. Apakah Sudah Bayar Ikoma ITS? *
+                              9. {formQuestions?.generalTask.find(q => q.id === 'paidIkoma')?.text || 'Apakah Sudah Bayar Ikoma ITS?'} *
                             </label>
                             <p className="text-[10px] text-blue-sail/60 leading-tight mb-2">Pilih 'Ya' untuk mengunggah bukti pembayaran IKOMA.</p>
                           </div>
@@ -1709,17 +1694,16 @@ export const Staff: React.FC = () => {
                       {/* Q6: Bentuk Komitmen */}
                       <div className="space-y-1.5">
                         <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          6. Jelaskan apa bentuk komitmen kamu untuk TSF 2026 *
+                          6. {formQuestions?.generalTask.find(q => q.id === 'commitmentForm')?.text || 'Jelaskan apa bentuk komitmen kamu untuk TSF 2026'} *
                         </label>
                         <textarea
                           id="general-commitment-form"
                           rows={3}
                           value={formData.commitmentForm}
                           onChange={e => setFormData(prev => ({ ...prev, commitmentForm: e.target.value }))}
-                          placeholder="Jelaskan kontribusi waktu, tenaga, dan kesiapan kamu berkontribusi..."
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                            formErrors.commitmentForm ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                          }`}
+                          placeholder={formQuestions?.generalTask.find(q => q.id === 'commitmentForm')?.placeholder || 'Jelaskan kontribusi waktu, tenaga, dan kesiapan kamu berkontribusi...'}
+                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.commitmentForm ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
                         />
                         {formErrors.commitmentForm && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.commitmentForm}</p>}
                       </div>
@@ -1727,17 +1711,16 @@ export const Staff: React.FC = () => {
                       {/* Q7: Kesibukan saat ini dan 5 bulan kedepan */}
                       <div className="space-y-1.5">
                         <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          7. Apa saja kesibukan kamu saat ini dan 5 bulan kedepan *
+                          7. {formQuestions?.generalTask.find(q => q.id === 'busySchedule')?.text || 'Apa saja kesibukan kamu saat ini dan 5 bulan kedepan'} *
                         </label>
                         <textarea
                           id="general-busy-schedule"
                           rows={3}
                           value={formData.busySchedule}
                           onChange={e => setFormData(prev => ({ ...prev, busySchedule: e.target.value }))}
-                          placeholder="Contoh: Kuliah, Praktikum, Organisasi lain, Magang, Tugas Akhir..."
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                            formErrors.busySchedule ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                          }`}
+                          placeholder={formQuestions?.generalTask.find(q => q.id === 'busySchedule')?.placeholder || 'Contoh: Kuliah, Praktikum, Organisasi lain, Magang, Tugas Akhir...'}
+                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.busySchedule ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
                         />
                         {formErrors.busySchedule && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.busySchedule}</p>}
                       </div>
@@ -1745,17 +1728,16 @@ export const Staff: React.FC = () => {
                       {/* Q8: Relasi Kenalan / Perusahaan */}
                       <div className="space-y-1.5">
                         <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
-                          8. Apakah Kamu Memiliki Relasi Kenalan/Perusahaan *
+                          8. {formQuestions?.generalTask.find(q => q.id === 'relations')?.text || 'Apakah Kamu Memiliki Relasi Kenalan/Perusahaan'} *
                         </label>
                         <textarea
                           id="general-relations"
                           rows={3}
                           value={formData.relations}
                           onChange={e => setFormData(prev => ({ ...prev, relations: e.target.value }))}
-                          placeholder="Sebutkan relasi alumni, media partner, pembicara, sponsor, atau perusahaan. Jika tidak ada, tuliskan 'Tidak ada'..."
-                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                            formErrors.relations ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                          }`}
+                          placeholder={formQuestions?.generalTask.find(q => q.id === 'relations')?.placeholder || 'Sebutkan relasi alumni, media partner, pembicara, sponsor, atau perusahaan. Jika tidak ada, tuliskan \'Tidak ada\'...'}
+                          className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.relations ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            }`}
                         />
                         {formErrors.relations && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.relations}</p>}
                       </div>
@@ -1811,22 +1793,21 @@ export const Staff: React.FC = () => {
                               setFormData(prev => ({ ...prev, priority1: val, divTaskAnswer1: '' }));
                               setAnswersP1({});
                             }}
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${
-                              formErrors.priority1 ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${formErrors.priority1 ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           >
                             <option value="">-- Pilih Divisi Pertama --</option>
                             {divisions.map(d => {
                               if (d.sub_divisions && d.sub_divisions.length > 0) {
-                                  return (
-                                    <optgroup key={d.id} label={d.name} className="font-mono font-bold text-xs uppercase bg-ballroom text-blue-sail">
-                                      {d.sub_divisions.map((sub, idx) => (
-                                        <option key={`${d.id}-${idx}`} value={sub} className="font-sans normal-case text-sm bg-white text-blue-sail">
-                                          {sub}
-                                        </option>
-                                      ))}
-                                    </optgroup>
-                                  );
+                                return (
+                                  <optgroup key={d.id} label={d.name} className="font-mono font-bold text-xs uppercase bg-ballroom text-blue-sail">
+                                    {d.sub_divisions.map((sub, idx) => (
+                                      <option key={`${d.id}-${idx}`} value={sub} className="font-sans normal-case text-sm bg-white text-blue-sail">
+                                        {sub}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                );
                               } else {
                                 return (
                                   <option key={d.id} value={d.name} className="font-sans font-semibold text-sm">
@@ -1851,22 +1832,21 @@ export const Staff: React.FC = () => {
                               setFormData(prev => ({ ...prev, priority2: val, divTaskAnswer2: '' }));
                               setAnswersP2({});
                             }}
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${
-                              formErrors.priority2 ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${formErrors.priority2 ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           >
                             <option value="">-- Pilih Divisi Kedua --</option>
                             {divisions.map(d => {
                               if (d.sub_divisions && d.sub_divisions.length > 0) {
-                                  return (
-                                    <optgroup key={d.id} label={d.name} className="font-mono font-bold text-xs uppercase bg-ballroom text-blue-sail">
-                                      {d.sub_divisions.map((sub, idx) => (
-                                        <option key={`${d.id}-${idx}`} value={sub} className="font-sans normal-case text-sm bg-white text-blue-sail">
-                                          {sub}
-                                        </option>
-                                      ))}
-                                    </optgroup>
-                                  );
+                                return (
+                                  <optgroup key={d.id} label={d.name} className="font-mono font-bold text-xs uppercase bg-ballroom text-blue-sail">
+                                    {d.sub_divisions.map((sub, idx) => (
+                                      <option key={`${d.id}-${idx}`} value={sub} className="font-sans normal-case text-sm bg-white text-blue-sail">
+                                        {sub}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                );
                               } else {
                                 return (
                                   <option key={d.id} value={d.name} className="font-sans font-semibold text-sm">
@@ -1929,7 +1909,7 @@ export const Staff: React.FC = () => {
                               {formData.priority1}
                             </span>
                           </div>
-                          
+
                           <div className="space-y-4">
                             {getDivisionQuestions(formData.priority1).map((q, qIdx) => (
                               <div key={q.id} className="space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)]">
@@ -1938,9 +1918,8 @@ export const Staff: React.FC = () => {
                                   <select
                                     value={answersP1[q.id] || ''}
                                     onChange={e => handleAnswersP1Change(q.id, e.target.value)}
-                                    className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${
-                                      formErrors[`p1_q_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                                    }`}
+                                    className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${formErrors[`p1_q_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                      }`}
                                   >
                                     <option value="">-- Pilih Jawaban --</option>
                                     {q.options?.map((opt, oIdx) => (
@@ -1953,9 +1932,8 @@ export const Staff: React.FC = () => {
                                     value={answersP1[q.id] || ''}
                                     onChange={e => handleAnswersP1Change(q.id, e.target.value)}
                                     placeholder="Tuliskan jawaban lengkap Anda di sini (minimal 15 karakter)..."
-                                    className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                                      formErrors[`p1_q_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                                    }`}
+                                    className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors[`p1_q_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                      }`}
                                   />
                                 )}
                                 <div className="flex justify-between items-center text-[10px]">
@@ -1985,7 +1963,7 @@ export const Staff: React.FC = () => {
                               {formData.priority2}
                             </span>
                           </div>
-                          
+
                           <div className="space-y-4">
                             {getDivisionQuestions(formData.priority2).map((q, qIdx) => (
                               <div key={q.id} className="space-y-3 bg-white/60 border border-blue-sail/10 p-4 shadow-[2px_2px_0_0_rgba(42,76,158,0.02)]">
@@ -1994,9 +1972,8 @@ export const Staff: React.FC = () => {
                                   <select
                                     value={answersP2[q.id] || ''}
                                     onChange={e => handleAnswersP2Change(q.id, e.target.value)}
-                                    className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${
-                                      formErrors[`p2_q_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                                    }`}
+                                    className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all cursor-pointer ${formErrors[`p2_q_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                      }`}
                                   >
                                     <option value="">-- Pilih Jawaban --</option>
                                     {q.options?.map((opt, oIdx) => (
@@ -2009,9 +1986,8 @@ export const Staff: React.FC = () => {
                                     value={answersP2[q.id] || ''}
                                     onChange={e => handleAnswersP2Change(q.id, e.target.value)}
                                     placeholder="Tuliskan jawaban lengkap Anda di sini (minimal 15 karakter)..."
-                                    className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                                      formErrors[`p2_q_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                                    }`}
+                                    className={`w-full px-4 py-3 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors[`p2_q_${q.id}`] ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                                      }`}
                                   />
                                 )}
                                 <div className="flex justify-between items-center text-[10px]">
@@ -2066,102 +2042,96 @@ export const Staff: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-sail/5 p-4 border border-blue-sail/10">
                         {/* 1. KTM / KRSM */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">KTM / KRSM (Link Drive) *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'ktmKrsLink')?.label || 'KTM / KRSM (Link Drive)'} *</label>
                           <input
                             id="staff-ktmKrsLink"
                             name="ktmKrsLink"
                             type="text"
                             value={formData.ktmKrsLink}
                             onChange={e => setFormData(prev => ({ ...prev, ktmKrsLink: e.target.value }))}
-                            placeholder="Contoh: drive.google.com/..."
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.ktmKrsLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.berkas.find(b => b.id === 'ktmKrsLink')?.placeholder || 'Contoh: drive.google.com/...'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.ktmKrsLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.ktmKrsLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.ktmKrsLink}</p>}
                         </div>
 
                         {/* 2. CV / Curriculum Vitae */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">CV / Curriculum Vitae (Link Drive) *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'cvLink')?.label || 'CV / Curriculum Vitae (Link Drive)'} *</label>
                           <input
                             id="staff-cvLink"
                             name="cvLink"
                             type="text"
                             value={formData.cvLink}
                             onChange={e => setFormData(prev => ({ ...prev, cvLink: e.target.value }))}
-                            placeholder="Contoh: drive.google.com/..."
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.cvLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.berkas.find(b => b.id === 'cvLink')?.placeholder || 'Contoh: drive.google.com/...'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.cvLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.cvLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.cvLink}</p>}
                         </div>
 
                         {/* 3. Repost Oprec SG */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Repost Oprec SG (Link Drive) *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'repostLink')?.label || 'Repost Oprec SG (Link Drive)'} *</label>
                           <input
                             id="staff-repostLink"
                             name="repostLink"
                             type="text"
                             value={formData.repostLink}
                             onChange={e => setFormData(prev => ({ ...prev, repostLink: e.target.value }))}
-                            placeholder="Contoh: drive.google.com/..."
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.repostLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.berkas.find(b => b.id === 'repostLink')?.placeholder || 'Contoh: drive.google.com/...'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.repostLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.repostLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.repostLink}</p>}
                         </div>
 
                         {/* 4. Twibbon */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Twibbon (Link Drive) *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'twibbonLink')?.label || 'Twibbon (Link Drive)'} *</label>
                           <input
                             id="staff-twibbonLink"
                             name="twibbonLink"
                             type="text"
                             value={formData.twibbonLink}
                             onChange={e => setFormData(prev => ({ ...prev, twibbonLink: e.target.value }))}
-                            placeholder="Contoh: drive.google.com/..."
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.twibbonLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.berkas.find(b => b.id === 'twibbonLink')?.placeholder || 'Contoh: drive.google.com/...'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.twibbonLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.twibbonLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.twibbonLink}</p>}
                         </div>
 
                         {/* 5. Bukti Follow Instagram @tdcits dan @tdcsummitfest */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Bukti Follow Instagram @tdcits & @tdcsummitfest (Link Drive) *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'igFollowLink')?.label || 'Bukti Follow Instagram @tdcits & @tdcsummitfest (Link Drive)'} *</label>
                           <input
                             id="staff-igFollowLink"
                             name="igFollowLink"
                             type="text"
                             value={formData.igFollowLink}
                             onChange={e => setFormData(prev => ({ ...prev, igFollowLink: e.target.value }))}
-                            placeholder="Contoh: drive.google.com/..."
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.igFollowLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.berkas.find(b => b.id === 'igFollowLink')?.placeholder || 'Contoh: drive.google.com/...'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.igFollowLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.igFollowLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.igFollowLink}</p>}
                         </div>
 
                         {/* 6. Bukti Follow Tiktok @tdcits dan @tdcsummitfest */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Bukti Follow Tiktok @tdcits & @tdcsummitfest (Link Drive) *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'tiktokFollowLink')?.label || 'Bukti Follow Tiktok @tdcits & @tdcsummitfest (Link Drive)'} *</label>
                           <input
                             id="staff-tiktokFollowLink"
                             name="tiktokFollowLink"
                             type="text"
                             value={formData.tiktokFollowLink}
                             onChange={e => setFormData(prev => ({ ...prev, tiktokFollowLink: e.target.value }))}
-                            placeholder="Contoh: drive.google.com/..."
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${
-                              formErrors.tiktokFollowLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                            }`}
+                            placeholder={formQuestions?.berkas.find(b => b.id === 'tiktokFollowLink')?.placeholder || 'Contoh: drive.google.com/...'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.tiktokFollowLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                              }`}
                           />
                           {formErrors.tiktokFollowLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.tiktokFollowLink}</p>}
                         </div>
@@ -2228,7 +2198,7 @@ export const Staff: React.FC = () => {
       {selectedDiv && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto animate-fadeIn">
           <div className="bg-ballroom w-full max-w-xl rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#2A4C9E] overflow-hidden font-sans flex flex-col max-h-[90vh] sm:max-h-[85vh]">
-            
+
             {/* Header Modal */}
             <div className="bg-blue-sail text-ballroom p-5 flex items-center justify-between border-b-4 border-decor shrink-0">
               <div className="flex items-center space-x-3">
@@ -2247,17 +2217,17 @@ export const Staff: React.FC = () => {
                 <Icon name="X" size={24} />
               </button>
             </div>
- 
+
             {/* Content Modal */}
             <div className="p-6 space-y-5 text-sm text-blue-sail overflow-y-auto flex-1">
-              
+
               <div className="space-y-1.5">
                 <span className="font-mono text-[10px] font-black uppercase text-red-inferno tracking-widest">// DESKRIPSI UTAMA</span>
                 <p className="leading-relaxed text-blue-sail/90 bg-white p-3.5 rounded-none border-2 border-blue-sail/35">
                   {selectedDiv.description}
                 </p>
               </div>
- 
+
               {/* Sub-divisions if present */}
               {selectedDiv.sub_divisions && selectedDiv.sub_divisions.length > 0 && (
                 <div className="space-y-2">
@@ -2272,7 +2242,7 @@ export const Staff: React.FC = () => {
                   </div>
                 </div>
               )}
- 
+
               {/* Jobdesks */}
               <div className="space-y-2">
                 <span className="font-mono text-[10px] font-black uppercase text-red-inferno tracking-widest">// TUGAS & TANGGUNG JAWAB</span>
@@ -2285,7 +2255,7 @@ export const Staff: React.FC = () => {
                   ))}
                 </ul>
               </div>
- 
+
               {/* Skills */}
               <div className="space-y-1.5">
                 <span className="font-mono text-[10px] font-black uppercase text-red-inferno tracking-widest">// KUALIFIKASI YANG DICARI</span>
@@ -2293,9 +2263,9 @@ export const Staff: React.FC = () => {
                   {getDivExpectations(selectedDiv.name).skills}
                 </p>
               </div>
- 
+
             </div>
- 
+
             {/* Footer Modal */}
             <div className="bg-ballroom/50 border-t-2 border-blue-sail/20 p-4 flex justify-end shrink-0">
               <button
@@ -2306,7 +2276,7 @@ export const Staff: React.FC = () => {
                 Tutup Deskripsi
               </button>
             </div>
- 
+
           </div>
         </div>
       )}
@@ -2315,7 +2285,7 @@ export const Staff: React.FC = () => {
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fadeIn">
           <div className="bg-ballroom w-full max-w-md rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#BD1B1F] p-6 text-center space-y-6 font-sans">
-            
+
             <div className="text-decor flex justify-center">
               <div className="bg-blue-sail p-4 rounded-none border-2 border-blue-sail text-decor animate-bounce">
                 <Icon name="CheckCircle2" size={48} className="stroke-[2.5px]" />

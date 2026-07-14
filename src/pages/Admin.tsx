@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
-import { Division, ThriftProduct, ThriftVendor } from '../types';
+import { Division, ThriftProduct, ThriftVendor, FormQuestionsConfig, QuestionConfig } from '../types';
 
 const SerializedAnswersViewer: React.FC<{ serializedText: string }> = ({ serializedText }) => {
   if (!serializedText) {
@@ -94,6 +94,8 @@ export const Admin: React.FC = () => {
     updateThriftProduct,
     deleteThriftProduct,
     updateStaffApplicationStatus,
+    formQuestions,
+    updateFormQuestions,
     resetToDefault
   } = useApp();
 
@@ -103,7 +105,135 @@ export const Admin: React.FC = () => {
   const [loginError, setLoginError] = useState('');
 
   // Active sub-dashboard section tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'staff' | 'competitions' | 'thrift' | 'divisions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'staff' | 'competitions' | 'thrift' | 'divisions' | 'form-control'>('overview');
+
+  // Form Questions Config states
+  const [formSubTab, setFormSubTab] = useState<'dataDiri' | 'generalTask' | 'berkas' | 'divisionTasks'>('dataDiri');
+  const [localFormConfig, setLocalFormConfig] = useState<FormQuestionsConfig | null>(null);
+  const [selectedConfigDivision, setSelectedConfigDivision] = useState<string>('');
+
+  useEffect(() => {
+    if (formQuestions) {
+      setLocalFormConfig(JSON.parse(JSON.stringify(formQuestions)));
+    }
+  }, [formQuestions, activeTab]);
+
+  useEffect(() => {
+    if (localFormConfig && !selectedConfigDivision) {
+      const keys = Object.keys(localFormConfig.divisionTasks);
+      if (keys.length > 0) {
+        setSelectedConfigDivision(keys[0]);
+      }
+    }
+  }, [localFormConfig]);
+
+  const handleDataDiriChange = (id: string, field: 'label' | 'placeholder', value: string) => {
+    if (!localFormConfig) return;
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      const updated = prev.dataDiri.map(item => {
+        if (item.id === id) {
+          return { ...item, [field]: value };
+        }
+        return item;
+      });
+      return { ...prev, dataDiri: updated };
+    });
+  };
+
+  const handleGeneralTaskChange = (id: string, field: 'text' | 'placeholder', value: string) => {
+    if (!localFormConfig) return;
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      const updated = prev.generalTask.map(item => {
+        if (item.id === id) {
+          return { ...item, [field]: value };
+        }
+        return item;
+      });
+      return { ...prev, generalTask: updated };
+    });
+  };
+
+  const handleBerkasChange = (id: string, field: 'label' | 'placeholder', value: string) => {
+    if (!localFormConfig) return;
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      const updated = prev.berkas.map(item => {
+        if (item.id === id) {
+          return { ...item, [field]: value };
+        }
+        return item;
+      });
+      return { ...prev, berkas: updated };
+    });
+  };
+
+  const handleDivisionQuestionChange = (divName: string, qId: string, field: 'text' | 'type' | 'options', value: any) => {
+    if (!localFormConfig) return;
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      const questions = prev.divisionTasks[divName] || [];
+      const updatedQuestions = questions.map(q => {
+        if (q.id === qId) {
+          if (field === 'options') {
+            const opts = typeof value === 'string' ? value.split(',').map((s: string) => s.trim()).filter(Boolean) : value;
+            return { ...q, options: opts };
+          }
+          return { ...q, [field]: value };
+        }
+        return q;
+      });
+      return {
+        ...prev,
+        divisionTasks: {
+          ...prev.divisionTasks,
+          [divName]: updatedQuestions
+        }
+      };
+    });
+  };
+
+  const handleAddDivisionQuestion = (divName: string) => {
+    if (!localFormConfig) return;
+    const newQuestion: QuestionConfig = {
+      id: `q-${Date.now()}`,
+      text: 'Pertanyaan baru...',
+      type: 'text'
+    };
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      const questions = prev.divisionTasks[divName] || [];
+      return {
+        ...prev,
+        divisionTasks: {
+          ...prev.divisionTasks,
+          [divName]: [...questions, newQuestion]
+        }
+      };
+    });
+  };
+
+  const handleDeleteDivisionQuestion = (divName: string, qId: string) => {
+    if (!localFormConfig) return;
+    setLocalFormConfig(prev => {
+      if (!prev) return null;
+      const questions = prev.divisionTasks[divName] || [];
+      return {
+        ...prev,
+        divisionTasks: {
+          ...prev.divisionTasks,
+          [divName]: questions.filter(q => q.id !== qId)
+        }
+      };
+    });
+  };
+
+  const handleSaveFormConfig = () => {
+    if (!localFormConfig) return;
+    updateFormQuestions(localFormConfig);
+    alert('Pengaturan pertanyaan form berhasil disimpan!');
+  };
 
   // Selected applicant detail modal state
   const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
@@ -385,6 +515,18 @@ export const Admin: React.FC = () => {
           >
             <Icon name="CalendarRange" size={16} />
             <span>Manajemen Divisi ({divisions.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('form-control')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              activeTab === 'form-control'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="Settings" size={16} />
+            <span>Pengaturan Form</span>
           </button>
 
           <div className="pt-6 border-t border-ballroom/10 mt-6">
@@ -1004,6 +1146,310 @@ export const Admin: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* 6. SECTION TAB: FORM CONTROL (QUESTION CONFIG) */}
+        {activeTab === 'form-control' && localFormConfig && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="space-y-1">
+                <h2 className="font-display font-black text-2xl uppercase">PENGATURAN PERTANYAAN FORM</h2>
+                <p className="text-xs text-blue-sail/60">Ubah label, placeholder, dan pertanyaan khusus per divisi pada formulir pendaftaran staff.</p>
+              </div>
+
+              <button
+                onClick={handleSaveFormConfig}
+                className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase px-6 py-3 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                <Icon name="Save" size={14} className="stroke-[3px]" />
+                <span>SIMPAN PERUBAHAN FORM</span>
+              </button>
+            </div>
+
+            {/* Inner Sub-navigation Tabs */}
+            <div className="flex flex-wrap gap-2 border-b border-blue-sail/10 pb-4">
+              {(['dataDiri', 'generalTask', 'berkas', 'divisionTasks'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setFormSubTab(tab)}
+                  className={`px-4 py-2 border-2 text-xs uppercase font-mono font-bold transition-all cursor-pointer ${
+                    formSubTab === tab
+                      ? 'bg-blue-sail text-white border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]'
+                      : 'bg-white text-blue-sail border-blue-sail/20 hover:border-blue-sail'
+                  }`}
+                >
+                  {tab === 'dataDiri' && 'Data Diri'}
+                  {tab === 'generalTask' && 'General Task'}
+                  {tab === 'berkas' && 'Berkas & Dokumen'}
+                  {tab === 'divisionTasks' && 'Division Task'}
+                </button>
+              ))}
+            </div>
+
+            {/* Form Fields container */}
+            <div className="bg-white border-4 border-blue-sail p-6 shadow-[4px_4px_0_0_#2A4C9E] font-sans text-xs text-blue-sail">
+              
+              {/* DATA DIRI SUB-TAB */}
+              {formSubTab === 'dataDiri' && (
+                <div className="space-y-6">
+                  <h3 className="font-display font-black text-sm uppercase tracking-wide border-b border-blue-sail/10 pb-2 flex items-center gap-1.5 text-red-inferno">
+                    <Icon name="User" size={16} />
+                    <span>Konfigurasi Form Data Diri</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {localFormConfig.dataDiri.map(field => (
+                      <div key={field.id} className="space-y-3 bg-blue-sail/[0.02] p-4 border border-blue-sail/15">
+                        <div className="flex justify-between items-center border-b border-blue-sail/10 pb-1.5">
+                          <span className="font-mono font-bold text-red-inferno uppercase text-[10px]">ID: {field.id}</span>
+                          <span className="bg-blue-sail/10 px-2 py-0.5 font-bold uppercase text-[9px]">Field Standar</span>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Label Pertanyaan</label>
+                          <input
+                            type="text"
+                            value={field.label}
+                            onChange={e => handleDataDiriChange(field.id, 'label', e.target.value)}
+                            className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Placeholder / Petunjuk</label>
+                          <input
+                            type="text"
+                            value={field.placeholder || ''}
+                            onChange={e => handleDataDiriChange(field.id, 'placeholder', e.target.value)}
+                            className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* GENERAL TASK SUB-TAB */}
+              {formSubTab === 'generalTask' && (
+                <div className="space-y-6">
+                  <h3 className="font-display font-black text-sm uppercase tracking-wide border-b border-blue-sail/10 pb-2 flex items-center gap-1.5 text-red-inferno">
+                    <Icon name="FileQuestion" size={16} />
+                    <span>Konfigurasi Form General Task</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {localFormConfig.generalTask.map((q, idx) => (
+                      <div key={q.id} className="space-y-3 bg-blue-sail/[0.02] p-4 border border-blue-sail/15">
+                        <div className="flex justify-between items-center border-b border-blue-sail/10 pb-1.5">
+                          <span className="font-mono font-bold text-red-inferno uppercase text-[10px]">No. {idx + 1} (ID: {q.id})</span>
+                          {q.id === 'commitmentScale' || q.id === 'paidIkoma' ? (
+                            <span className="bg-red-inferno/10 text-red-inferno px-2 py-0.5 font-bold uppercase text-[9px]">Custom Input</span>
+                          ) : (
+                            <span className="bg-blue-sail/10 px-2 py-0.5 font-bold uppercase text-[9px]">Textarea</span>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Teks Pertanyaan</label>
+                          <textarea
+                            rows={2}
+                            value={q.text}
+                            onChange={e => handleGeneralTaskChange(q.id, 'text', e.target.value)}
+                            className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                          />
+                        </div>
+
+                        {q.id !== 'commitmentScale' && q.id !== 'paidIkoma' && (
+                          <div className="space-y-1">
+                            <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Placeholder / Petunjuk</label>
+                            <input
+                              type="text"
+                              value={q.placeholder || ''}
+                              onChange={e => handleGeneralTaskChange(q.id, 'placeholder', e.target.value)}
+                              className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* BERKAS SUB-TAB */}
+              {formSubTab === 'berkas' && (
+                <div className="space-y-6">
+                  <h3 className="font-display font-black text-sm uppercase tracking-wide border-b border-blue-sail/10 pb-2 flex items-center gap-1.5 text-red-inferno">
+                    <Icon name="FileText" size={16} />
+                    <span>Konfigurasi Form Unggah Berkas</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {localFormConfig.berkas.map(field => (
+                      <div key={field.id} className="space-y-3 bg-blue-sail/[0.02] p-4 border border-blue-sail/15">
+                        <div className="flex justify-between items-center border-b border-blue-sail/10 pb-1.5">
+                          <span className="font-mono font-bold text-red-inferno uppercase text-[10px]">ID: {field.id}</span>
+                          <span className="bg-blue-sail/10 px-2 py-0.5 font-bold uppercase text-[9px]">Link Drive Input</span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Label Pertanyaan</label>
+                          <input
+                            type="text"
+                            value={field.label}
+                            onChange={e => handleBerkasChange(field.id, 'label', e.target.value)}
+                            className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Placeholder / Petunjuk</label>
+                          <input
+                            type="text"
+                            value={field.placeholder || ''}
+                            onChange={e => handleBerkasChange(field.id, 'placeholder', e.target.value)}
+                            className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* DIVISION TASKS SUB-TAB */}
+              {formSubTab === 'divisionTasks' && (
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-blue-sail/10 pb-4">
+                    <h3 className="font-display font-black text-sm uppercase tracking-wide flex items-center gap-1.5 text-red-inferno">
+                      <Icon name="Folders" size={16} />
+                      <span>Pertanyaan Khusus Per Divisi</span>
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold uppercase tracking-wider text-[10px]">Pilih Divisi/Subdivisi:</span>
+                      <select
+                        value={selectedConfigDivision}
+                        onChange={e => setSelectedConfigDivision(e.target.value)}
+                        className="px-3 py-1.5 border-2 border-blue-sail bg-white rounded-none outline-none font-bold text-xs uppercase text-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                      >
+                        <option value="">-- Pilih --</option>
+                        {divisions.map(d => (
+                          <option key={d.id} value={d.name}>{d.name}</option>
+                        ))}
+                        {/* Fallback to keys in config if they are not in divisions */}
+                        {Object.keys(localFormConfig.divisionTasks).map(key => {
+                          if (!divisions.some(d => d.name === key)) {
+                            return <option key={key} value={key}>{key}</option>;
+                          }
+                          return null;
+                        })}
+                      </select>
+                    </div>
+                  </div>
+
+                  {selectedConfigDivision ? (
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center">
+                        <span className="bg-decor text-blue-sail font-mono text-[10px] font-bold px-2 py-0.5 border border-blue-sail">
+                          {selectedConfigDivision}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => handleAddDivisionQuestion(selectedConfigDivision)}
+                          className="bg-blue-sail hover:bg-barbera text-white font-mono font-bold text-[10px] uppercase px-3 py-1.5 rounded-none border border-blue-sail tracking-wide flex items-center space-x-1 hover:-translate-y-0.5 transition-all cursor-pointer shadow-[2px_2px_0_0_#BD1B1F]"
+                        >
+                          <Icon name="Plus" size={12} className="stroke-[3px]" />
+                          <span>Tambah Soal</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {(localFormConfig.divisionTasks[selectedConfigDivision] || []).length === 0 ? (
+                          <div className="text-center py-8 bg-blue-sail/[0.02] border border-dashed border-blue-sail/20 text-blue-sail/50 font-bold uppercase italic">
+                            Belum ada pertanyaan khusus untuk divisi ini. Formulir pendaftaran akan menggunakan Pertanyaan Bawaan (Default).
+                          </div>
+                        ) : (
+                          (localFormConfig.divisionTasks[selectedConfigDivision] || []).map((q, idx) => (
+                            <div key={q.id} className="bg-blue-sail/[0.02] p-5 border border-blue-sail/15 space-y-4 relative">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteDivisionQuestion(selectedConfigDivision, q.id)}
+                                className="absolute top-4 right-4 bg-red-inferno/10 hover:bg-red-inferno text-red-inferno hover:text-white p-1.5 rounded-none border border-red-inferno transition-all cursor-pointer"
+                                title="Hapus Pertanyaan"
+                              >
+                                <Icon name="Trash2" size={14} />
+                              </button>
+
+                              <div className="flex items-center space-x-2 border-b border-blue-sail/10 pb-2 w-[calc(100%-2.5rem)]">
+                                <span className="bg-blue-sail text-white font-mono text-[10px] font-bold w-5 h-5 flex items-center justify-center shrink-0 border border-blue-sail">
+                                  {idx + 1}
+                                </span>
+                                <span className="font-mono text-blue-sail/50 text-[10px] font-bold">ID: {q.id}</span>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="md:col-span-2 space-y-1">
+                                  <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Teks Pertanyaan (Gunakan awalan 'Study Case: ' jika merupakan soal studi kasus)</label>
+                                  <textarea
+                                    rows={3}
+                                    value={q.text}
+                                    onChange={e => handleDivisionQuestionChange(selectedConfigDivision, q.id, 'text', e.target.value)}
+                                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                                  />
+                                </div>
+
+                                <div className="space-y-3">
+                                  <div className="space-y-1">
+                                    <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Tipe Input</label>
+                                    <select
+                                      value={q.type}
+                                      onChange={e => handleDivisionQuestionChange(selectedConfigDivision, q.id, 'type', e.target.value as any)}
+                                      className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                                    >
+                                      <option value="text">Teks Deskriptif (Textarea)</option>
+                                      <option value="select">Pilihan Ganda (Dropdown Select)</option>
+                                    </select>
+                                  </div>
+
+                                  {q.type === 'select' && (
+                                    <div className="space-y-1 animate-fadeIn">
+                                      <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Opsi Pilihan (Pisahkan dengan koma)</label>
+                                      <input
+                                        type="text"
+                                        placeholder="Contoh: Ya, Tidak, Mungkin"
+                                        value={q.options?.join(', ') || ''}
+                                        onChange={e => handleDivisionQuestionChange(selectedConfigDivision, q.id, 'options', e.target.value)}
+                                        className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-blue-sail/[0.02] border border-dashed border-blue-sail/20 text-blue-sail/50 font-bold uppercase italic">
+                      Silakan pilih divisi di sudut kanan atas untuk mengelola pertanyaan khusus.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="flex justify-end pt-4">
+              <button
+                onClick={handleSaveFormConfig}
+                className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase px-8 py-4 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-2 shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                <Icon name="Save" size={16} className="stroke-[3px]" />
+                <span>SIMPAN PERUBAHAN FORMULIR</span>
+              </button>
             </div>
           </div>
         )}
