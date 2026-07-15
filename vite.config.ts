@@ -18,7 +18,7 @@ export default defineConfig(() => {
     },
     server: {
       port: 8100,
-      allowedHosts: true,
+      allowedHosts: true as any,
       proxy: {
         '/api': {
           target: `http://localhost:${BACKEND_PORT}`,

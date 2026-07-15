@@ -516,6 +516,20 @@ export const Admin: React.FC = () => {
       setLoginError('Koneksi ke server gagal.');
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('tsf_admin_token');
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).catch(() => {});
+    } catch (err) {}
+
+    localStorage.removeItem('tsf_admin_token');
+    localStorage.removeItem('tsf_admin_username');
+    setIsAuthenticated(false);
+  };
   // CSV Exporter Helper
   const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
     const csvContent = "data:text/csv;charset=utf-8," 
@@ -810,12 +824,38 @@ export const Admin: React.FC = () => {
             <span>Pengaturan Form</span>
           </button>
 
-          <div className="pt-6 border-t border-ballroom/10 mt-6">
+          <div className="pt-6 border-t border-ballroom/10 mt-6 space-y-3">
             <button
-              onClick={() => {
-                if (confirm('Apakah Anda yakin ingin menyetel ulang database simulasi ke setelan awal?')) {
-                  resetToDefault();
-                  alert('Database berhasil disetel ulang ke setelan awal pabrik.');
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-2.5 rounded-none flex items-center space-x-2.5 bg-red-inferno/10 text-red-inferno hover:bg-red-inferno hover:text-ballroom transition-all border-2 border-red-inferno cursor-pointer shadow-[3px_3px_0_0_#8B011A]"
+            >
+              <Icon name="LogOut" size={14} />
+              <span>Keluar (Logout)</span>
+            </button>
+
+            <button
+              onClick={async () => {
+                const password = prompt('Masukkan kata sandi admin Anda untuk mengonfirmasi reset database:');
+                if (password === null) return; // Cancelled
+                
+                const currentUsername = localStorage.getItem('tsf_admin_username') || 'admin';
+                try {
+                  const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUsername, password })
+                  });
+                  if (res.ok) {
+                    if (confirm('Apakah Anda yakin ingin menyetel ulang database simulasi ke setelan awal?')) {
+                      resetToDefault();
+                      alert('Database berhasil disetel ulang ke setelan awal.');
+                    }
+                  } else {
+                    const data = await res.json().catch(() => ({}));
+                    alert(data.message || 'Kata sandi salah. Reset database dibatalkan.');
+                  }
+                } catch (err) {
+                  alert('Koneksi ke server gagal. Gagal memverifikasi kata sandi.');
                 }
               }}
               className="w-full text-left px-4 py-2.5 rounded-none flex items-center space-x-2.5 text-red-inferno hover:bg-red-inferno hover:text-ballroom transition-all border-2 border-red-inferno cursor-pointer shadow-[3px_3px_0_0_#8B011A]"
