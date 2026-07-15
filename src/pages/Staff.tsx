@@ -1157,7 +1157,7 @@ export const Staff: React.FC = () => {
                         <div>
                           <span className="font-mono text-[9px] font-black uppercase text-red-inferno tracking-widest leading-none">DETAIL DIVISI</span>
                           <h3 className="font-display font-extrabold text-base sm:text-lg uppercase tracking-tight text-blue-sail leading-none mt-0.5">
-                            {activeDiv.name} {activeSubDivTab !== 'Overview' && <span className="text-red-inferno text-xs sm:text-sm lowercase block sm:inline sm:ml-1 font-sans font-semibold">({activeSubDivTab.replace(/Sub Divisi (Event - |Operasional - |BnM - |Finance - )?/i, '')})</span>}
+                            {activeDiv.name} {activeSubDivTab !== 'Overview' && <span className="text-red-inferno text-xs sm:text-sm block sm:inline sm:ml-1 font-sans font-semibold">({activeSubDivTab.replace(/Sub Divisi (Event - |Operasional - |BnM - |Finance - )?/i, '')})</span>}
                           </h3>
                         </div>
                       </div>
