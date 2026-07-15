@@ -22,7 +22,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
       return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     }
     // const target = new Date(`${activePhase.end_date}T23:59:59`).getTime();
-    const target = new Date(`2026-07-17T23:59:59`).getTime();
+    const target = new Date(`2026-07-25T23:59:59`).getTime();
     const now = new Date().getTime();
     const difference = target - now;
     if (difference <= 0) {
@@ -268,28 +268,28 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   key={phase.id}
                   onClick={() => handleTimelineClick(phase.name)}
                   className={`cursor-pointer group flex flex-col justify-between p-5 rounded-none border-[3px] transition-all duration-200 relative hover:-translate-y-1 ${isActive
-                      ? 'bg-blue-sail border-decor text-ballroom shadow-[4px_4px_0_0_#F6BB02]'
-                      : isClosed
-                        ? 'bg-ballroom/60 border-blue-sail/20 text-blue-sail/50'
-                        : 'bg-ballroom border-blue-sail/40 text-blue-sail hover:border-decor hover:shadow-[4px_4px_0_0_#2A4C9E]'
+                    ? 'bg-blue-sail border-decor text-ballroom shadow-[4px_4px_0_0_#F6BB02]'
+                    : isClosed
+                      ? 'bg-ballroom/60 border-blue-sail/20 text-blue-sail/50'
+                      : 'bg-ballroom border-blue-sail/40 text-blue-sail hover:border-decor hover:shadow-[4px_4px_0_0_#2A4C9E]'
                     }`}
                 >
                   {/* Status Indicator Bar */}
                   <div className={`absolute top-0 left-0 right-0 h-1.5 ${isActive
-                      ? 'bg-decor'
-                      : isClosed
-                        ? 'bg-blue-sail/10'
-                        : 'bg-blue-sail/30'
+                    ? 'bg-decor'
+                    : isClosed
+                      ? 'bg-blue-sail/10'
+                      : 'bg-blue-sail/30'
                     }`} />
 
                   <div>
                     {/* Circle Badge with index */}
                     <div className="flex items-center justify-between mb-4">
                       <span className={`font-mono text-xs font-bold px-2.5 py-1 rounded-none border tracking-wider skew-x-[-10deg] ${isActive
-                          ? 'bg-decor text-blue-sail border-blue-sail'
-                          : isClosed
-                            ? 'bg-blue-sail/10 text-blue-sail/40 border-blue-sail/10'
-                            : 'bg-blue-sail/20 text-blue-sail border-blue-sail/20'
+                        ? 'bg-decor text-blue-sail border-blue-sail'
+                        : isClosed
+                          ? 'bg-blue-sail/10 text-blue-sail/40 border-blue-sail/10'
+                          : 'bg-blue-sail/20 text-blue-sail border-blue-sail/20'
                         }`}>
                         FASE 0{idx + 1}
                       </span>
