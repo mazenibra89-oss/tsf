@@ -16,26 +16,34 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   // Find currently active phase
   const activePhase = phases.find(p => p.status === 'active') || phases[0];
 
-  // Simple countdown simulator for active phase (makes page look alive!)
-  const [timeLeft, setTimeLeft] = useState({ days: 3, hours: 14, minutes: 25, seconds: 40 });
+  // Function to calculate time left from activePhase.end_date minus today
+  const calculateTimeLeft = () => {
+    if (!activePhase || !activePhase.end_date) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+    const target = new Date(`${activePhase.end_date}T23:59:59`).getTime();
+    const now = new Date().getTime();
+    const difference = target - now;
+    if (difference <= 0) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60)
+    };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
+    setTimeLeft(calculateTimeLeft());
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else if (prev.days > 0) {
-          return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [activePhase]);
 
   const navigateToPhase = (page: string) => {
     const disabledPages = ['pe1', 'pe2', 'competition', 'thrift'];
