@@ -21,7 +21,8 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
     if (!activePhase || !activePhase.end_date) {
       return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     }
-    const target = new Date(`${activePhase.end_date}T23:59:59`).getTime();
+    // const target = new Date(`${activePhase.end_date}T23:59:59`).getTime();
+    const target = new Date(`2026-07-17T23:59:59`).getTime();
     const now = new Date().getTime();
     const difference = target - now;
     if (difference <= 0) {
@@ -86,22 +87,22 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
 
   return (
     <div className="asphalt-texture min-h-screen pb-16">
-      
+
       {/* 1. HERO SECTION */}
       <section className="relative bg-blue-sail text-ballroom overflow-hidden border-b-8 border-decor pt-8 pb-16 lg:pt-12 lg:pb-24">
         <div className="absolute inset-0 grid-pattern opacity-15" />
         {/* Dynamic decorative race track lines */}
         <div className="absolute -bottom-10 left-0 right-0 h-2 bg-red-inferno transform skew-y-[-1.5deg]" />
         <div className="absolute -bottom-6 left-0 right-0 h-4 bg-decor transform skew-y-[-1.5deg]" />
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col lg:flex-row items-center gap-12">
           {/* Hero Left Content */}
           <div className="flex-1 text-center lg:text-left space-y-6">
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
               <div className="relative bg-decor w-32 h-12 border-2 border-blue-sail shadow-lg flex items-center justify-center rounded-none transform skew-x-[-6deg]">
-                <img 
-                  src={tsfLogo} 
-                  alt="TSF Logo" 
+                <img
+                  src={tsfLogo}
+                  alt="TSF Logo"
                   className="absolute h-20 w-auto object-contain transform skew-x-[6deg] z-10"
                   referrerPolicy="no-referrer"
                 />
@@ -109,13 +110,13 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
 
             </div>
             <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-7xl leading-none uppercase tracking-tighter text-shadow-md">
-              TDC <span className="text-decor">SUMMIT</span> <br/>
+              TDC <span className="text-decor">SUMMIT</span> <br />
               FESTIVAL <span className="text-red-inferno">2026</span>
             </h1>
             <p className="text-base sm:text-lg text-ballroom/90 max-w-xl font-sans leading-relaxed">
               Wadah bagi entrepreneur muda, baik pelajar maupun mahasiswa, TDC Summit Fest hadir untuk membantu mereka mengembangkan kemampuan melalui kompetisi berskala nasional. Melalui program ini, peserta diajak untuk berpikir kritis, merancang strategi, dan membangun solusi yang relevan dengan kebutuhan industri saat ini.
             </p>
-            
+
             {/* Quick Action Buttons */}
             <div className="flex flex-wrap justify-center lg:justify-start gap-4 pt-2">
               <button
@@ -126,7 +127,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                 <span>{activePhase.status === 'active' ? `IKUTI ${activePhase.label}` : 'LIHAT JADWAL EVENT'}</span>
                 <Icon name="ArrowRight" size={16} className="stroke-[3px]" />
               </button>
-              
+
               <button
                 id="hero-secondary-cta"
                 onClick={() => {
@@ -195,7 +196,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
         <div className="bg-decor p-1.5 rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#BD1B1F] transform -skew-y-1">
           <div className="bg-blue-sail text-ballroom p-6 sm:p-8 rounded-none flex flex-col md:flex-row items-center justify-between gap-6">
-            
+
             {/* Banner Left */}
             <div className="flex items-center space-x-4">
               <div className="bg-decor text-blue-sail p-4 rounded-none border-2 border-blue-sail animate-bounce">
@@ -255,44 +256,41 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
         {/* Timeline Stepper Container */}
         <div className="bg-ballroom p-6 sm:p-10 rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] relative overflow-hidden">
           <div className="absolute inset-0 grid-pattern opacity-5" />
-          
+
           <div className="relative grid grid-cols-1 md:grid-cols-5 gap-6 z-10">
             {phases.map((phase, idx) => {
               const isActive = phase.status === 'active';
               const isClosed = phase.status === 'closed';
               const isUpcoming = phase.status === 'upcoming';
-              
+
               return (
-                <div 
+                <div
                   key={phase.id}
                   onClick={() => handleTimelineClick(phase.name)}
-                  className={`cursor-pointer group flex flex-col justify-between p-5 rounded-none border-[3px] transition-all duration-200 relative hover:-translate-y-1 ${
-                    isActive 
-                      ? 'bg-blue-sail border-decor text-ballroom shadow-[4px_4px_0_0_#F6BB02]' 
+                  className={`cursor-pointer group flex flex-col justify-between p-5 rounded-none border-[3px] transition-all duration-200 relative hover:-translate-y-1 ${isActive
+                      ? 'bg-blue-sail border-decor text-ballroom shadow-[4px_4px_0_0_#F6BB02]'
                       : isClosed
                         ? 'bg-ballroom/60 border-blue-sail/20 text-blue-sail/50'
                         : 'bg-ballroom border-blue-sail/40 text-blue-sail hover:border-decor hover:shadow-[4px_4px_0_0_#2A4C9E]'
-                  }`}
+                    }`}
                 >
                   {/* Status Indicator Bar */}
-                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${
-                    isActive 
-                      ? 'bg-decor' 
+                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${isActive
+                      ? 'bg-decor'
                       : isClosed
                         ? 'bg-blue-sail/10'
                         : 'bg-blue-sail/30'
-                  }`} />
-                  
+                    }`} />
+
                   <div>
                     {/* Circle Badge with index */}
                     <div className="flex items-center justify-between mb-4">
-                      <span className={`font-mono text-xs font-bold px-2.5 py-1 rounded-none border tracking-wider skew-x-[-10deg] ${
-                        isActive 
-                          ? 'bg-decor text-blue-sail border-blue-sail' 
+                      <span className={`font-mono text-xs font-bold px-2.5 py-1 rounded-none border tracking-wider skew-x-[-10deg] ${isActive
+                          ? 'bg-decor text-blue-sail border-blue-sail'
                           : isClosed
                             ? 'bg-blue-sail/10 text-blue-sail/40 border-blue-sail/10'
                             : 'bg-blue-sail/20 text-blue-sail border-blue-sail/20'
-                      }`}>
+                        }`}>
                         FASE 0{idx + 1}
                       </span>
 
@@ -307,10 +305,9 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                     <h4 className="font-display font-extrabold text-lg uppercase tracking-tight group-hover:text-decor transition-colors">
                       {phase.label}
                     </h4>
-                    
-                    <p className={`text-xs mt-2 leading-relaxed font-sans ${
-                      isActive ? 'text-ballroom/80' : 'text-blue-sail/70'
-                    }`}>
+
+                    <p className={`text-xs mt-2 leading-relaxed font-sans ${isActive ? 'text-ballroom/80' : 'text-blue-sail/70'
+                      }`}>
                       {phase.description.substring(0, 75)}...
                     </p>
                   </div>
@@ -340,7 +337,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
           {faqs.map((faq, idx) => {
             const isOpen = activeFaq === idx;
             return (
-              <div 
+              <div
                 key={idx}
                 className="bg-ballroom rounded-none border-[3px] border-blue-sail overflow-hidden shadow-[3px_3px_0_0_#2A4C9E] hover:shadow-[4px_4px_0_0_#2A4C9E] transition-all"
               >
@@ -352,13 +349,13 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   <span className="font-display font-bold text-base text-blue-sail pr-4 uppercase tracking-tight">
                     {faq.question}
                   </span>
-                  <Icon 
-                    name={isOpen ? 'ChevronUp' : 'ChevronDown'} 
-                    size={20} 
-                    className="text-decor shrink-0 transition-transform duration-200" 
+                  <Icon
+                    name={isOpen ? 'ChevronUp' : 'ChevronDown'}
+                    size={20}
+                    className="text-decor shrink-0 transition-transform duration-200"
                   />
                 </button>
-                
+
                 {isOpen && (
                   <div className="px-6 pb-5 pt-1 text-sm text-blue-sail/80 border-t border-blue-sail/10 bg-ballroom/30 leading-relaxed animate-fadeIn">
                     {faq.answer}
