@@ -485,7 +485,14 @@ export const Admin: React.FC = () => {
 
   // Modal / Form state for Div CRUD
   const [isDivModalOpen, setIsDivModalOpen] = useState(false);
-  const [divForm, setDivForm] = useState({ id: '', name: '', description: '', quota: 10, icon_name: 'Users' });
+  const [divForm, setDivForm] = useState<{
+    id: string;
+    name: string;
+    description: string;
+    quota: number;
+    icon_name: string;
+    sub_divisions: string[];
+  }>({ id: '', name: '', description: '', quota: 0, icon_name: 'Users', sub_divisions: [] });
 
   // Modal / Form state for Thrift Prod CRUD
   const [isProdModalOpen, setIsProdModalOpen] = useState(false);
@@ -603,19 +610,21 @@ export const Admin: React.FC = () => {
         id: divForm.id,
         name: divForm.name,
         description: divForm.description,
-        quota: Number(divForm.quota),
-        icon_name: divForm.icon_name
+        quota: 0,
+        icon_name: divForm.icon_name,
+        sub_divisions: divForm.sub_divisions
       });
     } else {
       addDivision({
         name: divForm.name,
         description: divForm.description,
-        quota: Number(divForm.quota),
-        icon_name: divForm.icon_name
+        quota: 0,
+        icon_name: divForm.icon_name,
+        sub_divisions: divForm.sub_divisions
       });
     }
     setIsDivModalOpen(false);
-    setDivForm({ id: '', name: '', description: '', quota: 10, icon_name: 'Users' });
+    setDivForm({ id: '', name: '', description: '', quota: 0, icon_name: 'Users', sub_divisions: [] });
   };
 
   // Product submit
@@ -1516,7 +1525,7 @@ export const Admin: React.FC = () => {
               <button
                 id="add-div-btn"
                 onClick={() => {
-                  setDivForm({ id: '', name: '', description: '', quota: 10, icon_name: 'Users' });
+                  setDivForm({ id: '', name: '', description: '', quota: 0, icon_name: 'Users', sub_divisions: [] });
                   setIsDivModalOpen(true);
                 }}
                 className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-black text-xs uppercase px-5 py-2.5 rounded-none border-2 border-decor tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#BD1B1F] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
@@ -1552,12 +1561,18 @@ export const Admin: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="border-t-2 border-blue-sail/10 pt-3 w-full flex items-center justify-between">
-                    <span className="font-mono text-[10px] font-bold text-red-inferno uppercase">Quota: {div.quota} Orang</span>
+                  <div className="border-t-2 border-blue-sail/10 pt-3 w-full flex items-center justify-end">
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => {
-                          setDivForm({ ...div, quota: div.quota });
+                          setDivForm({
+                            id: div.id,
+                            name: div.name,
+                            description: div.description,
+                            quota: 0,
+                            icon_name: div.icon_name,
+                            sub_divisions: div.sub_divisions || []
+                          });
                           setIsDivModalOpen(true);
                         }}
                         className="bg-blue-sail/5 hover:bg-blue-sail hover:text-ballroom p-2 text-blue-sail rounded-none border border-blue-sail transition-colors cursor-pointer"
@@ -2177,48 +2192,99 @@ export const Admin: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold uppercase tracking-wide">Quota Panitia *</label>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={divForm.quota}
-                    onChange={e => setDivForm(prev => ({ ...prev, quota: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold uppercase tracking-wide">Ikon Lucide *</label>
-                  <select
-                    value={divForm.icon_name}
-                    onChange={e => setDivForm(prev => ({ ...prev, icon_name: e.target.value }))}
-                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
-                  >
-                    <option value="CalendarRange">CalendarRange</option>
-                    <option value="MessageSquareShare">MessageSquareShare</option>
-                    <option value="Radio">Radio</option>
-                    <option value="BadgeDollarSign">BadgeDollarSign</option>
-                    <option value="Wrench">Wrench</option>
-                    <option value="Camera">Camera</option>
-                    <option value="ShieldCheck">ShieldCheck</option>
-                    <option value="Users">Users / Standard</option>
-                  </select>
-                </div>
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wide">Ikon Lucide *</label>
+                <select
+                  value={divForm.icon_name}
+                  onChange={e => setDivForm(prev => ({ ...prev, icon_name: e.target.value }))}
+                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                >
+                  <option value="CalendarRange">CalendarRange</option>
+                  <option value="MessageSquareShare">MessageSquareShare</option>
+                  <option value="Radio">Radio</option>
+                  <option value="BadgeDollarSign">BadgeDollarSign</option>
+                  <option value="Wrench">Wrench</option>
+                  <option value="Camera">Camera</option>
+                  <option value="ShieldCheck">ShieldCheck</option>
+                  <option value="Users">Users / Standard</option>
+                </select>
               </div>
 
               <div className="space-y-1">
                 <label className="block text-xs font-bold uppercase tracking-wide">Deskripsi Divisi *</label>
                 <textarea
                   required
-                  rows={4}
+                  rows={3}
                   value={divForm.description}
                   onChange={e => setDivForm(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Isi tugas dan tanggung jawab divisi..."
                   className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
                 />
+              </div>
+
+              {/* Sub-divisions Editor */}
+              <div className="space-y-2 border-t border-blue-sail/10 pt-3">
+                <label className="block text-xs font-bold uppercase tracking-wide">Daftar Sub-Divisi</label>
+                <div className="flex gap-2">
+                  <input
+                    id="new-subdiv-input"
+                    type="text"
+                    placeholder="Nama sub-divisi baru..."
+                    className="flex-1 px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const input = e.currentTarget;
+                        const val = input.value.trim();
+                        if (val && !divForm.sub_divisions.includes(val)) {
+                          setDivForm(prev => ({ ...prev, sub_divisions: [...prev.sub_divisions, val] }));
+                          input.value = '';
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const input = document.getElementById('new-subdiv-input') as HTMLInputElement;
+                      const val = input?.value.trim();
+                      if (val && !divForm.sub_divisions.includes(val)) {
+                        setDivForm(prev => ({ ...prev, sub_divisions: [...prev.sub_divisions, val] }));
+                        if (input) input.value = '';
+                      }
+                    }}
+                    className="bg-blue-sail hover:bg-barbera text-white px-3 py-2 font-mono font-bold text-xs uppercase tracking-wide cursor-pointer transition-all active:translate-y-0.5"
+                  >
+                    Tambah
+                  </button>
+                </div>
+                
+                {(divForm.sub_divisions || []).length === 0 ? (
+                  <p className="text-[10px] text-blue-sail/50 italic font-medium">Belum ada sub-divisi (divisi umum tanpa sub-bagian).</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5 pt-1.5 max-h-[100px] overflow-y-auto">
+                    {(divForm.sub_divisions || []).map((sub, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-blue-sail text-white border border-blue-sail/25 text-[10px] px-2 py-1 font-sans font-semibold flex items-center space-x-1.5"
+                      >
+                        <span>{sub}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDivForm(prev => ({
+                              ...prev,
+                              sub_divisions: (prev.sub_divisions || []).filter((_, i) => i !== idx)
+                            }));
+                          }}
+                          className="text-decor hover:text-red-inferno font-mono font-bold text-[10px] cursor-pointer ml-1"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button
