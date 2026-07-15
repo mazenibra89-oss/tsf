@@ -583,261 +583,429 @@ const SEED_PRODUCTS: ThriftProduct[] = [
 ];
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AppState>(() => {
-    const saved = localStorage.getItem('tsf_state');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        const mergedPhases = (parsed.phases || []).map((p: any) => {
-          const seed = SEED_PHASES.find(s => s.name === p.name);
-          if (seed) {
-            return {
-              ...p,
-              label: seed.label,
-              description: seed.description
-            };
-          }
-          return p;
-        });
-        return {
-          ...parsed,
-          phases: mergedPhases.length > 0 ? mergedPhases : SEED_PHASES,
-          divisions: SEED_DIVISIONS,
-          formQuestions: mergeFormQuestionsWithSeed(parsed.formQuestions)
-        };
-      } catch (e) {
-        console.error('Failed to parse local storage tsf_state:', e);
-      }
-    }
-    return {
-      phases: SEED_PHASES,
-      divisions: SEED_DIVISIONS,
-      staffApplications: [],
-      subEvents: SEED_SUB_EVENTS,
-      competitions: SEED_COMPETITIONS,
-      competitionRegistrations: [],
-      thriftProducts: SEED_PRODUCTS,
-      thriftVendors: SEED_VENDORS,
-      vendorApplications: [],
-      formQuestions: mergeFormQuestionsWithSeed()
-    };
+  const [state, setState] = useState<AppState>({
+    phases: SEED_PHASES,
+    divisions: SEED_DIVISIONS,
+    staffApplications: [],
+    subEvents: SEED_SUB_EVENTS,
+    competitions: SEED_COMPETITIONS,
+    competitionRegistrations: [],
+    thriftProducts: SEED_PRODUCTS,
+    thriftVendors: SEED_VENDORS,
+    vendorApplications: [],
+    formQuestions: mergeFormQuestionsWithSeed()
   });
 
+  const [loading, setLoading] = useState(true);
+
+  // Helper for authenticated requests
+  const authFetch = async (url: string, options: RequestInit = {}) => {
+    const token = localStorage.getItem('tsf_admin_token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+    return fetch(url, { ...options, headers });
+  };
+
+  const fetchState = async () => {
+    try {
+      const res = await fetch('/api/state');
+      if (res.ok) {
+        const data = await res.json();
+        setState(data);
+      }
+    } catch (err) {
+      console.error('Failed to load state from backend:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem('tsf_state', JSON.stringify(state));
-  }, [state]);
+    fetchState();
+  }, []);
 
-  const resetToDefault = () => {
-    setState({
-      phases: SEED_PHASES,
-      divisions: SEED_DIVISIONS,
-      staffApplications: [],
-      subEvents: SEED_SUB_EVENTS,
-      competitions: SEED_COMPETITIONS,
-      competitionRegistrations: [],
-      thriftProducts: SEED_PRODUCTS,
-      thriftVendors: SEED_VENDORS,
-      vendorApplications: [],
-      formQuestions: mergeFormQuestionsWithSeed()
-    });
+  const resetToDefault = async () => {
+    try {
+      const res = await authFetch('/api/reset', { method: 'POST' });
+      if (!res.ok) throw new Error('Reset failed');
+      await fetchState();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to reset to default');
+    }
   };
 
-  const updateFormQuestions = (config: FormQuestionsConfig) => {
-    setState(prev => ({
-      ...prev,
-      formQuestions: normalizeFormQuestions(config)
-    }));
-  };
-
-  const setActivePhase = (phaseName: EventPhase['name']) => {
-    setState(prev => {
-      const updatedPhases = prev.phases.map(p => {
-        if (p.name === phaseName) {
-          return { ...p, status: 'active' as const };
-        } else {
-          return { ...p, status: p.status === 'active' ? 'closed' as const : p.status };
-        }
+  const updateFormQuestions = async (config: FormQuestionsConfig) => {
+    try {
+      const normalized = normalizeFormQuestions(config);
+      const res = await authFetch('/api/form-questions', {
+        method: 'PUT',
+        body: JSON.stringify(normalized)
       });
-
-      // Auto synchronize other models based on active phase
-      const updatedCompetitions = prev.competitions.map(c => {
-        if (phaseName === 'competition') {
-          return { ...c, status: 'active' as const };
-        } else if (phaseName === 'thrift') {
-          return { ...c, status: 'closed' as const };
-        }
-        return c;
-      });
-
-      return {
+      if (!res.ok) throw new Error('Failed to update form questions');
+      setState(prev => ({
         ...prev,
-        phases: updatedPhases,
-        competitions: updatedCompetitions
-      };
-    });
+        formQuestions: normalized
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui konfigurasi pertanyaan.');
+    }
   };
 
-  const updatePhase = (updated: EventPhase) => {
-    setState(prev => ({
-      ...prev,
-      phases: prev.phases.map(p => p.id === updated.id ? updated : p)
-    }));
+  const setActivePhase = async (phaseName: EventPhase['name']) => {
+    try {
+      const res = await authFetch('/api/phases/active', {
+        method: 'POST',
+        body: JSON.stringify({ phaseName })
+      });
+      if (!res.ok) throw new Error('Failed to set active phase');
+      await fetchState();
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengganti fase aktif.');
+    }
+  };
+
+  const updatePhase = async (updated: EventPhase) => {
+    try {
+      const res = await authFetch(`/api/phases/${updated.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updated)
+      });
+      if (!res.ok) throw new Error('Failed to update phase');
+      setState(prev => ({
+        ...prev,
+        phases: prev.phases.map(p => p.id === updated.id ? updated : p)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui detail fase.');
+    }
   };
 
   // Staff application management
-  const addStaffApplication = (app: Omit<StaffApplication, 'id' | 'status' | 'submitted_at'>) => {
-    const newApp: StaffApplication = {
-      ...app,
-      id: `app-s-${Date.now()}`,
-      status: 'pending',
-      submitted_at: new Date().toISOString()
-    };
-    setState(prev => ({
-      ...prev,
-      staffApplications: [newApp, ...prev.staffApplications]
-    }));
+  const addStaffApplication = async (app: Omit<StaffApplication, 'id' | 'status' | 'submitted_at'>) => {
+    try {
+      const res = await fetch('/api/staff-applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(app)
+      });
+      if (!res.ok) throw new Error('Failed to submit staff application');
+      const result = await res.json();
+      
+      const newApp: StaffApplication = {
+        ...app,
+        id: result.id,
+        status: 'pending',
+        submitted_at: new Date().toISOString()
+      };
+      setState(prev => ({
+        ...prev,
+        staffApplications: [newApp, ...prev.staffApplications]
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengirim pendaftaran.');
+    }
   };
 
-  const updateStaffApplicationStatus = (id: string, status: StaffApplication['status']) => {
-    setState(prev => ({
-      ...prev,
-      staffApplications: prev.staffApplications.map(a => a.id === id ? { ...a, status } : a)
-    }));
+  const updateStaffApplicationStatus = async (id: string, status: StaffApplication['status']) => {
+    try {
+      const res = await authFetch(`/api/staff-applications/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) throw new Error('Failed to update status');
+      setState(prev => ({
+        ...prev,
+        staffApplications: prev.staffApplications.map(a => a.id === id ? { ...a, status } : a)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui status pendaftaran.');
+    }
   };
 
-  const addDivision = (div: Omit<Division, 'id'>) => {
-    const newDiv: Division = {
-      ...div,
-      id: `d-${Date.now()}`
-    };
-    setState(prev => ({
-      ...prev,
-      divisions: [...prev.divisions, newDiv]
-    }));
+  const addDivision = async (div: Omit<Division, 'id'>) => {
+    try {
+      const res = await authFetch('/api/divisions', {
+        method: 'POST',
+        body: JSON.stringify(div)
+      });
+      if (!res.ok) throw new Error('Failed to add division');
+      const result = await res.json();
+      const newDiv: Division = { ...div, id: result.id };
+      setState(prev => ({
+        ...prev,
+        divisions: [...prev.divisions, newDiv]
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menambahkan divisi.');
+    }
   };
 
-  const updateDivision = (div: Division) => {
-    setState(prev => ({
-      ...prev,
-      divisions: prev.divisions.map(d => d.id === div.id ? div : d)
-    }));
+  const updateDivision = async (div: Division) => {
+    try {
+      const res = await authFetch(`/api/divisions/${div.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(div)
+      });
+      if (!res.ok) throw new Error('Failed to update division');
+      setState(prev => ({
+        ...prev,
+        divisions: prev.divisions.map(d => d.id === div.id ? div : d)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui divisi.');
+    }
   };
 
-  const deleteDivision = (id: string) => {
-    setState(prev => ({
-      ...prev,
-      divisions: prev.divisions.filter(d => d.id !== id)
-    }));
+  const deleteDivision = async (id: string) => {
+    try {
+      const res = await authFetch(`/api/divisions/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete division');
+      setState(prev => ({
+        ...prev,
+        divisions: prev.divisions.filter(d => d.id !== id)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menghapus divisi.');
+    }
   };
 
   // Sub Events PE1 & PE2
-  const updateSubEvent = (updated: SubEvent) => {
-    setState(prev => ({
-      ...prev,
-      subEvents: prev.subEvents.map(e => e.id === updated.id ? updated : e)
-    }));
+  const updateSubEvent = async (updated: SubEvent) => {
+    try {
+      const res = await authFetch(`/api/sub-events/${updated.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updated)
+      });
+      if (!res.ok) throw new Error('Failed to update sub event');
+      setState(prev => ({
+        ...prev,
+        subEvents: prev.subEvents.map(e => e.id === updated.id ? updated : e)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui sub-event.');
+    }
   };
 
   // Competitions
-  const addCompetition = (comp: Omit<Competition, 'id'>) => {
-    const newComp: Competition = {
-      ...comp,
-      id: `c-${Date.now()}`
-    };
-    setState(prev => ({
-      ...prev,
-      competitions: [...prev.competitions, newComp]
-    }));
+  const addCompetition = async (comp: Omit<Competition, 'id'>) => {
+    try {
+      const res = await authFetch('/api/competitions', {
+        method: 'POST',
+        body: JSON.stringify(comp)
+      });
+      if (!res.ok) throw new Error('Failed to add competition');
+      const result = await res.json();
+      const newComp: Competition = { ...comp, id: result.id };
+      setState(prev => ({
+        ...prev,
+        competitions: [...prev.competitions, newComp]
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menambahkan kompetisi.');
+    }
   };
 
-  const updateCompetition = (comp: Competition) => {
-    setState(prev => ({
-      ...prev,
-      competitions: prev.competitions.map(c => c.id === comp.id ? comp : c)
-    }));
+  const updateCompetition = async (comp: Competition) => {
+    try {
+      const res = await authFetch(`/api/competitions/${comp.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(comp)
+      });
+      if (!res.ok) throw new Error('Failed to update competition');
+      setState(prev => ({
+        ...prev,
+        competitions: prev.competitions.map(c => c.id === comp.id ? comp : c)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui kompetisi.');
+    }
   };
 
-  const deleteCompetition = (id: string) => {
-    setState(prev => ({
-      ...prev,
-      competitions: prev.competitions.filter(c => c.id !== id)
-    }));
+  const deleteCompetition = async (id: string) => {
+    try {
+      const res = await authFetch(`/api/competitions/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete competition');
+      setState(prev => ({
+        ...prev,
+        competitions: prev.competitions.filter(c => c.id !== id)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menghapus kompetisi.');
+    }
   };
 
-  const addCompetitionRegistration = (reg: Omit<CompetitionRegistration, 'id' | 'submitted_at'>) => {
-    const newReg: CompetitionRegistration = {
-      ...reg,
-      id: `reg-c-${Date.now()}`,
-      submitted_at: new Date().toISOString()
-    };
-    setState(prev => ({
-      ...prev,
-      competitionRegistrations: [newReg, ...prev.competitionRegistrations]
-    }));
+  const addCompetitionRegistration = async (reg: Omit<CompetitionRegistration, 'id' | 'submitted_at'>) => {
+    try {
+      const res = await fetch('/api/competition-registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reg)
+      });
+      if (!res.ok) throw new Error('Failed to submit competition registration');
+      const result = await res.json();
+      const newReg: CompetitionRegistration = {
+        ...reg,
+        id: result.id,
+        submitted_at: new Date().toISOString()
+      };
+      setState(prev => ({
+        ...prev,
+        competitionRegistrations: [newReg, ...prev.competitionRegistrations]
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengirim pendaftaran kompetisi.');
+    }
   };
 
   // Thrift Vendor & Catalog Product
-  const addThriftVendor = (vendor: Omit<ThriftVendor, 'id'>) => {
-    const newVendor: ThriftVendor = {
-      ...vendor,
-      id: `v-${Date.now()}`
-    };
-    setState(prev => ({
-      ...prev,
-      thriftVendors: [...prev.thriftVendors, newVendor]
-    }));
+  const addThriftVendor = async (vendor: Omit<ThriftVendor, 'id'>) => {
+    try {
+      const res = await authFetch('/api/thrift-vendors', {
+        method: 'POST',
+        body: JSON.stringify(vendor)
+      });
+      if (!res.ok) throw new Error('Failed to add vendor');
+      const result = await res.json();
+      const newVendor: ThriftVendor = { ...vendor, id: result.id };
+      setState(prev => ({
+        ...prev,
+        thriftVendors: [...prev.thriftVendors, newVendor]
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menambahkan vendor.');
+    }
   };
 
-  const updateThriftVendor = (vendor: ThriftVendor) => {
-    setState(prev => ({
-      ...prev,
-      thriftVendors: prev.thriftVendors.map(v => v.id === vendor.id ? vendor : v)
-    }));
+  const updateThriftVendor = async (vendor: ThriftVendor) => {
+    try {
+      const res = await authFetch(`/api/thrift-vendors/${vendor.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(vendor)
+      });
+      if (!res.ok) throw new Error('Failed to update vendor');
+      setState(prev => ({
+        ...prev,
+        thriftVendors: prev.thriftVendors.map(v => v.id === vendor.id ? vendor : v)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui vendor.');
+    }
   };
 
-  const deleteThriftVendor = (id: string) => {
-    setState(prev => ({
-      ...prev,
-      thriftVendors: prev.thriftVendors.filter(v => v.id !== id),
-      thriftProducts: prev.thriftProducts.filter(p => p.vendor_id !== id) // cascade delete products from vendor
-    }));
+  const deleteThriftVendor = async (id: string) => {
+    try {
+      const res = await authFetch(`/api/thrift-vendors/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete vendor');
+      setState(prev => ({
+        ...prev,
+        thriftVendors: prev.thriftVendors.filter(v => v.id !== id),
+        thriftProducts: prev.thriftProducts.filter(p => p.vendor_id !== id)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menghapus vendor.');
+    }
   };
 
-  const addThriftProduct = (prod: Omit<ThriftProduct, 'id'>) => {
-    const newProd: ThriftProduct = {
-      ...prod,
-      id: `p-${Date.now()}`
-    };
-    setState(prev => ({
-      ...prev,
-      thriftProducts: [newProd, ...prev.thriftProducts]
-    }));
+  const addThriftProduct = async (prod: Omit<ThriftProduct, 'id'>) => {
+    try {
+      const res = await authFetch('/api/thrift-products', {
+        method: 'POST',
+        body: JSON.stringify(prod)
+      });
+      if (!res.ok) throw new Error('Failed to add product');
+      const result = await res.json();
+      const newProd: ThriftProduct = { ...prod, id: result.id };
+      setState(prev => ({
+        ...prev,
+        thriftProducts: [newProd, ...prev.thriftProducts]
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menambahkan produk.');
+    }
   };
 
-  const updateThriftProduct = (prod: ThriftProduct) => {
-    setState(prev => ({
-      ...prev,
-      thriftProducts: prev.thriftProducts.map(p => p.id === prod.id ? prod : p)
-    }));
+  const updateThriftProduct = async (prod: ThriftProduct) => {
+    try {
+      const res = await authFetch(`/api/thrift-products/${prod.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(prod)
+      });
+      if (!res.ok) throw new Error('Failed to update product');
+      setState(prev => ({
+        ...prev,
+        thriftProducts: prev.thriftProducts.map(p => p.id === prod.id ? prod : p)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui produk.');
+    }
   };
 
-  const deleteThriftProduct = (id: string) => {
-    setState(prev => ({
-      ...prev,
-      thriftProducts: prev.thriftProducts.filter(p => p.id !== id)
-    }));
+  const deleteThriftProduct = async (id: string) => {
+    try {
+      const res = await authFetch(`/api/thrift-products/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete product');
+      setState(prev => ({
+        ...prev,
+        thriftProducts: prev.thriftProducts.filter(p => p.id !== id)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menghapus produk.');
+    }
   };
 
-  const addVendorApplication = (app: Omit<VendorApplication, 'id' | 'submitted_at'>) => {
-    const newApp: VendorApplication = {
-      ...app,
-      id: `app-v-${Date.now()}`,
-      submitted_at: new Date().toISOString()
-    };
-    setState(prev => ({
-      ...prev,
-      vendorApplications: [newApp, ...prev.vendorApplications]
-    }));
+  const addVendorApplication = async (app: Omit<VendorApplication, 'id' | 'submitted_at'>) => {
+    try {
+      const res = await fetch('/api/vendor-applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(app)
+      });
+      if (!res.ok) throw new Error('Failed to submit vendor application');
+      const result = await res.json();
+      const newApp: VendorApplication = {
+        ...app,
+        id: result.id,
+        submitted_at: new Date().toISOString()
+      };
+      setState(prev => ({
+        ...prev,
+        vendorApplications: [newApp, ...prev.vendorApplications]
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengirim pendaftaran vendor.');
+    }
   };
 
   return (

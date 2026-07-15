@@ -227,18 +227,33 @@ export const Admin: React.FC = () => {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [adminAccounts, setAdminAccounts] = useState<{username: string, password: string}[]>(() => {
-    const saved = localStorage.getItem('tsf_admin_accounts');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {}
+  const [adminAccounts, setAdminAccounts] = useState<{username: string}[]>([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('tsf_admin_token');
+    if (token) {
+      setIsAuthenticated(true);
     }
-    const initial = [{ username: 'admin', password: 'admin123' }];
-    localStorage.setItem('tsf_admin_accounts', JSON.stringify(initial));
-    return initial;
-  });
+  }, []);
+
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const token = localStorage.getItem('tsf_admin_token');
+        const res = await fetch('/api/auth/admins', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAdminAccounts(data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchAdmins();
+  }, [isAuthenticated]);
 
   // Active sub-dashboard section tab state
   const [activeTab, setActiveTab] = useState<'overview' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control'>('overview');
@@ -479,20 +494,28 @@ export const Admin: React.FC = () => {
   // Modal / Form state for Thrift Vendor CRUD
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
   const [vendorFormState, setVendorFormState] = useState({ id: '', vendor_name: '', booth_location: '', contact: '', status: 'active' as const });
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = usernameInput.trim().toLowerCase();
-    const pass = passwordInput;
-    const account = adminAccounts.find(acc => acc.username.toLowerCase() === user && acc.password === pass);
-    if (account) {
-      setIsAuthenticated(true);
-      setLoginError('');
-    } else {
-      setLoginError('Username atau kata sandi salah!');
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: usernameInput, password: passwordInput })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('tsf_admin_token', data.token);
+        localStorage.setItem('tsf_admin_username', data.username);
+        setIsAuthenticated(true);
+        setLoginError('');
+      } else {
+        const data = await res.json();
+        setLoginError(data.message || 'Username atau kata sandi salah!');
+      }
+    } catch (err) {
+      setLoginError('Koneksi ke server gagal.');
     }
   };
-
   // CSV Exporter Helper
   const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
     const csvContent = "data:text/csv;charset=utf-8," 
@@ -1296,7 +1319,7 @@ export const Admin: React.FC = () => {
                 </h3>
                 
                 <form
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
                     const target = e.target as any;
                     const username = target.username.value.trim();
@@ -1318,11 +1341,27 @@ export const Admin: React.FC = () => {
                       return;
                     }
 
-                    const updated = [...adminAccounts, { username, password }];
-                    setAdminAccounts(updated);
-                    localStorage.setItem('tsf_admin_accounts', JSON.stringify(updated));
-                    target.reset();
-                    alert(`Akun "${username}" berhasil ditambahkan.`);
+                    try {
+                      const token = localStorage.getItem('tsf_admin_token');
+                      const res = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ username, password })
+                      });
+                      if (res.ok) {
+                        setAdminAccounts(prev => [...prev, { username }]);
+                        target.reset();
+                        alert(`Akun "${username}" berhasil ditambahkan.`);
+                      } else {
+                        const data = await res.json();
+                        alert(data.message || 'Gagal menambahkan akun.');
+                      }
+                    } catch (err) {
+                      alert('Koneksi ke server gagal.');
+                    }
                   }}
                   className="space-y-4"
                 >
