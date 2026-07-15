@@ -734,9 +734,10 @@ export const Staff: React.FC = () => {
     const errors: Record<string, string> = {};
     const generalQuestions = formQuestions?.generalTask || [];
     generalQuestions.forEach(q => {
-      const val = GENERAL_TASK_FIELD_IDS.has(q.id) 
-        ? (formData[q.id as keyof typeof formData] as string || '').trim()
-        : getCustomAnswerValue('generalTask', q.id).trim();
+      const raw = GENERAL_TASK_FIELD_IDS.has(q.id) 
+        ? formData[q.id as keyof typeof formData]
+        : getCustomAnswerValue('generalTask', q.id);
+      const val = (raw === undefined || raw === null) ? '' : String(raw).trim();
 
       if (q.required !== false && !val) {
         errors[GENERAL_TASK_FIELD_IDS.has(q.id) ? q.id : `generalTask_${q.id}`] = 'Jawaban wajib diisi';
