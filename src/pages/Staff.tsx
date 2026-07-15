@@ -8,6 +8,7 @@ export interface Question {
   text: string;
   type: 'text' | 'select';
   options?: string[];
+  required?: boolean;
 }
 
 export const DEFAULT_QUESTIONS: Question[] = [
@@ -704,23 +705,20 @@ export const Staff: React.FC = () => {
 
   const validateStep2 = () => {
     const errors: Record<string, string> = {};
-    if (!formData.generalKnowledge.trim()) errors.generalKnowledge = 'Jawaban wajib diisi';
-    if (!formData.generalMotivation.trim()) errors.generalMotivation = 'Jawaban wajib diisi';
-    if (!formData.experience.trim()) errors.experience = 'Jawaban wajib diisi';
-    if (!formData.strengthsWeaknesses.trim()) errors.strengthsWeaknesses = 'Jawaban wajib diisi';
-    if (!formData.commitmentForm.trim()) errors.commitmentForm = 'Jawaban wajib diisi';
-    if (!formData.busySchedule.trim()) errors.busySchedule = 'Jawaban wajib diisi';
-    if (!formData.relations.trim()) errors.relations = 'Jawaban wajib diisi';
+    const generalQuestions = formQuestions?.generalTask || [];
+    generalQuestions.forEach(q => {
+      const val = GENERAL_TASK_FIELD_IDS.has(q.id) 
+        ? (formData[q.id as keyof typeof formData] as string || '').trim()
+        : getCustomAnswerValue('generalTask', q.id).trim();
+
+      if (q.required !== false && !val) {
+        errors[GENERAL_TASK_FIELD_IDS.has(q.id) ? q.id : `generalTask_${q.id}`] = 'Jawaban wajib diisi';
+      }
+    });
+
     if (formData.paidIkoma === 'yes' && !formData.ikomaProofUrl) {
       errors.ikomaProofUrl = 'Bukti pembayaran IKOMA wajib diunggah';
     }
-
-    const customGeneralTaskFields = (formQuestions?.generalTask || []).filter(q => !GENERAL_TASK_FIELD_IDS.has(q.id));
-    customGeneralTaskFields.forEach(q => {
-      if (q.required !== false && !getCustomAnswerValue('generalTask', q.id).trim()) {
-        errors[`generalTask_${q.id}`] = 'Jawaban wajib diisi';
-      }
-    });
 
     setFormErrors(prev => {
       const cleanErrors = { ...prev };
@@ -764,20 +762,16 @@ export const Staff: React.FC = () => {
     const questions1 = getDivisionQuestions(formData.priority1);
     questions1.forEach(q => {
       const val = answersP1[q.id]?.trim() || '';
-      if (!val) {
+      if (q.required !== false && !val) {
         errors[`p1_q_${q.id}`] = 'Jawaban ini wajib diisi';
-      } else if (q.type === 'text' && val.length < 15) {
-        errors[`p1_q_${q.id}`] = 'Jawaban minimal 15 karakter';
       }
     });
 
     const questions2 = getDivisionQuestions(formData.priority2);
     questions2.forEach(q => {
       const val = answersP2[q.id]?.trim() || '';
-      if (!val) {
+      if (q.required !== false && !val) {
         errors[`p2_q_${q.id}`] = 'Jawaban ini wajib diisi';
-      } else if (q.type === 'text' && val.length < 15) {
-        errors[`p2_q_${q.id}`] = 'Jawaban minimal 15 karakter';
       }
     });
 

@@ -23,20 +23,42 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
           <h4 className="font-display font-extrabold text-xl text-decor uppercase tracking-widest border-b-2 border-decor pb-2 px-6">
             Hubungi Kami
           </h4>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm font-sans text-ballroom/95 w-full">
-            <div className="flex items-center space-x-3 bg-blue-sail/20 px-5 py-3 border border-decor/20 max-w-xs w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch justify-center gap-8 text-sm font-sans text-ballroom/95 w-full max-w-2xl">
+            <div className="flex items-center space-x-3 bg-blue-sail/20 px-5 py-3 border border-decor/20 flex-1">
               <Icon name="Phone" size={18} className="text-decor shrink-0" />
-              <div className="text-left">
+              <div className="text-left space-y-1">
                 <p className="font-semibold text-decor text-xs uppercase tracking-wide">WhatsApp Hotline</p>
-                <p className="font-mono text-xs mt-0.5">+62 812-3456-7890 (Mazen)</p>
+                <a
+                  href="https://wa.me/6287812126693"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block font-mono text-xs hover:text-decor transition-colors"
+                >
+                  +62 878-1212-6693 (Atar)
+                </a>
+                <a
+                  href="https://wa.me/6285366050293"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block font-mono text-xs hover:text-decor transition-colors"
+                >
+                  +62 853-6605-0293 (Reza)
+                </a>
               </div>
             </div>
 
-            <div className="flex items-center space-x-3 bg-blue-sail/20 px-5 py-3 border border-decor/20 max-w-xs w-full sm:w-auto">
+            <div className="flex items-center space-x-3 bg-blue-sail/20 px-5 py-3 border border-decor/20 flex-1">
               <Icon name="Instagram" size={18} className="text-decor shrink-0" />
               <div className="text-left">
                 <p className="font-semibold text-decor text-xs uppercase tracking-wide">Instagram Resmi</p>
-                <p className="font-mono text-xs mt-0.5">@tsf.festival2026</p>
+                <a
+                  href="https://instagram.com/tdcsummitfest_its"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block font-mono text-xs mt-0.5 hover:text-decor transition-colors"
+                >
+                  @tdcsummitfest_its
+                </a>
               </div>
             </div>
           </div>

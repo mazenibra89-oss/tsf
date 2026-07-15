@@ -300,7 +300,7 @@ export const Admin: React.FC = () => {
     }
   }, [localFormConfig, divisions, selectedConfigDivision]);
 
-  const handleDataDiriChange = (id: string, field: 'label' | 'placeholder', value: string) => {
+  const handleDataDiriChange = (id: string, field: 'label' | 'placeholder' | 'required', value: any) => {
     if (!localFormConfig) return;
     setLocalFormConfig(prev => {
       if (!prev) return null;
@@ -338,7 +338,7 @@ export const Admin: React.FC = () => {
     });
   };
 
-  const handleGeneralTaskChange = (id: string, field: 'text' | 'placeholder', value: string) => {
+  const handleGeneralTaskChange = (id: string, field: 'text' | 'placeholder' | 'required', value: any) => {
     if (!localFormConfig) return;
     setLocalFormConfig(prev => {
       if (!prev) return null;
@@ -376,7 +376,7 @@ export const Admin: React.FC = () => {
     });
   };
 
-  const handleBerkasChange = (id: string, field: 'label' | 'placeholder', value: string) => {
+  const handleBerkasChange = (id: string, field: 'label' | 'placeholder' | 'required', value: any) => {
     if (!localFormConfig) return;
     setLocalFormConfig(prev => {
       if (!prev) return null;
@@ -414,7 +414,7 @@ export const Admin: React.FC = () => {
     });
   };
 
-  const handleDivisionQuestionChange = (divName: string, qId: string, field: 'text' | 'type' | 'options', value: any) => {
+  const handleDivisionQuestionChange = (divName: string, qId: string, field: 'text' | 'type' | 'options' | 'required', value: any) => {
     if (!localFormConfig) return;
     setLocalFormConfig(prev => {
       if (!prev) return null;
@@ -1692,6 +1692,18 @@ export const Admin: React.FC = () => {
                             className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
                           />
                         </div>
+
+                        <div className="flex items-center pt-1">
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={field.required !== false}
+                              onChange={e => handleDataDiriChange(field.id, 'required', e.target.checked)}
+                              className="h-3.5 w-3.5 border-2 border-blue-sail rounded-none"
+                            />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-sail/75">Wajib Diisi (Required)</span>
+                          </label>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1852,6 +1864,18 @@ export const Admin: React.FC = () => {
                             />
                           </div>
                         )}
+
+                        <div className="flex items-center pt-1">
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={q.required !== false}
+                              onChange={e => handleGeneralTaskChange(q.id, 'required', e.target.checked)}
+                              className="h-3.5 w-3.5 border-2 border-blue-sail rounded-none"
+                            />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-sail/75">Wajib Diisi (Required)</span>
+                          </label>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1911,6 +1935,18 @@ export const Admin: React.FC = () => {
                             onChange={e => handleBerkasChange(field.id, 'placeholder', e.target.value)}
                             className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none focus:shadow-[2px_2px_0_0_#2A4C9E]"
                           />
+                        </div>
+
+                        <div className="flex items-center pt-1">
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={field.required !== false}
+                              onChange={e => handleBerkasChange(field.id, 'required', e.target.checked)}
+                              className="h-3.5 w-3.5 border-2 border-blue-sail rounded-none"
+                            />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-sail/75">Wajib Diisi (Required)</span>
+                          </label>
                         </div>
                       </div>
                     ))}
@@ -2135,6 +2171,18 @@ export const Admin: React.FC = () => {
                                       />
                                     </div>
                                   )}
+
+                                  <div className="flex items-center pt-1.5">
+                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={q.required !== false}
+                                        onChange={e => handleDivisionQuestionChange(selectedConfigDivision, q.id, 'required', e.target.checked)}
+                                        className="h-3.5 w-3.5 border-2 border-blue-sail rounded-none"
+                                      />
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-sail/75">Wajib Diisi (Required)</span>
+                                    </label>
+                                  </div>
                                 </div>
                               </div>
                             </div>
