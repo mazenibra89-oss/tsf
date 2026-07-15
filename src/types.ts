@@ -14,13 +14,22 @@ export interface EventPhase {
   cta_link: string;
 }
 
+export interface SubDivisionConfig {
+  name: string;
+  description: string;
+  jobdesk: string[];
+  skills: string;
+}
+
 export interface Division {
   id: string;
   name: string;
-  description: string;
+  description: string; // Will store either raw text (fallback) or stringified JSON { tugasPokok, jobdesk, skills }
   quota: number;
-  icon_name: string; // references lucide-react icon names
-  sub_divisions?: string[];
+  icon_name: string;
+  sub_divisions?: SubDivisionConfig[];
+  jobdesk?: string[];
+  skills?: string;
 }
 
 export interface StaffApplication {

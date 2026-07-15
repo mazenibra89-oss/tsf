@@ -484,9 +484,36 @@ export const DIVISION_CONTENT: Record<string, DivDetail> = {
   }
 };
 
-export const getNormalizedContent = (name: string): DivDetail => {
+export const getNormalizedContent = (name: string, divisions: Division[] = []): DivDetail => {
   const aliasName = DIVISION_CONTENT_KEY_ALIASES[name] || name;
   const normalized = aliasName.toLowerCase().replace(/\s+/g, ' ').trim();
+
+  // Search in database divisions
+  const matchedDiv = (divisions || []).find(d => d.name.toLowerCase().replace(/\s+/g, ' ').trim() === normalized);
+  if (matchedDiv) {
+    return {
+      tugasPokok: matchedDiv.description,
+      jobdesk: matchedDiv.jobdesk || [],
+      skills: matchedDiv.skills || ''
+    };
+  }
+
+  // Search inside subdivisions of all divisions
+  for (const d of (divisions || [])) {
+    if (d.sub_divisions) {
+      for (const sub of d.sub_divisions) {
+        const subName = typeof sub === 'string' ? sub : sub.name;
+        if (subName.toLowerCase().replace(/\s+/g, ' ').trim() === normalized) {
+          return {
+            tugasPokok: typeof sub === 'string' ? '' : sub.description,
+            jobdesk: typeof sub === 'string' ? [] : sub.jobdesk || [],
+            skills: typeof sub === 'string' ? '' : sub.skills || ''
+          };
+        }
+      }
+    }
+  }
+
   const matchedKey = Object.keys(DIVISION_CONTENT).find(key => {
     return key.toLowerCase().replace(/\s+/g, ' ').trim() === normalized;
   });
@@ -996,7 +1023,7 @@ export const Staff: React.FC = () => {
 
   // Division detailed expectations helper
   const getDivExpectations = (divName: string) => {
-    const content = getNormalizedContent(divName);
+    const content = getNormalizedContent(divName, divisions);
     return {
       jobdesk: content.jobdesk,
       skills: content.skills
@@ -1137,7 +1164,7 @@ export const Staff: React.FC = () => {
               }
 
               const activeContentName = activeSubDivTab === 'Overview' ? activeDiv.name : activeSubDivTab;
-              const contentData = getNormalizedContent(activeContentName);
+              const contentData = getNormalizedContent(activeContentName, divisions);
 
               return (
                 <div className="flex-1 p-5 sm:p-6 bg-white flex flex-col justify-between text-blue-sail relative">
@@ -1171,13 +1198,14 @@ export const Staff: React.FC = () => {
                           Overview
                         </button>
                         {activeDiv.sub_divisions.map((sub, idx) => {
-                          const displayLabel = sub.replace(/Sub Divisi (Event - |Operasional - |BnM - |Finance - )?/i, '');
-                          const isSelected = activeSubDivTab === sub;
+                          const subName = typeof sub === 'string' ? sub : sub.name;
+                          const displayLabel = subName.replace(/Sub Divisi (Event - |Operasional - |BnM - |Finance - )?/i, '');
+                          const isSelected = activeSubDivTab === subName;
                           return (
                             <button
                               type="button"
                               key={idx}
-                              onClick={() => setActiveSubDivTab(sub)}
+                              onClick={() => setActiveSubDivTab(subName)}
                               className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${isSelected
                                   ? 'bg-blue-sail text-white border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]'
                                   : 'bg-white text-blue-sail hover:bg-blue-sail/10 border-blue-sail/15'
@@ -1204,16 +1232,19 @@ export const Staff: React.FC = () => {
                           <div className="space-y-1.5">
                             <span className="font-mono text-[9px] font-bold uppercase text-blue-sail/40 tracking-wider">Daftar Sub-Divisi (Klik Tombol Di Atas Untuk Detail):</span>
                             <div className="flex flex-wrap gap-1.5">
-                              {activeDiv.sub_divisions.map((sub, idx) => (
-                                <button
-                                  type="button"
-                                  key={idx}
-                                  onClick={() => setActiveSubDivTab(sub)}
-                                  className="bg-blue-sail/5 hover:bg-blue-sail/10 text-blue-sail border border-blue-sail/15 text-[10px] px-2.5 py-1 font-sans font-semibold transition-all cursor-pointer"
-                                >
-                                  {sub.replace(/Sub Divisi (Event - |Operasional - |BnM - |Finance - )?/i, '')} →
-                                </button>
-                              ))}
+                              {activeDiv.sub_divisions.map((sub, idx) => {
+                                const subName = typeof sub === 'string' ? sub : sub.name;
+                                return (
+                                  <button
+                                    type="button"
+                                    key={idx}
+                                    onClick={() => setActiveSubDivTab(subName)}
+                                    className="bg-blue-sail/5 hover:bg-blue-sail/10 text-blue-sail border border-blue-sail/15 text-[10px] px-2.5 py-1 font-sans font-semibold transition-all cursor-pointer"
+                                  >
+                                    {subName.replace(/Sub Divisi (Event - |Operasional - |BnM - |Finance - )?/i, '')} →
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -2049,11 +2080,14 @@ export const Staff: React.FC = () => {
                               if (d.sub_divisions && d.sub_divisions.length > 0) {
                                 return (
                                   <optgroup key={d.id} label={d.name} className="font-mono font-bold text-xs uppercase bg-ballroom text-blue-sail">
-                                    {d.sub_divisions.map((sub, idx) => (
-                                      <option key={`${d.id}-${idx}`} value={sub} className="font-sans normal-case text-sm bg-white text-blue-sail">
-                                        {sub}
-                                      </option>
-                                    ))}
+                                    {d.sub_divisions.map((sub, idx) => {
+                                      const subName = typeof sub === 'string' ? sub : sub.name;
+                                      return (
+                                        <option key={`${d.id}-${idx}`} value={subName} className="font-sans normal-case text-sm bg-white text-blue-sail">
+                                          {subName}
+                                        </option>
+                                      );
+                                    })}
                                   </optgroup>
                                 );
                               } else {
@@ -2088,11 +2122,14 @@ export const Staff: React.FC = () => {
                               if (d.sub_divisions && d.sub_divisions.length > 0) {
                                 return (
                                   <optgroup key={d.id} label={d.name} className="font-mono font-bold text-xs uppercase bg-ballroom text-blue-sail">
-                                    {d.sub_divisions.map((sub, idx) => (
-                                      <option key={`${d.id}-${idx}`} value={sub} className="font-sans normal-case text-sm bg-white text-blue-sail">
-                                        {sub}
-                                      </option>
-                                    ))}
+                                    {d.sub_divisions.map((sub, idx) => {
+                                      const subName = typeof sub === 'string' ? sub : sub.name;
+                                      return (
+                                        <option key={`${d.id}-${idx}`} value={subName} className="font-sans normal-case text-sm bg-white text-blue-sail">
+                                          {subName}
+                                        </option>
+                                      );
+                                    })}
                                   </optgroup>
                                 );
                               } else {
@@ -2505,12 +2542,15 @@ export const Staff: React.FC = () => {
                 <div className="space-y-2">
                   <span className="font-mono text-[10px] font-black uppercase text-red-inferno tracking-widest">// SUB-DIVISI KEPANITIAAN</span>
                   <div className="flex flex-wrap gap-2">
-                    {selectedDiv.sub_divisions.map((sub, i) => (
-                      <span key={i} className="bg-blue-sail/5 text-blue-sail border border-blue-sail/25 text-xs font-semibold px-3 py-1.5 rounded-none font-sans flex items-center space-x-1.5">
-                        <span className="w-1.5 h-1.5 bg-decor rounded-full" />
-                        <span>{sub}</span>
-                      </span>
-                    ))}
+                    {selectedDiv.sub_divisions.map((sub, i) => {
+                      const subName = typeof sub === 'string' ? sub : sub.name;
+                      return (
+                        <span key={i} className="bg-blue-sail/5 text-blue-sail border border-blue-sail/25 text-xs font-semibold px-3 py-1.5 rounded-none font-sans flex items-center space-x-1.5">
+                          <span className="w-1.5 h-1.5 bg-decor rounded-full" />
+                          <span>{subName}</span>
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               )}

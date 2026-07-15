@@ -272,7 +272,10 @@ export const Admin: React.FC = () => {
 
     divisions.forEach(div => {
       if (div.sub_divisions && div.sub_divisions.length > 0) {
-        div.sub_divisions.forEach(sub => keys.add(sub));
+        div.sub_divisions.forEach(sub => {
+          const subName = typeof sub === 'string' ? sub : sub.name;
+          keys.add(subName);
+        });
       } else {
         keys.add(div.name);
       }
@@ -491,8 +494,19 @@ export const Admin: React.FC = () => {
     description: string;
     quota: number;
     icon_name: string;
-    sub_divisions: string[];
-  }>({ id: '', name: '', description: '', quota: 0, icon_name: 'Users', sub_divisions: [] });
+    sub_divisions: any[];
+    jobdesk: string[];
+    skills: string;
+  }>({
+    id: '',
+    name: '',
+    description: '',
+    quota: 0,
+    icon_name: 'Users',
+    sub_divisions: [],
+    jobdesk: [],
+    skills: ''
+  });
 
   // Modal / Form state for Thrift Prod CRUD
   const [isProdModalOpen, setIsProdModalOpen] = useState(false);
@@ -612,7 +626,9 @@ export const Admin: React.FC = () => {
         description: divForm.description,
         quota: 0,
         icon_name: divForm.icon_name,
-        sub_divisions: divForm.sub_divisions
+        sub_divisions: divForm.sub_divisions,
+        jobdesk: divForm.jobdesk,
+        skills: divForm.skills
       });
     } else {
       addDivision({
@@ -620,11 +636,13 @@ export const Admin: React.FC = () => {
         description: divForm.description,
         quota: 0,
         icon_name: divForm.icon_name,
-        sub_divisions: divForm.sub_divisions
+        sub_divisions: divForm.sub_divisions,
+        jobdesk: divForm.jobdesk,
+        skills: divForm.skills
       });
     }
     setIsDivModalOpen(false);
-    setDivForm({ id: '', name: '', description: '', quota: 0, icon_name: 'Users', sub_divisions: [] });
+    setDivForm({ id: '', name: '', description: '', quota: 0, icon_name: 'Users', sub_divisions: [], jobdesk: [], skills: '' });
   };
 
   // Product submit
@@ -1014,11 +1032,14 @@ export const Admin: React.FC = () => {
                       if (d.sub_divisions && d.sub_divisions.length > 0) {
                         return (
                           <optgroup key={d.id} label={d.name} className="font-mono font-bold text-[10px] uppercase bg-ballroom text-blue-sail">
-                            {d.sub_divisions.map((sub, idx) => (
-                              <option key={`${d.id}-${idx}`} value={sub} className="font-sans normal-case text-xs bg-white text-blue-sail">
-                                {sub}
-                              </option>
-                            ))}
+                            {d.sub_divisions.map((sub, idx) => {
+                              const subName = typeof sub === 'string' ? sub : sub.name;
+                              return (
+                                <option key={`${d.id}-${idx}`} value={subName} className="font-sans normal-case text-xs bg-white text-blue-sail">
+                                  {subName}
+                                </option>
+                              );
+                            })}
                           </optgroup>
                         );
                       } else {
@@ -1525,7 +1546,7 @@ export const Admin: React.FC = () => {
               <button
                 id="add-div-btn"
                 onClick={() => {
-                  setDivForm({ id: '', name: '', description: '', quota: 0, icon_name: 'Users', sub_divisions: [] });
+                  setDivForm({ id: '', name: '', description: '', quota: 0, icon_name: 'Users', sub_divisions: [], jobdesk: [], skills: '' });
                   setIsDivModalOpen(true);
                 }}
                 className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-black text-xs uppercase px-5 py-2.5 rounded-none border-2 border-decor tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#BD1B1F] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
@@ -1553,7 +1574,7 @@ export const Admin: React.FC = () => {
                         <div className="flex flex-wrap gap-1">
                           {div.sub_divisions.map((sub, idx) => (
                             <span key={idx} className="bg-blue-sail/5 text-blue-sail border border-blue-sail/15 text-[9px] px-1.5 py-0.5 font-sans font-medium">
-                              {sub}
+                              {typeof sub === 'string' ? sub : sub.name}
                             </span>
                           ))}
                         </div>
@@ -1571,7 +1592,9 @@ export const Admin: React.FC = () => {
                             description: div.description,
                             quota: 0,
                             icon_name: div.icon_name,
-                            sub_divisions: div.sub_divisions || []
+                            sub_divisions: div.sub_divisions || [],
+                            jobdesk: div.jobdesk || [],
+                            skills: div.skills || ''
                           });
                           setIsDivModalOpen(true);
                         }}
@@ -1974,9 +1997,10 @@ export const Admin: React.FC = () => {
                         {divisions.map(d => (
                           d.sub_divisions && d.sub_divisions.length > 0 ? (
                             <optgroup key={d.id} label={d.name}>
-                              {d.sub_divisions.map(sub => (
-                                <option key={sub} value={sub}>{sub}</option>
-                              ))}
+                              {d.sub_divisions.map(sub => {
+                                const subName = typeof sub === 'string' ? sub : sub.name;
+                                return <option key={subName} value={subName}>{subName}</option>;
+                              })}
                             </optgroup>
                           ) : (
                             <option key={d.id} value={d.name}>{d.name}</option>
@@ -1984,7 +2008,7 @@ export const Admin: React.FC = () => {
                         ))}
                         {/* Fallback to keys in config if they are not in divisions */}
                         {Object.keys(localFormConfig.divisionTasks).map(key => {
-                          const isSelectable = divisions.some(d => d.name === key || (d.sub_divisions || []).includes(key));
+                          const isSelectable = divisions.some(d => d.name === key || (d.sub_divisions || []).some(sub => (typeof sub === 'string' ? sub : sub.name) === key));
                           if (!isSelectable) {
                             return <option key={key} value={key}>{key}</option>;
                           }
@@ -2217,8 +2241,8 @@ export const Admin: React.FC = () => {
       {/* MODAL: DIVISIA ADD/EDIT */}
       {isDivModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn font-sans text-blue-sail">
-          <div className="bg-ballroom w-full max-w-md rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#2A4C9E] overflow-hidden">
-            <div className="bg-blue-sail text-ballroom p-5 flex justify-between items-center border-b-4 border-decor">
+          <div className="bg-ballroom w-full max-w-2xl rounded-none border-4 border-blue-sail shadow-[8px_8px_0_0_#2A4C9E] overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-blue-sail text-ballroom p-5 flex justify-between items-center border-b-4 border-decor shrink-0">
               <h3 className="font-display font-black text-base uppercase tracking-tight text-decor">
                 {divForm.id ? 'Edit Divisi Panitia' : 'Tambah Divisi Baru'}
               </h3>
@@ -2227,120 +2251,207 @@ export const Admin: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleDivSubmit} className="p-6 space-y-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-bold uppercase tracking-wide">Nama Divisi *</label>
-                <input
-                  type="text"
-                  required
-                  value={divForm.name}
-                  onChange={e => setDivForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Contoh: Acara (Event Planner)"
-                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
-                />
+            <form onSubmit={handleDivSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Nama Divisi *</label>
+                  <input
+                    type="text"
+                    required
+                    value={divForm.name}
+                    onChange={e => setDivForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Contoh: Acara (Event Planner)"
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wide">Ikon Lucide *</label>
+                  <select
+                    value={divForm.icon_name}
+                    onChange={e => setDivForm(prev => ({ ...prev, icon_name: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                  >
+                    <option value="CalendarRange">CalendarRange</option>
+                    <option value="MessageSquareShare">MessageSquareShare</option>
+                    <option value="Radio">Radio</option>
+                    <option value="BadgeDollarSign">BadgeDollarSign</option>
+                    <option value="Wrench">Wrench</option>
+                    <option value="Camera">Camera</option>
+                    <option value="ShieldCheck">ShieldCheck</option>
+                    <option value="Users">Users / Standard</option>
+                  </select>
+                </div>
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold uppercase tracking-wide">Ikon Lucide *</label>
-                <select
-                  value={divForm.icon_name}
-                  onChange={e => setDivForm(prev => ({ ...prev, icon_name: e.target.value }))}
-                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
-                >
-                  <option value="CalendarRange">CalendarRange</option>
-                  <option value="MessageSquareShare">MessageSquareShare</option>
-                  <option value="Radio">Radio</option>
-                  <option value="BadgeDollarSign">BadgeDollarSign</option>
-                  <option value="Wrench">Wrench</option>
-                  <option value="Camera">Camera</option>
-                  <option value="ShieldCheck">ShieldCheck</option>
-                  <option value="Users">Users / Standard</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-bold uppercase tracking-wide">Deskripsi Divisi *</label>
+                <label className="block text-xs font-bold uppercase tracking-wide">Deskripsi Divisi (Tugas Pokok) *</label>
                 <textarea
                   required
                   rows={3}
                   value={divForm.description}
                   onChange={e => setDivForm(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Isi tugas dan tanggung jawab divisi..."
+                  placeholder="Isi tugas pokok divisi..."
+                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wide">Jobdesk Divisi (Satu per baris) *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={(divForm.jobdesk || []).join('\n')}
+                  onChange={e => setDivForm(prev => ({ ...prev, jobdesk: e.target.value.split('\n') }))}
+                  placeholder="Contoh:&#10;Menyusun konsep acara&#10;Memastikan alur rundown"
+                  className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wide">Kualifikasi/Skills Divisi *</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={divForm.skills || ''}
+                  onChange={e => setDivForm(prev => ({ ...prev, skills: e.target.value }))}
+                  placeholder="Contoh: Kreativitas tinggi, berpikir kritis..."
                   className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
                 />
               </div>
 
               {/* Sub-divisions Editor */}
-              <div className="space-y-2 border-t border-blue-sail/10 pt-3">
-                <label className="block text-xs font-bold uppercase tracking-wide">Daftar Sub-Divisi</label>
-                <div className="flex gap-2">
-                  <input
-                    id="new-subdiv-input"
-                    type="text"
-                    placeholder="Nama sub-divisi baru..."
-                    className="flex-1 px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none outline-none text-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const input = e.currentTarget;
-                        const val = input.value.trim();
-                        if (val && !divForm.sub_divisions.includes(val)) {
-                          setDivForm(prev => ({ ...prev, sub_divisions: [...prev.sub_divisions, val] }));
-                          input.value = '';
-                        }
-                      }
-                    }}
-                  />
+              <div className="space-y-4 border-t border-blue-sail/20 pt-4">
+                <div className="flex justify-between items-center">
+                  <label className="block text-xs font-black uppercase tracking-wide text-red-inferno">Kelola Sub-Divisi</label>
                   <button
                     type="button"
                     onClick={() => {
-                      const input = document.getElementById('new-subdiv-input') as HTMLInputElement;
-                      const val = input?.value.trim();
-                      if (val && !divForm.sub_divisions.includes(val)) {
-                        setDivForm(prev => ({ ...prev, sub_divisions: [...prev.sub_divisions, val] }));
-                        if (input) input.value = '';
-                      }
+                      const newSub = { name: 'Sub Divisi Baru', description: '', jobdesk: [], skills: '' };
+                      setDivForm(prev => ({ ...prev, sub_divisions: [...(prev.sub_divisions || []), newSub] }));
                     }}
-                    className="bg-blue-sail hover:bg-barbera text-white px-3 py-2 font-mono font-bold text-xs uppercase tracking-wide cursor-pointer transition-all active:translate-y-0.5"
+                    className="bg-blue-sail hover:bg-barbera text-white px-3 py-1.5 font-mono font-bold text-[10px] uppercase tracking-wide cursor-pointer transition-all flex items-center gap-1 border border-blue-sail"
                   >
-                    Tambah
+                    <Icon name="Plus" size={10} /> Tambah Sub-divisi
                   </button>
                 </div>
-                
-                {(divForm.sub_divisions || []).length === 0 ? (
+
+                {(!divForm.sub_divisions || divForm.sub_divisions.length === 0) ? (
                   <p className="text-[10px] text-blue-sail/50 italic font-medium">Belum ada sub-divisi (divisi umum tanpa sub-bagian).</p>
                 ) : (
-                  <div className="flex flex-wrap gap-1.5 pt-1.5 max-h-[100px] overflow-y-auto">
-                    {(divForm.sub_divisions || []).map((sub, idx) => (
-                      <span
-                        key={idx}
-                        className="bg-blue-sail text-white border border-blue-sail/25 text-[10px] px-2 py-1 font-sans font-semibold flex items-center space-x-1.5"
-                      >
-                        <span>{sub}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDivForm(prev => ({
-                              ...prev,
-                              sub_divisions: (prev.sub_divisions || []).filter((_, i) => i !== idx)
-                            }));
-                          }}
-                          className="text-decor hover:text-red-inferno font-mono font-bold text-[10px] cursor-pointer ml-1"
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    ))}
+                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                    {divForm.sub_divisions.map((sub: any, idx: number) => {
+                      const subObj = typeof sub === 'string' 
+                        ? { name: sub, description: '', jobdesk: [], skills: '' }
+                        : sub;
+
+                      return (
+                        <div key={idx} className="bg-blue-sail/[0.02] p-4 border border-blue-sail/20 space-y-3 relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDivForm(prev => ({
+                                ...prev,
+                                sub_divisions: (prev.sub_divisions || []).filter((_, i) => i !== idx)
+                              }));
+                            }}
+                            className="absolute top-2 right-2 text-red-inferno hover:text-white bg-red-inferno/5 hover:bg-red-inferno border border-red-inferno px-2 py-0.5 text-[9px] font-mono font-bold transition-all cursor-pointer"
+                          >
+                            Hapus
+                          </button>
+
+                          <div className="text-[10px] font-mono font-bold text-blue-sail/50 uppercase">Sub-Divisi #{idx + 1}</div>
+
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-bold uppercase tracking-wide text-blue-sail/70">Nama Sub-Divisi</label>
+                            <input
+                              type="text"
+                              required
+                              value={subObj.name || ''}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setDivForm(prev => {
+                                  const updated = [...prev.sub_divisions];
+                                  updated[idx] = { ...subObj, name: val };
+                                  return { ...prev, sub_divisions: updated };
+                                });
+                              }}
+                              placeholder="Nama sub-divisi..."
+                              className="w-full px-2 py-1 text-xs bg-white border border-blue-sail rounded-none outline-none focus:shadow-[1.5px_1.5px_0_0_#2A4C9E]"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-bold uppercase tracking-wide text-blue-sail/70">Deskripsi Sub-Divisi</label>
+                            <textarea
+                              required
+                              rows={2}
+                              value={subObj.description || ''}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setDivForm(prev => {
+                                  const updated = [...prev.sub_divisions];
+                                  updated[idx] = { ...subObj, description: val };
+                                  return { ...prev, sub_divisions: updated };
+                                });
+                              }}
+                              placeholder="Tugas pokok sub-divisi..."
+                              className="w-full px-2 py-1 text-xs bg-white border-blue-sail rounded-none outline-none focus:shadow-[1.5px_1.5px_0_0_#2A4C9E]"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-bold uppercase tracking-wide text-blue-sail/70">Jobdesk Sub-Divisi (Satu per baris)</label>
+                            <textarea
+                              required
+                              rows={2}
+                              value={(subObj.jobdesk || []).join('\n')}
+                              onChange={e => {
+                                const val = e.target.value.split('\n');
+                                setDivForm(prev => {
+                                  const updated = [...prev.sub_divisions];
+                                  updated[idx] = { ...subObj, jobdesk: val };
+                                  return { ...prev, sub_divisions: updated };
+                                });
+                              }}
+                              placeholder="Jobdesk sub-divisi per baris..."
+                              className="w-full px-2 py-1 text-xs bg-white border-blue-sail rounded-none outline-none focus:shadow-[1.5px_1.5px_0_0_#2A4C9E]"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-bold uppercase tracking-wide text-blue-sail/70">Kualifikasi/Skills Sub-Divisi</label>
+                            <textarea
+                              required
+                              rows={2}
+                              value={subObj.skills || ''}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setDivForm(prev => {
+                                  const updated = [...prev.sub_divisions];
+                                  updated[idx] = { ...subObj, skills: val };
+                                  return { ...prev, sub_divisions: updated };
+                                });
+                              }}
+                              placeholder="Kualifikasi sub-divisi..."
+                              className="w-full px-2 py-1 text-xs bg-white border-blue-sail rounded-none outline-none focus:shadow-[1.5px_1.5px_0_0_#2A4C9E]"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
-              <button
-                type="submit"
-                className="w-full bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs py-3 rounded-none border-2 border-blue-sail tracking-wider shadow-[3px_3px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all uppercase mt-4 cursor-pointer"
-              >
-                SIMPAN PERUBAHAN
-              </button>
+              <div className="shrink-0 pt-2">
+                <button
+                  type="submit"
+                  className="w-full bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs py-3 rounded-none border-2 border-blue-sail tracking-wider shadow-[3px_3px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all uppercase cursor-pointer"
+                >
+                  SIMPAN PERUBAHAN
+                </button>
+              </div>
             </form>
           </div>
         </div>

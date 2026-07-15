@@ -94,9 +94,33 @@ export async function seed(knex: Knex): Promise<void> {
       description: 'Divisi paling sibuk tapi paling seru! Bertugas jadi juru rancang sekaligus nahkoda dari semua sub-event TSF 2026. Mulai dari bikin konsep kece, koordinasi antar tim, sampai memastikan semua acara berjalan tanpa drama',
       quota: 25,
       icon_name: 'CalendarRange',
+      jobdesk: JSON.stringify([
+        'Menyusun kerangka konsep besar dan timeline pelaksanaan TDC Summit Fest 2026.',
+        'Mengawasi serta menyinkronkan seluruh konsep acara di bawah Sub-Divisi Kompetisi dan Non-Kompetisi.',
+        'Memastikan alur rundown terintegrasi dengan baik demi kenyamanan audiens.'
+      ]),
+      skills: 'Kreativitas tinggi, berpikir kritis, manajemen waktu handal, komunikasi prima, & kepemimpinan yang adaptif.',
       sub_divisions: JSON.stringify([
-        'Sub Divisi Event - Competition',
-        'Sub Divisi Event - Non Competition'
+        {
+          name: 'Sub Divisi Event - Competition',
+          description: 'Sub Divisi yang bertanggung jawab dalam pembuatan konsep dan teknis acara Event Competition selama kegiatan TSF 2026, mencakup 2 cabang lomba (BPC dan BCC)',
+          jobdesk: [
+            'Menyusun konsep, ketentuan, timeline kompetisi, dan sistem penilaian untuk 2 cabang lomba (BPC dan BCC)',
+            'Memastikan dan mengoordinasikan pelaksanaan kompetisi agar sesuai dengan ketentuan dan timeline yang telah ditetapkan',
+            'Berkoordinasi dengan judges, mentor, dan pihak eksternal terkait kompetisi'
+          ],
+          skills: 'Ketelitian, pemikiran terstruktur, mampu berkoordinasi dengan juri/mitra profesional secara taktis.'
+        },
+        {
+          name: 'Sub Divisi Event - Non Competition',
+          description: 'Sub Divisi yang bertanggung jawab dalam pembuatan konsep dan teknis acara Event Non Competition selama kegiatan TSF 2026',
+          jobdesk: [
+            'Menyusun konsep, juklak-juknis, alur, rundown, dan kebutuhan acara untuk seluruh rangkaian kegiatan non-competition (Pre Event and Closing)',
+            'Berkoordinasi dengan perangkat acara dan divisi terkait dalam mempersiapkan serta memastikan kelancaran pelaksanaan acara.',
+            'Menyusun strategi pelaksanaan acara, mengantisipasi potensi kendala teknis, dan menyiapkan langkah mitigasi yang efektif.'
+          ],
+          skills: 'Keterampilan operasional & koordinatif, manajemen waktu yang ketat, dan sigap dalam mitigasi kendala lapangan.'
+        }
       ])
     },
     {
@@ -105,10 +129,44 @@ export async function seed(knex: Knex): Promise<void> {
       description: 'Divisi Operational bertugas memastikan segala kebutuhan teknis acara berjalan dengan baik dan lancar. Mulai dari pengadaan barang, perizinan tempat, keamanan, hingga konsumsi dan kesehatan peserta maupun panitia. Divisi ini jadi garda terdepan dalam memastikan acara berlangsung tanpa hambatan.',
       quota: 35,
       icon_name: 'Wrench',
+      jobdesk: JSON.stringify([
+        'Mengoordinasikan seluruh logistik barang, perizinan, keamanan, konsumsi, dan tim kesehatan medis.',
+        'Bertanggung jawab atas kelancaran operasional teknis lapangan selama acara berlangsung.'
+      ]),
+      skills: 'Ketahanan fisik yang kuat, tanggap memecahkan masalah darurat di lapangan, serta kerja sama tim yang solid.',
       sub_divisions: JSON.stringify([
-        'Sub Divisi Operasional - Logistic, Technical, Equipment (LTE)',
-        'Sub Divisi Operasional - Secure & Licence',
-        'Sub Divisi Operasional - Health & Consumption'
+        {
+          name: 'Sub Divisi Operasional - Logistic, Technical, Equipment (LTE)',
+          description: 'Subdivisi LTE bertugas untuk bertanggung jawab dalam menyiapkan, mengatur semua kebutuhan perlengkapan acara, lalu subdivi yang mengatur dan menjalankan teknis acara. Mulai dari barang, bahan perlengkapan, distribusi barang, hingga operasional selama acara berlangsung. Selain itu LTE juga bertugas untuk mengecek kondisi semua barang dari awal hingga akhir acara',
+          jobdesk: [
+            'Menyiapkan and menyediakan seluruh kebutuhan barang acara.',
+            'Memastikan kesiapan vanue dan perlengkapan teknis.',
+            'Berkoordinasi dengan seluruh divisi terkait kebutuhan logistik ataupun equipment.',
+            'Melakukan pengecekan kondisi barang sebelum dan sesudah acara'
+          ],
+          skills: 'Pemahaman logistik, ketahanan fisik prima, dan kemampuan teknis pengecekan inventaris barang.'
+        },
+        {
+          name: 'Sub Divisi Operasional - Secure & Licence',
+          description: 'Bertanggung jawab dalam mengoordinasikan seluruh aspek perizinan yang diperlukan untuk pelaksanaan TDC Summit Fest 2026, mulai dari tahap persiapan hingga hari-H acara. Selain itu, divisi ini juga berperan aktif dalam memastikan keamanan dan ketertiban selama rangkaian kegiatan berlangsung, guna menjaga kelancaran serta kondusivitas acara secara keseluruhan, juga bertanggung jawab dalam mengkoordinasi seluruh aspek perizinan yang diperlukan selama berlangsungnya acara TDC Summit Fest (pre-event hingga selesai)',
+          jobdesk: [
+            'Survey segala tempat yang akan dipinjam selama acara berlangsung',
+            'Mengurus surat dan segala peminjaman tempat/ruangan untuk kebutuhan acara.',
+            'Menjaga Ketertiban serta kondusivitas peserta serta panitia pada saat acara berlangsung'
+          ],
+          skills: 'Ketegasan, kepatuhan prosedur (SOP), tanggap darurat, dan koordinasi yang tenang dalam situasi panik.'
+        },
+        {
+          name: 'Sub Divisi Operasional - Health & Consumption',
+          description: 'Bertanggung jawab memastikan kebutuhan konsumsi dan kesehatan selama rangkaian acara terpenuhi dengan baik. Mulai dari perencanaan, distribusi konsumsi, penyediaan P3K, hingga penanganan kondisi darurat ringan agar seluruh peserta dan panitia dapat menjalankan acara dengan nyaman.',
+          jobdesk: [
+            'Menyusun kebutuhan konsumsi untuk panitia, peserta, tamu, maupun pengisi acara.',
+            'Berkoordinasi dengan vendor atau pihak konsumsi terkait jumlah, jadwal, dan distribusi makanan/minuman.',
+            'Mengatur distribusi konsumsi agar tepat waktu dan sesuai kebutuhan.',
+            'Menyiapkan serta menjaga ketersediaan perlengkapan P3K dan kebutuhan kesehatan.'
+          ],
+          skills: 'Ketelitian gizi/porsi, relasi vendor, penanganan P3K dasar, dan kesediaan jam aktif dinamis.'
+        }
       ])
     },
     {
@@ -117,6 +175,13 @@ export async function seed(knex: Knex): Promise<void> {
       description: 'Divisi Data Management adalah divisi yang bertanggung jawab dalam mengelola, menghimpun, dan menyimpan seluruh data yang dibutuhkan untuk kelancaran TSF 2026.',
       quota: 10,
       icon_name: 'Database',
+      jobdesk: JSON.stringify([
+        'Mengelola dan menyimpan seluruh data yang dibutuhkan selama pelaksanaan TSF 2026, baik peserta maupun panitia.',
+        'Berkoordinasi dengan divisi lain dan khususnya divisi Event untuk menyusun sistem pendataan peserta yang terstruktur.',
+        'Melakukan rekapitulasi terhadap seluruh data peserta TSF 2026.',
+        'Mempersiapkan segala formulir kebutuhan TSF 2026, seperti registrasi, absensi, dan feedback.'
+      ]),
+      skills: 'Ketelitian tinggi terhadap detail data, mahir menggunakan Google Sheets / Microsoft Excel, serta memiliki pola pikir yang terstruktur.',
       sub_divisions: JSON.stringify([])
     },
     {
@@ -125,11 +190,59 @@ export async function seed(knex: Knex): Promise<void> {
       description: 'Divisi paling pecah yang bikin TSF tampil kece di semua sisi, mulai dari desain yang estetik, konten yang ngena, sampe campaign yang bikin semua mata tertuju.',
       quota: 20,
       icon_name: 'Megaphone',
+      jobdesk: JSON.stringify([
+        'Mengatur dan memimpin koordinasi sub-divisi desain grafis, produksi media video/foto, strategi promosi digital, dan pengelolaan talent.'
+      ]),
+      skills: 'Menguasai tools desain/editing, up-to-date dengan tren media sosial, berpikir kreatif strategis, serta ramah & cakap berkomunikasi.',
       sub_divisions: JSON.stringify([
-        'Sub Divisi BnM - Creative Design',
-        'Sub Divisi BnM - Media Production',
-        'Sub Divisi BnM - Marketing Strategist',
-        'Sub Divisi BnM - Talent Management'
+        {
+          name: 'Sub Divisi BnM - Creative Design',
+          description: 'Sub Divisi Creative Desain bertugas sebagai garda terdepan dalam menghadirkan identitas visual TSF 2026. Divisi ini akan mengelola seluruh elemen desain grafis, mulai dari branding, thumbnails konten media sosial, backdrop, poster, merchandise, hingga elemen dekorasi fisik dan digital. Selain itu, tim ini juga bertanggung jawab untuk menjaga konsistensi gaya visual agar selaras dengan tema besar acara. Di sinilah seluruh ide estetik, warna, dan bentuk dikonversi menjadi karya visual yang tidak hanya indah tapi juga komunikatif dan berkesan.',
+          jobdesk: [
+            'Bikin GSM',
+            'Menyusun guideline identitas visual (brand book)',
+            'Melakukan quality control pada seluruh produk desain agar sesuai dengan GSM',
+            'Bikin desain untuk seluruh keperluan media cetak; poster, merchandise kit panitia, dll',
+            'Bikin desain untuk seluruh keperluan media sosial TSF; feeds, frame story, add yours, grid, dll',
+            'Memenuhi request desain divisi lain'
+          ],
+          skills: 'Mahir menggunakan software desain grafis (Canva, Figma, Adobe, dll) dan pemahaman GSM visual.'
+        },
+        {
+          name: 'Sub Divisi BnM - Media Production',
+          description: 'Subdivisi ini bertanggung jawab atas seluruh proses pembuatan konten visual yang terkonsep, mulai dari pra-produksi seperti penulisan naskah, storyboard, dan pemahaman angle kamera, hingga produksi dan pasca-produksi video. Subdivisi ini juga menangani pengambilan gambar, penyuntingan video, serta dokumentasi acara dalam bentuk foto dan video, guna memastikan setiap momen dan pesan acara tersampaikan secara kreatif dan informatif.',
+          jobdesk: [
+            'Memproduksi vidio teaser, recap, after movie dan lainnya (Sesuai dengan Request).',
+            'Melakukan proses shooting, pengambilan gambar, persiapan teknis hingga editing',
+            'Mendokumentasi setiap kegiatan TSF 2025 baik foto maupun vidio',
+            'Melakukan riset konten serta evaluasi estetika dari setiap pembuatan konten vidio',
+            'Membuat konsep content dengan membuat story board, Callsheet, dan Script'
+          ],
+          skills: 'Menguasai pra-produksi (script/storyboard) hingga pasca-produksi video, serta editing foto/video.'
+        },
+        {
+          name: 'Sub Divisi BnM - Marketing Strategist',
+          description: 'SubDivisi ini bertugas ngatur semua aktivitas medsos, dari TikTok, sampai Instagram. Mulai dari bikin konten yang kreatif dan konsisten, interaksi sama followers (story, komen, DM, Q&A), sampai nyusun strategi campaign dan copywriting yang relate. Lalu bertanggung jawab buat ngatur ads, analisis insight konten, dan bikin strategi biar exposure, engagement, dan awareness TSF terus naik. Pokoknya, jadi tim yang bikin TSF makin dikenal dan disayang audiens!',
+          jobdesk: [
+            'Melakukan interaksi dengan audiens di media sosial; story Ig, X, QnA session, comment, dll',
+            'Mengelola serta mengoptimalisasi seluruh aktivitas media sosial TSF (Ig, Tiktok, hingga LinkedIn), copywriting, campaign hingga content brief',
+            'Bikin konten video tiktok atau reels yang menarik secara konsisten untuk branding maupun menjaga antusiasme',
+            'Merancang strategi untuk penggunaan ads serta verified secara efektif & efisien',
+            'Menganalisis performa konten (reach, impression, dsb.) untuk evaluasi',
+            'Menyusun strategi untuk meningkatkan eksposur, engagement hingga awareness khalayak'
+          ],
+          skills: 'Kreatif menulis copywriting menarik, mengerti analitik media sosial (Ig, Tiktok), dan strategi periklanan/ads.'
+        },
+        {
+          name: 'Sub Divisi BnM - Talent Management',
+          description: 'Manager para Ambassador! Sub-Divisi ini mengonsep materi, tema, serta seluruh kebutuhan yang berhubungan langsung dengan para Campuss Influencer dan Student Ambassador guna meningkatkan awareness TSF kepada siswa/i SMA hingga masyarakat umum.',
+          jobdesk: [
+            'Managing aktivitas Campuss Influencer dan Student Ambassador selama rangkaian kegiatan TSF 2026.',
+            'Scoring keaktifan, kontribusi, dan kualitas konten dari para Campuss Influencer dan Student Ambassador',
+            'Pemantauan kinerja serta memandu Campuss Influencer dan Student Ambassador'
+          ],
+          skills: 'Public speaking, kemampuan negosiasi, tata krama hospitality, ramah, dan solutif.'
+        }
       ])
     },
     {
@@ -138,6 +251,12 @@ export async function seed(knex: Knex): Promise<void> {
       description: 'Nguli is my life, moto hidup divisi dekorasi. Divisi ini merupakan bagian penting yang bertanggung jawab dalam menyediakan dekorasi penunjang acara melalui proses merancang, pengerjaan, serta pemasangan dekorasi untuk seluruh rangkaian acara di TDC Summit Fest 2026, elemen utama yang menjadi fokus pengerjaan divisi dekorasi yaitu gate, stage, dan photobooth. Selain itu divisi ini juga menerima request pembuatan dekorasi yang dapat disesuaikan untuk kebutuhan acara',
       quota: 15,
       icon_name: 'Palette',
+      jobdesk: JSON.stringify([
+        'Mendesain serta merancang elemen gate, stage serta panggung.',
+        'Mengerjakan teknis pembuatan gate, stage, panggung serta elemen hasil request.',
+        'Menyusun serta membongkar dekorasi sebelum dan sesudah acara.'
+      ]),
+      skills: 'Sensitivitas seni visual yang tinggi, keterampilan tangan dalam crafting/decor, serta koordinasi tim yang sigap di lokasi.',
       sub_divisions: JSON.stringify([])
     },
     {
@@ -146,9 +265,33 @@ export async function seed(knex: Knex): Promise<void> {
       description: "Tim yang paling sering ngomong: 'Mana nota-nya?' Ngurus alur duit masuk dan keluar dengan rapi, teliti, dan penuh cinta. Jago nyusun anggaran, bayar-bayaran, dan ngatur laporan keuangan. Mereka bukan pelit, mereka hati-hati. Kalo kamu minta dana, pastikan kamu siap jawab: 'Buat apa ya?'",
       quota: 12,
       icon_name: 'BadgeDollarSign',
+      jobdesk: JSON.stringify([
+        'Mengawasi alokasi anggaran belanja kepanitiaan TSF 2026.',
+        'Membimbing tim Fundraising dalam mencari dana mandiri dan Sponsorship dalam bernegosiasi dengan brand eksternal.'
+      ]),
+      skills: 'Ketelitian anggaran, integritas kejujuran, dan pemahaman dasar laporan keuangan (LPJ/arus kas).',
       sub_divisions: JSON.stringify([
-        'Sub Divisi Finance - Fundraising',
-        'Sub Divisi Finance - Sponsorship'
+        {
+          name: 'Sub Divisi Finance - Fundraising',
+          description: "Tim pencari cuan sejati! Kerja mereka kayak sales + creative agency: mikir ide seru buat dapet pemasukan, lobi sponsor, jualan, dan tetap senyum meski dibilang 'masih dipertimbangkan ya, Kak 🙂'. Tanpa mereka? Acara jalan, tapi bisa tekor!",
+          jobdesk: [
+            'Menyusun strategi funding dana acara serta melakukan sistem penjualan efektif',
+            'Melakukan survey vendor dan bernegosiasi terkait harga mulai dari kit panitia hingga merchandise',
+            'Menginisiasi pembuatan kit panitia'
+          ],
+          skills: 'Jiwa wirausaha, kreativitas penjualan, negosiasi harga vendor, dan kemampuan sales persuasif.'
+        },
+        {
+          name: 'Sub Divisi Finance - Sponsorship',
+          description: "Bertanggung jawab untuk mendapatkan sponsor dan kemitraan untuk kebaikan bersama (both TSF dan mitra). Tugas utamanya adalah PDKT ke perusahaan atau brand keren dan nawarin kolaborasi yang win win solution, hrs tetep senyum yeah klo dibilang 'proposalnya kami pelajari dulu ya kak....'",
+          jobdesk: [
+            'Mengumpulkan dan mengolah data TSF,',
+            'disusun menjadi offering menarik untuk perusahaan',
+            'sambil berburu perusahaan potensial,',
+            'PDKT dan melakukan partnership deals untuk mewujudkan win-win solution bagi TSF and mitra.'
+          ],
+          skills: 'Kemampuan komunikasi presentasi (PDKT korporat), pembuatan offering proposal, dan lobi bisnis yang tangguh.'
+        }
       ])
     },
     {
@@ -157,6 +300,15 @@ export async function seed(knex: Knex): Promise<void> {
       description: 'Si Social Butterfly nya TSF 🦋🫧 Jadi wajah naratamu dari juri, pihak sponsor, ataupun stakeholder dari ITS!!! Dijamin masuk Public Relation, relasi nya auto menggokill abieszz 😝‼️Profesional Extrovert yang siap jadi koordinator dan contact person yang siap menjawab seluruh pertanyaan pihak luar ke Panit TSF 26 pastinya 📞💥',
       quota: 10,
       icon_name: 'MessageSquareShare',
+      jobdesk: JSON.stringify([
+        'Menjalin komunikasi dan menjadi PIC bagi seluruh pihak eksternal.',
+        'Berkoordinasi dengan seluruh divisi serta memastikan informasi yang diberikan akurat.',
+        'Melakukan follow-up, konfirmasi, dan reminder kepada pihak eksternal.',
+        'Menyambut, mendampingi, dan mengarahkan pihak eksternal selama acara.',
+        'Menjadi penghubung antara pihak eksternal dan divisi internal serta menangani kendala komunikasi.',
+        'Menjaga hubungan baik, menyampaikan ucapan terima kasih, dan melakukan evaluasi pascaacara.'
+      ]),
+      skills: 'Public speaking yang sangat percaya diri, tata bahasa formal tertulis yang rapi, pandai melobi, serta berjejaring luas.',
       sub_divisions: JSON.stringify([])
     }
   ]);

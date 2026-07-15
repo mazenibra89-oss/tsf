@@ -156,7 +156,12 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
 
     res.json({
       phases,
-      divisions: divisions.map(d => ({ ...d, sub_divisions: parseJson(d.sub_divisions) })),
+      divisions: divisions.map(d => ({
+        ...d,
+        sub_divisions: parseJson(d.sub_divisions || '[]'),
+        jobdesk: parseJson(d.jobdesk || '[]'),
+        skills: d.skills || ''
+      })),
       staffApplications: staffApplications.map(a => ({ ...a, custom_form_answers: parseJson(a.custom_form_answers) })),
       subEvents: subEvents.map(e => ({
         ...e,
@@ -248,7 +253,7 @@ app.put('/api/phases/:id', authenticateToken, async (req: Request, res: Response
 // -------------------------------------------------------------
 
 app.post('/api/divisions', authenticateToken, async (req: Request, res: Response): Promise<void> => {
-  const { name, description, quota, icon_name, sub_divisions } = req.body;
+  const { name, description, quota, icon_name, sub_divisions, jobdesk, skills } = req.body;
   const id = `d-${Date.now()}`;
 
   try {
@@ -258,7 +263,9 @@ app.post('/api/divisions', authenticateToken, async (req: Request, res: Response
       description,
       quota,
       icon_name,
-      sub_divisions: JSON.stringify(sub_divisions || [])
+      sub_divisions: JSON.stringify(sub_divisions || []),
+      jobdesk: JSON.stringify(jobdesk || []),
+      skills: skills || ''
     });
     res.status(201).json({ id, message: 'Division added successfully' });
   } catch (err) {
@@ -269,7 +276,7 @@ app.post('/api/divisions', authenticateToken, async (req: Request, res: Response
 
 app.put('/api/divisions/:id', authenticateToken, async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
-  const { name, description, quota, icon_name, sub_divisions } = req.body;
+  const { name, description, quota, icon_name, sub_divisions, jobdesk, skills } = req.body;
 
   try {
     await db('divisions').where({ id }).update({
@@ -277,7 +284,9 @@ app.put('/api/divisions/:id', authenticateToken, async (req: Request, res: Respo
       description,
       quota,
       icon_name,
-      sub_divisions: JSON.stringify(sub_divisions || [])
+      sub_divisions: JSON.stringify(sub_divisions || []),
+      jobdesk: JSON.stringify(jobdesk || []),
+      skills: skills || ''
     });
     res.json({ message: 'Division updated successfully' });
   } catch (err) {

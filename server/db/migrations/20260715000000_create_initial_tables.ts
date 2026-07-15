@@ -21,6 +21,8 @@ export async function up(knex: Knex): Promise<void> {
     table.integer('quota').notNullable();
     table.string('icon_name').notNullable();
     table.jsonb('sub_divisions').nullable();
+    table.jsonb('jobdesk').nullable();
+    table.text('skills').nullable();
   });
 
   // Staff Applications Table
