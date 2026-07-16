@@ -566,14 +566,13 @@ export const Admin: React.FC = () => {
   };
 
   const exportStaffCSV = () => {
-    const headers = ['Nama Lengkap', 'NRP', 'Fakultas', 'Departemen', 'Jurusan', 'Angkatan', 'No WA', 'Email', 'Divisi P1', 'Divisi P2', 'Motivasi', 'Status', 'Tanggal Daftar'];
-    const rows = staffApplications.map(app => [
+    const headers = ['Nama Lengkap', 'NRP', 'Fakultas', 'Departemen', 'Jurusan', 'No WA', 'Email', 'Divisi P1', 'Divisi P2', 'Motivasi', 'Status', 'Tanggal Daftar'];
+    const rows = filteredStaffApplications.map(app => [
       app.full_name,
       app.nim,
       app.faculty || '-',
       app.department || '-',
       app.major,
-      app.batch,
       app.phone,
       app.email,
       app.division_priority_1,
@@ -762,6 +761,17 @@ export const Admin: React.FC = () => {
     }
     return true;
   });
+
+  // Sort: Priority 1 matches first, Priority 2 matches second (when viewing all priorities under a division filter)
+  if (filterDivision && !filterPriority) {
+    filteredStaffApplications.sort((a, b) => {
+      const aIsP1 = a.division_priority_1 === filterDivision;
+      const bIsP1 = b.division_priority_1 === filterDivision;
+      if (aIsP1 && !bIsP1) return -1;
+      if (!aIsP1 && bIsP1) return 1;
+      return 0;
+    });
+  }
 
   return (
     <div className="min-h-screen bg-ballroom font-sans text-blue-sail flex flex-col lg:flex-row">
@@ -1143,7 +1153,6 @@ export const Admin: React.FC = () => {
                           <td className="p-4 space-y-0.5">
                             <p className="font-bold text-red-inferno text-xs uppercase">{app.faculty || 'FSAD'}</p>
                             <p className="font-semibold text-blue-sail">{app.department || app.major}</p>
-                            <p className="text-blue-sail/60 text-[10px] font-medium uppercase font-mono">Angkatan: {app.batch}</p>
                           </td>
                           <td className="p-4 space-y-1">
                             <p className="text-red-inferno font-semibold">P1: {app.division_priority_1}</p>
@@ -2688,8 +2697,8 @@ export const Admin: React.FC = () => {
                     <p className="font-mono font-semibold text-xs text-blue-sail">{selectedApplicant.nim}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Departemen & Angkatan</p>
-                    <p className="font-semibold text-xs text-blue-sail">{selectedApplicant.department || selectedApplicant.major || '-'} ({selectedApplicant.batch || '2024'})</p>
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Departemen</p>
+                    <p className="font-semibold text-xs text-blue-sail">{selectedApplicant.department || selectedApplicant.major || '-'}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Fakultas</p>
@@ -2702,10 +2711,6 @@ export const Admin: React.FC = () => {
                   <div>
                     <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Email Address</p>
                     <p className="font-mono text-xs text-blue-sail">{selectedApplicant.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Instagram</p>
-                    <p className="font-mono text-xs text-blue-sail">@{selectedApplicant.instagram || '-'}</p>
                   </div>
                 </div>
               </div>

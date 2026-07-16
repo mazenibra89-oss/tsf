@@ -207,9 +207,6 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   <span className="bg-red-inferno text-ballroom font-mono text-[9px] font-bold px-2 py-0.5 rounded-none border border-blue-sail uppercase tracking-widest animate-pulse">
                     Fase Terkini
                   </span>
-                  <span className="text-decor font-mono text-xs font-bold uppercase tracking-wider">
-                    {activePhase.start_date} s/d {activePhase.end_date}
-                  </span>
                 </div>
                 <h3 className="font-display font-black text-2xl uppercase tracking-tight text-decor mt-1">
                   {activePhase.name === 'staff_recruitment' && "Pendaftaran Staff TSF Dibuka!"}
