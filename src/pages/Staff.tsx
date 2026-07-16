@@ -173,56 +173,12 @@ export const parseQuestionText = (text: string) => {
     };
   }
 
-  // Fallback to old heuristic parsing for backwards compatibility
-  const hasNumberedList = /\b[1-9]\)\s/.test(cleanText);
-  let introText = cleanText;
-  const listItems: string[] = [];
-
-  if (hasNumberedList) {
-    const parts = cleanText.split(/\b[1-9]\)\s/);
-    introText = parts[0];
-    for (let i = 1; i < parts.length; i++) {
-      listItems.push(parts[i].trim());
-    }
-  }
-
-  // Now, let's separate context from the actual questions.
-  const sentenceParts = introText.split(/(\. |\? |\! )/);
-
-  const sentences: { text: string; isQuestion: boolean }[] = [];
-
-  for (let i = 0; i < sentenceParts.length; i += 2) {
-    const part = sentenceParts[i]?.trim();
-    if (!part) continue;
-    const punct = sentenceParts[i + 1] || '';
-    const fullSentence = part + punct;
-
-    const isQuestion = fullSentence.trim().endsWith('?') ||
-      /^(bagaimana|apa|sebutkan|rancang|jelaskan|tindakan|keputusan|pihak|menurut|ceritakan|apakah|berapa)/i.test(fullSentence.trim());
-
-    sentences.push({ text: fullSentence.trim(), isQuestion });
-  }
-
-  const background: string[] = [];
-  const questions: string[] = [];
-
-  sentences.forEach((s) => {
-    if (s.isQuestion) {
-      questions.push(s.text);
-    } else {
-      if (questions.length === 0) {
-        background.push(s.text);
-      } else {
-        questions.push(s.text);
-      }
-    }
-  });
-
+  // No delimiter: return cleanText as a single question
   return {
     isStudyCase,
-    background: background.join(' '),
-    questions,
-    listItems,
+    background: '',
+    questions: [cleanText.trim()],
+    listItems: [],
     hasContent: text.trim().length > 0
   };
 };

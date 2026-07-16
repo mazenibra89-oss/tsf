@@ -300,7 +300,13 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                     </div>
 
                     <h4 className="font-display font-extrabold text-lg uppercase tracking-tight group-hover:text-decor transition-colors">
-                      {phase.label}
+                      {phase.label === 'Thrift' ? (
+                        <span className="bg-current px-1 text-transparent select-none group-hover:bg-transparent group-hover:text-current transition-all duration-300">
+                          THRIFT
+                        </span>
+                      ) : (
+                        phase.label
+                      )}
                     </h4>
 
                     <p className={`text-xs mt-2 leading-relaxed font-sans ${isActive ? 'text-ballroom/80' : 'text-blue-sail/70'
@@ -310,7 +316,17 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   </div>
 
                   <div className="mt-6 pt-3 border-t border-current/10 flex items-center justify-between text-[11px] font-mono font-bold uppercase tracking-wider">
-                    <span>{phase.name === 'staff_recruitment' ? 'Recruitment' : phase.name.toUpperCase()}</span>
+                    <span>
+                      {phase.name === 'thrift' ? (
+                        <span className="bg-current px-1 text-transparent select-none group-hover:bg-transparent group-hover:text-current transition-all duration-300">
+                          THRIFT
+                        </span>
+                      ) : phase.name === 'staff_recruitment' ? (
+                        'Recruitment'
+                      ) : (
+                        phase.name.toUpperCase()
+                      )}
+                    </span>
                     <Icon name="ArrowRight" size={14} className="transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
