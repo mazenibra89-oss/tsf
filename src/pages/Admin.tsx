@@ -714,7 +714,7 @@ export const Admin: React.FC = () => {
                   type="text"
                   value={usernameInput}
                   onChange={e => setUsernameInput(e.target.value)}
-                  placeholder="Isi username: admin"
+                  placeholder="Username"
                   className="w-full px-4 py-2.5 text-sm bg-white border-2 border-decor text-blue-sail rounded-none outline-none font-mono focus:shadow-[2px_2px_0_0_#F6BB02]"
                 />
               </div>
@@ -726,7 +726,7 @@ export const Admin: React.FC = () => {
                   type="password"
                   value={passwordInput}
                   onChange={e => setPasswordInput(e.target.value)}
-                  placeholder="Isi sandi: admin123"
+                  placeholder="Kata Sandi"
                   className="w-full px-4 py-2.5 text-sm bg-white border-2 border-decor text-blue-sail rounded-none outline-none font-mono focus:shadow-[2px_2px_0_0_#F6BB02]"
                 />
               </div>

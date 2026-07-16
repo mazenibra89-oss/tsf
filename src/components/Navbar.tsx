@@ -112,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
             })}
           </div>
 
-          {/* Right actions: CTA and CMS Button */}
+          {/* Right actions: CTA Button */}
           <div className="hidden lg:flex items-center space-x-3">
             <button
               id="nav-cta"
@@ -122,32 +122,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
               <span>{ctaText}</span>
               <Icon name="ArrowRight" size={14} className="stroke-[3px]" />
             </button>
-
-            <button
-              id="nav-admin"
-              onClick={() => handleNavClick('admin')}
-              className={`p-2.5 rounded-none transition-all duration-150 border-2 ${currentPage === 'admin'
-                  ? 'bg-barbera border-decor text-decor'
-                  : 'bg-blue-sail hover:bg-barbera border-ballroom/20 text-ballroom/80 hover:text-ballroom'
-                }`}
-              title="Admin CMS Panel"
-            >
-              <Icon name="Sliders" size={18} />
-            </button>
           </div>
 
           {/* Mobile hamburger button */}
           <div className="flex items-center space-x-2 lg:hidden">
-            <button
-              id="nav-admin-mobile"
-              onClick={() => handleNavClick('admin')}
-              className={`p-2 rounded-none border-2 ${currentPage === 'admin'
-                  ? 'bg-barbera border-decor text-decor'
-                  : 'bg-blue-sail border-ballroom/20 text-ballroom'
-                }`}
-            >
-              <Icon name="Sliders" size={16} />
-            </button>
             <button
               id="nav-hamburger"
               onClick={() => setIsOpen(!isOpen)}

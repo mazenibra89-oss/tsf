@@ -62,6 +62,16 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
               </div>
             </div>
           </div>
+          
+          <div className="border-t border-decor/20 mt-8 pt-6 text-center text-xs font-mono text-ballroom/40">
+            <button
+              type="button"
+              onClick={() => setCurrentPage('admin')}
+              className="hover:text-decor transition-colors focus:outline-none cursor-pointer"
+            >
+              &copy; TSF 2026. All Rights Reserved.
+            </button>
+          </div>
         </div>
       </div>
     </footer>
