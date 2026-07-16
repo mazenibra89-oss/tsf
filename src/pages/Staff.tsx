@@ -504,8 +504,16 @@ export const Staff: React.FC = () => {
 
   // Reset sub-division selection when main division selection changes
   React.useEffect(() => {
-    setActiveSubDivTab('Overview');
-  }, [activeDivInfoId]);
+    const currentActiveId = activeDivInfoId || (divisions.length > 0 ? divisions[0].id : '');
+    const activeDiv = divisions.find(d => d.id === currentActiveId);
+    if (activeDiv && activeDiv.sub_divisions && activeDiv.sub_divisions.length > 0) {
+      const firstSub = activeDiv.sub_divisions[0];
+      const firstSubName = typeof firstSub === 'string' ? firstSub : firstSub.name;
+      setActiveSubDivTab(firstSubName);
+    } else {
+      setActiveSubDivTab('Overview');
+    }
+  }, [activeDivInfoId, divisions]);
 
   // Wizard current step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -1144,16 +1152,6 @@ export const Staff: React.FC = () => {
                     {/* Interactive Sub-Division Selector Buttons */}
                     {activeDiv.sub_divisions && activeDiv.sub_divisions.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 bg-blue-sail/5 p-1.5 border border-blue-sail/10">
-                        <button
-                          type="button"
-                          onClick={() => setActiveSubDivTab('Overview')}
-                          className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${activeSubDivTab === 'Overview'
-                              ? 'bg-blue-sail text-white border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]'
-                              : 'bg-white text-blue-sail hover:bg-blue-sail/10 border-blue-sail/15'
-                            }`}
-                        >
-                          Overview
-                        </button>
                         {activeDiv.sub_divisions.map((sub, idx) => {
                           const subName = typeof sub === 'string' ? sub : sub.name;
                           const displayLabel = subName.replace(/Sub Divisi (Event - |Operasional - |BnM - |Finance - )?/i, '');

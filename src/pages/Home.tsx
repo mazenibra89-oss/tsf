@@ -301,7 +301,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
 
                     <h4 className="font-display font-extrabold text-lg uppercase tracking-tight group-hover:text-decor transition-colors">
                       {phase.label === 'Thrift' ? (
-                        <span className="bg-current px-1 text-transparent select-none group-hover:bg-transparent group-hover:text-current transition-all duration-300">
+                        <span className="blur-[3px] group-hover:blur-none transition-all duration-300 select-none">
                           THRIFT
                         </span>
                       ) : (
@@ -318,7 +318,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   <div className="mt-6 pt-3 border-t border-current/10 flex items-center justify-between text-[11px] font-mono font-bold uppercase tracking-wider">
                     <span>
                       {phase.name === 'thrift' ? (
-                        <span className="bg-current px-1 text-transparent select-none group-hover:bg-transparent group-hover:text-current transition-all duration-300">
+                        <span className="blur-[3px] group-hover:blur-none transition-all duration-300 select-none">
                           THRIFT
                         </span>
                       ) : phase.name === 'staff_recruitment' ? (
