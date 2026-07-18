@@ -17,15 +17,18 @@ export async function seed(knex: Knex): Promise<void> {
   // Hash password for default admin
   const defaultAdminPasswordHash = await bcrypt.hash('admin123', 10);
 
-  // Deletes ALL existing entries (just in case)
-  await knex('admin_accounts').del();
-  await knex('form_questions_config').del();
+  // Deletes ALL existing entries in correct dependency order (child tables first)
+  await knex('staff_applications').del();
+  await knex('vendor_applications').del();
+  await knex('competition_registrations').del();
   await knex('thrift_products').del();
   await knex('thrift_vendors').del();
   await knex('competitions').del();
   await knex('sub_events').del();
   await knex('divisions').del();
   await knex('event_phases').del();
+  await knex('admin_accounts').del();
+  await knex('form_questions_config').del();
 
   // Seed Admin Accounts
   await knex('admin_accounts').insert([
