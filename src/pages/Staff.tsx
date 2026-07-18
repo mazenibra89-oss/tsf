@@ -1028,12 +1028,12 @@ export const Staff: React.FC = () => {
               </div>
             </div>
             <a
-              href="https://drive.google.com/drive/folders/1RiUmpaCUrvYAiKw6uiWbX9xkeVUkVAH_"
+              href="https://its.id/m/SIAPMENJADIGARDAINOVASI"
               target="_blank"
               rel="noreferrer"
               className="relative z-10 bg-decor hover:bg-decor/90 text-black font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest border-2 border-ballroom shadow-[3px_3px_0_0_#FFF] active:translate-x-0.5 active:translate-y-0.5 hover:shadow-[1px_1px_0_0_#FFF] hover:translate-x-0.5 hover:translate-y-0.5 transition-all text-center whitespace-nowrap"
             >
-              BUKA GUIDEBOOK (GDrive)
+              BUKA GUIDEBOOK
             </a>
           </div>
         </section>
