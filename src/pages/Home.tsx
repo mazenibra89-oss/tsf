@@ -65,19 +65,21 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   const faqs = [
     {
       question: "Apa itu TSF (TDC Summit Festival) 2026?",
-      answer: "TSF (TDC Summit Festival) adalah rangkaian festival kepemudaan tahunan yang menyatukan gairah dunia motorsport, apresiasi seni kreatif, panggung musik spektakuler, kompetisi berskala nasional, hingga bazar thrift clothing terbesar. TSF dirancang sebagai ruang kolaboratif yang energik dan dinamis bagi mahasiswa serta masyarakat umum."
+      answer: "TDC Summit Fest (TSF) merupakan event besar yang diselenggarakan oleh UKM Technopreneurship Development Center (TDC) Institut Teknologi Sepuluh Nopember dengan tujuan untuk memperkuat eksistensi TDC baik dalam lingkup ITS maupun lingkup nasional serta sebagai bentuk upaya untuk menggelorakan jiwa usaha kepada generasi muda Indonesia. TDC Summit Fest 2026 mengusung tema 'From Innovation to Sustainable Impact' Melambangkan gagasan-gagasan yang telah diciptakan tidak hanya inovatif dan untuk dikembangkan saja, tetapi juga bagaimana inovasi tersebut bisa memberikan dampak dan nilai jangka panjang yang relevan dengan tantangan global sekarang."
+
+
     },
     {
       question: "Kapan dan di mana TSF diselenggarakan?",
-      answer: "Rangkaian TSF berjalan dari Juli hingga Oktober 2026. Pre-Event 1 (TSF Spark) diadakan pada 15 Agustus 2026 di Auditorium Kampus Merdeka, Pre-Event 2 (TSF Rev-Up) diadakan pada 12 September 2026 di Area Parkir Timur Plaza Bangsa, Jakarta. Dan puncak acara (Bazar Thrift & Kompetisi) diselenggarakan pada 25-30 Oktober 2026."
+      answer: "TDC Summit Fest akan diselenggarakan di Kota Surabaya secara daring dan luring yang akan berjalan dari Agustus hingga Nopember 2026."
     },
     {
       question: "Bagaimana cara mendaftar menjadi Staff Panitia TSF?",
-      answer: "Anda dapat menuju ke halaman 'Staff Recruitment' di website ini, membaca detail tugas untuk masing-masing divisi (seperti Acara, Humas, Medpar, Dekdok, dll), lalu mengisi form pendaftaran dengan melampirkan motivasi dan portofolio Anda sebelum batas waktu pendaftaran ditutup."
+      answer: "Anda dapat menuju ke halaman 'Staff Recruitment' di website ini, membaca detail tugas untuk masing-masing divisi (seperti Event, Public Relation, Branding and Marketing, dll), lalu mengisi form pendaftaran dengan melampirkan motivasi dan portofolio Anda sebelum batas waktu pendaftaran ditutup."
     },
     {
-      question: "Apakah kompetisi TSF terbuka untuk seluruh Indonesia?",
-      answer: "Ya! Kompetisi TSF seperti Battle of the Bands, Street Dance League, dan Sim Racing Grand Prix terbuka untuk pelajar, mahasiswa, dan peserta umum nasional selama memenuhi persyaratan usia dan kriteria pendaftaran yang tercantum dalam Guidebook (TOR) masing-masing cabang lomba."
+      question: "Apa saja kompetisi yang ada di TSF?",
+      answer: "TDC Summit Fest menghadirkan Business Plan Competition (BPC) dan Business Case Competition (BCC) sebagai wadah bagi generasi muda untuk mengembangkan kemampuan problem solving, innovation thinking, dan strategic decision making. Melalui kedua kompetisi ini, peserta diajak untuk merancang solusi yang tidak hanya inovatif, tetapi juga mampu memberikan dampak yang berkelanjutan bagi masyarakat, industri, maupun lingkungan."
     },
     {
       question: "Bagaimana cara menyewa booth/tenant di Thrift TSF?",

@@ -331,6 +331,7 @@ app.post('/api/staff-applications', async (req: Request, res: Response): Promise
       division_priority_2: data.division_priority_2,
       motivation: data.motivation,
       file_url: data.file_url,
+      drive_folder_link: data.drive_folder_link,
       ktm_krs_link: data.ktm_krs_link,
       cv_link: data.cv_link,
       repost_link: data.repost_link,

@@ -139,7 +139,7 @@ const GENERAL_TASK_FIELD_IDS = new Set([
   'busySchedule',
   'relations'
 ]);
-const BERKAS_FIELD_IDS = new Set(['ktmKrsLink', 'cvLink', 'repostLink', 'twibbonLink', 'igFollowLink', 'tiktokFollowLink']);
+const BERKAS_FIELD_IDS = new Set(['driveFolderLink']);
 
 export const getDivisionQuestions = (priorityName: string): Question[] => {
   if (!priorityName) return [];
@@ -533,12 +533,7 @@ export const Staff: React.FC = () => {
     priority2: '',
     motivation: '',
     fileUrl: '',
-    ktmKrsLink: '',
-    cvLink: '',
-    repostLink: '',
-    twibbonLink: '',
-    igFollowLink: '',
-    tiktokFollowLink: '',
+    driveFolderLink: '',
     divTaskAnswer1: '',
     divTaskAnswer2: '',
     // General Task Fields
@@ -798,12 +793,7 @@ export const Staff: React.FC = () => {
   const validateStep5 = () => {
     const errors: Record<string, string> = {};
     const linkFields = [
-      { key: 'ktmKrsLink', label: 'Link KTM/KRSM' },
-      { key: 'cvLink', label: 'Link CV/Curriculum Vitae' },
-      { key: 'repostLink', label: 'Link Repost Oprec SG' },
-      { key: 'twibbonLink', label: 'Link Twibbon' },
-      { key: 'igFollowLink', label: 'Link Bukti Follow Instagram @tdcits dan @tdcsummitfest' },
-      { key: 'tiktokFollowLink', label: 'Link Bukti Follow Tiktok @tdcits dan @tdcsummitfest' }
+      { key: 'driveFolderLink', label: 'Link Folder Google Drive' }
     ];
 
     linkFields.forEach(field => {
@@ -824,7 +814,7 @@ export const Staff: React.FC = () => {
 
     setFormErrors(prev => {
       const cleanErrors = { ...prev };
-      const step5Keys = ['fileUrl', 'ktmKrsLink', 'cvLink', 'repostLink', 'twibbonLink', 'igFollowLink', 'tiktokFollowLink'];
+      const step5Keys = ['fileUrl', 'driveFolderLink'];
       step5Keys.forEach(k => delete cleanErrors[k]);
       Object.keys(cleanErrors).forEach(k => {
         if (k.startsWith('berkas_')) {
@@ -921,12 +911,7 @@ export const Staff: React.FC = () => {
         division_priority_2: formData.priority2,
         motivation: formData.generalMotivation,
         file_url: formData.fileUrl,
-        ktm_krs_link: formData.ktmKrsLink,
-        cv_link: formData.cvLink,
-        repost_link: formData.repostLink,
-        twibbon_link: formData.twibbonLink,
-        ig_follow_link: formData.igFollowLink,
-        tiktok_follow_link: formData.tiktokFollowLink,
+        drive_folder_link: formData.driveFolderLink,
         div_task_answer_1: formData.divTaskAnswer1,
         div_task_answer_2: formData.divTaskAnswer2,
         custom_form_answers: customFormAnswers,
@@ -959,12 +944,7 @@ export const Staff: React.FC = () => {
         priority2: '',
         motivation: '',
         fileUrl: '',
-        ktmKrsLink: '',
-        cvLink: '',
-        repostLink: '',
-        twibbonLink: '',
-        igFollowLink: '',
-        tiktokFollowLink: '',
+        driveFolderLink: '',
         divTaskAnswer1: '',
         divTaskAnswer2: '',
         generalKnowledge: '',
@@ -2279,101 +2259,21 @@ export const Staff: React.FC = () => {
                         <span>E. Berkas & Dokumen Pendukung</span>
                       </h4>
                       {/* Drive/Folder Link inputs */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-sail/5 p-4 border border-blue-sail/10">
-                        {/* 1. KTM / KRSM */}
+                      <div className="grid grid-cols-1 gap-4 bg-blue-sail/5 p-4 border border-blue-sail/10">
+                        {/* Single Google Drive Folder Link */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'ktmKrsLink')?.label || 'KTM / KRSM (Link Drive)'} *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'driveFolderLink')?.label || 'Link Folder Google Drive (KTM, CV, Repost, Twibbon, Bukti Follow)'} *</label>
                           <input
-                            id="staff-ktmKrsLink"
-                            name="ktmKrsLink"
+                            id="staff-driveFolderLink"
+                            name="driveFolderLink"
                             type="text"
-                            value={formData.ktmKrsLink}
-                            onChange={e => setFormData(prev => ({ ...prev, ktmKrsLink: e.target.value }))}
-                            placeholder={formQuestions?.berkas.find(b => b.id === 'ktmKrsLink')?.placeholder || 'Contoh: drive.google.com/...'}
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.ktmKrsLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
+                            value={formData.driveFolderLink}
+                            onChange={e => setFormData(prev => ({ ...prev, driveFolderLink: e.target.value }))}
+                            placeholder={formQuestions?.berkas.find(b => b.id === 'driveFolderLink')?.placeholder || 'Masukkan link folder Google Drive...'}
+                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.driveFolderLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
                               }`}
                           />
-                          {formErrors.ktmKrsLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.ktmKrsLink}</p>}
-                        </div>
-
-                        {/* 2. CV / Curriculum Vitae */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'cvLink')?.label || 'CV / Curriculum Vitae (Link Drive)'} *</label>
-                          <input
-                            id="staff-cvLink"
-                            name="cvLink"
-                            type="text"
-                            value={formData.cvLink}
-                            onChange={e => setFormData(prev => ({ ...prev, cvLink: e.target.value }))}
-                            placeholder={formQuestions?.berkas.find(b => b.id === 'cvLink')?.placeholder || 'Contoh: drive.google.com/...'}
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.cvLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                              }`}
-                          />
-                          {formErrors.cvLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.cvLink}</p>}
-                        </div>
-
-                        {/* 3. Repost Oprec SG */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'repostLink')?.label || 'Repost Oprec SG (Link Drive)'} *</label>
-                          <input
-                            id="staff-repostLink"
-                            name="repostLink"
-                            type="text"
-                            value={formData.repostLink}
-                            onChange={e => setFormData(prev => ({ ...prev, repostLink: e.target.value }))}
-                            placeholder={formQuestions?.berkas.find(b => b.id === 'repostLink')?.placeholder || 'Contoh: drive.google.com/...'}
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.repostLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                              }`}
-                          />
-                          {formErrors.repostLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.repostLink}</p>}
-                        </div>
-
-                        {/* 4. Twibbon */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'twibbonLink')?.label || 'Twibbon (Link Drive)'} *</label>
-                          <input
-                            id="staff-twibbonLink"
-                            name="twibbonLink"
-                            type="text"
-                            value={formData.twibbonLink}
-                            onChange={e => setFormData(prev => ({ ...prev, twibbonLink: e.target.value }))}
-                            placeholder={formQuestions?.berkas.find(b => b.id === 'twibbonLink')?.placeholder || 'Contoh: drive.google.com/...'}
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.twibbonLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                              }`}
-                          />
-                          {formErrors.twibbonLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.twibbonLink}</p>}
-                        </div>
-
-                        {/* 5. Bukti Follow Instagram @tdcits dan @tdcsummitfest */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'igFollowLink')?.label || 'Bukti Follow Instagram @tdcits & @tdcsummitfest (Link Drive)'} *</label>
-                          <input
-                            id="staff-igFollowLink"
-                            name="igFollowLink"
-                            type="text"
-                            value={formData.igFollowLink}
-                            onChange={e => setFormData(prev => ({ ...prev, igFollowLink: e.target.value }))}
-                            placeholder={formQuestions?.berkas.find(b => b.id === 'igFollowLink')?.placeholder || 'Contoh: drive.google.com/...'}
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.igFollowLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                              }`}
-                          />
-                          {formErrors.igFollowLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.igFollowLink}</p>}
-                        </div>
-
-                        {/* 6. Bukti Follow Tiktok @tdcits dan @tdcsummitfest */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'tiktokFollowLink')?.label || 'Bukti Follow Tiktok @tdcits & @tdcsummitfest (Link Drive)'} *</label>
-                          <input
-                            id="staff-tiktokFollowLink"
-                            name="tiktokFollowLink"
-                            type="text"
-                            value={formData.tiktokFollowLink}
-                            onChange={e => setFormData(prev => ({ ...prev, tiktokFollowLink: e.target.value }))}
-                            placeholder={formQuestions?.berkas.find(b => b.id === 'tiktokFollowLink')?.placeholder || 'Contoh: drive.google.com/...'}
-                            className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.tiktokFollowLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
-                              }`}
-                          />
-                          {formErrors.tiktokFollowLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.tiktokFollowLink}</p>}
+                          {formErrors.driveFolderLink && <p className="text-red-inferno text-[10px] font-bold uppercase">{formErrors.driveFolderLink}</p>}
                         </div>
                       </div>
 

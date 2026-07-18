@@ -522,7 +522,7 @@ export const Admin: React.FC = () => {
   };
 
   const exportStaffCSV = () => {
-    const headers = ['Nama Lengkap', 'NRP', 'Fakultas', 'Departemen', 'Jurusan', 'No WA', 'Email', 'Divisi P1', 'Divisi P2', 'Motivasi', 'Status', 'Tanggal Daftar'];
+    const headers = ['Nama Lengkap', 'NRP', 'Fakultas', 'Departemen', 'Jurusan', 'No WA', 'Email', 'Divisi P1', 'Divisi P2', 'Motivasi', 'Folder Google Drive', 'Status', 'Tanggal Daftar'];
     const rows = filteredStaffApplications.map(app => [
       app.full_name,
       app.nim,
@@ -534,6 +534,7 @@ export const Admin: React.FC = () => {
       app.division_priority_1,
       app.division_priority_2,
       app.motivation,
+      app.drive_folder_link || '-',
       app.status,
       new Date(app.submitted_at).toLocaleDateString('id-ID')
     ]);
@@ -2678,98 +2679,45 @@ export const Admin: React.FC = () => {
                   <span>BERKAS & DOKUMEN PENDUKUNG</span>
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-3 border border-blue-sail/10">
-                  <div>
-                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">KTM / KRSM</p>
-                    {selectedApplicant.ktm_krs_link ? (
+                  <div className="col-span-1 md:col-span-2">
+                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Folder Google Drive Berkas Pendukung (KTM, CV, Repost, Twibbon, Bukti Follow)</p>
+                    {selectedApplicant.drive_folder_link ? (
                       <a
-                        href={selectedApplicant.ktm_krs_link.startsWith('http') ? selectedApplicant.ktm_krs_link : `https://${selectedApplicant.ktm_krs_link}`}
+                        href={selectedApplicant.drive_folder_link.startsWith('http') ? selectedApplicant.drive_folder_link : `https://${selectedApplicant.drive_folder_link}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
+                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1.5 mt-1"
                       >
-                        <Icon name="ExternalLink" size={12} />
-                        <span>Buka KTM / KRSM</span>
+                        <Icon name="ExternalLink" size={14} />
+                        <span>Buka Folder Google Drive</span>
                       </a>
-                    ) : (
-                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">CV / Curriculum Vitae</p>
-                    {selectedApplicant.cv_link ? (
-                      <a
-                        href={selectedApplicant.cv_link.startsWith('http') ? selectedApplicant.cv_link : `https://${selectedApplicant.cv_link}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
-                      >
-                        <Icon name="ExternalLink" size={12} />
-                        <span>Buka CV / CV</span>
-                      </a>
-                    ) : (
-                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Repost Oprec SG</p>
-                    {selectedApplicant.repost_link ? (
-                      <a
-                        href={selectedApplicant.repost_link.startsWith('http') ? selectedApplicant.repost_link : `https://${selectedApplicant.repost_link}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
-                      >
-                        <Icon name="ExternalLink" size={12} />
-                        <span>Buka Repost Oprec SG</span>
-                      </a>
-                    ) : (
-                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Twibbon</p>
-                    {selectedApplicant.twibbon_link ? (
-                      <a
-                        href={selectedApplicant.twibbon_link.startsWith('http') ? selectedApplicant.twibbon_link : `https://${selectedApplicant.twibbon_link}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
-                      >
-                        <Icon name="ExternalLink" size={12} />
-                        <span>Buka Twibbon</span>
-                      </a>
-                    ) : (
-                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Bukti Follow Instagram</p>
-                    {selectedApplicant.ig_follow_link ? (
-                      <a
-                        href={selectedApplicant.ig_follow_link.startsWith('http') ? selectedApplicant.ig_follow_link : `https://${selectedApplicant.ig_follow_link}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
-                      >
-                        <Icon name="ExternalLink" size={12} />
-                        <span>Buka Follow Instagram</span>
-                      </a>
-                    ) : (
-                      <span className="text-blue-sail/40 font-mono text-xs">-</span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Bukti Follow Tiktok</p>
-                    {selectedApplicant.tiktok_follow_link ? (
-                      <a
-                        href={selectedApplicant.tiktok_follow_link.startsWith('http') ? selectedApplicant.tiktok_follow_link : `https://${selectedApplicant.tiktok_follow_link}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center space-x-1"
-                      >
-                        <Icon name="ExternalLink" size={12} />
-                        <span>Buka Follow Tiktok</span>
-                      </a>
+                    ) : selectedApplicant.cv_link ? (
+                      // Fallback to old CV link if it was submitted before this change
+                      <div className="space-y-1 mt-1">
+                        <p className="text-xs text-blue-sail/60 font-sans italic">Data lama (sebelum penggabungan folder):</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                          {selectedApplicant.ktm_krs_link && (
+                            <a href={selectedApplicant.ktm_krs_link.startsWith('http') ? selectedApplicant.ktm_krs_link : `https://${selectedApplicant.ktm_krs_link}`} target="_blank" rel="noreferrer" className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center gap-1">
+                              <Icon name="ExternalLink" size={11} /> KTM
+                            </a>
+                          )}
+                          {selectedApplicant.cv_link && (
+                            <a href={selectedApplicant.cv_link.startsWith('http') ? selectedApplicant.cv_link : `https://${selectedApplicant.cv_link}`} target="_blank" rel="noreferrer" className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center gap-1">
+                              <Icon name="ExternalLink" size={11} /> CV
+                            </a>
+                          )}
+                          {selectedApplicant.repost_link && (
+                            <a href={selectedApplicant.repost_link.startsWith('http') ? selectedApplicant.repost_link : `https://${selectedApplicant.repost_link}`} target="_blank" rel="noreferrer" className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center gap-1">
+                              <Icon name="ExternalLink" size={11} /> Repost
+                            </a>
+                          )}
+                          {selectedApplicant.twibbon_link && (
+                            <a href={selectedApplicant.twibbon_link.startsWith('http') ? selectedApplicant.twibbon_link : `https://${selectedApplicant.twibbon_link}`} target="_blank" rel="noreferrer" className="text-red-inferno hover:text-barbera font-mono text-xs font-bold flex items-center gap-1">
+                              <Icon name="ExternalLink" size={11} /> Twibbon
+                            </a>
+                          )}
+                        </div>
+                      </div>
                     ) : (
                       <span className="text-blue-sail/40 font-mono text-xs">-</span>
                     )}

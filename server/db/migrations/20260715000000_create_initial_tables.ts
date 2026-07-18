@@ -41,6 +41,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('division_priority_2').notNullable();
     table.text('motivation').notNullable();
     table.string('file_url').nullable();
+    table.string('drive_folder_link').nullable();
     table.string('ktm_krs_link').nullable();
     table.string('cv_link').nullable();
     table.string('repost_link').nullable();

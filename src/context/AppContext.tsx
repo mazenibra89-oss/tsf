@@ -352,12 +352,7 @@ const SEED_FORM_QUESTIONS: FormQuestionsConfig = {
     { id: 'relations', text: 'Apakah Kamu Memiliki Relasi Kenalan/Perusahaan', type: 'text', placeholder: 'Sebutkan relasi alumni, media partner, pembicara, sponsor, atau perusahaan. Jika tidak ada, tuliskan \'Tidak ada\'...', required: true }
   ],
   berkas: [
-    { id: 'ktmKrsLink', label: 'KTM / KRSM (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'cvLink', label: 'CV / Curriculum Vitae (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'repostLink', label: 'Repost Oprec SG (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'twibbonLink', label: 'Twibbon (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'igFollowLink', label: 'Bukti Follow Instagram @tdcits & @tdcsummitfest (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true },
-    { id: 'tiktokFollowLink', label: 'Bukti Follow Tiktok @tdcits & @tdcsummitfest (Link Drive)', type: 'text', placeholder: 'Contoh: drive.google.com/...', required: true }
+    { id: 'driveFolderLink', label: 'Link Folder Google Drive (Berisi KTM, CV, Repost Oprec, Twibbon, Bukti Follow Instagram & Tiktok)', type: 'text', placeholder: 'Masukkan link folder Google Drive yang berisi semua berkas di atas...', required: true }
   ],
   divisionTasks: {
     'Sub Divisi Event - Competition': [

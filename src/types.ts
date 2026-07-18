@@ -47,6 +47,7 @@ export interface StaffApplication {
   division_priority_2: string;
   motivation: string;
   file_url?: string;
+  drive_folder_link?: string;
   ktm_krs_link?: string;
   cv_link?: string;
   repost_link?: string;
