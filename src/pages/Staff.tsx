@@ -140,6 +140,7 @@ const GENERAL_TASK_FIELD_IDS = new Set([
   'relations'
 ]);
 const BERKAS_FIELD_IDS = new Set(['driveFolderLink']);
+const OLD_BERKAS_FIELD_IDS = new Set(['ktmKrsLink', 'cvLink', 'repostLink', 'twibbonLink', 'igFollowLink', 'tiktokFollowLink']);
 
 export const getDivisionQuestions = (priorityName: string): Question[] => {
   if (!priorityName) return [];
@@ -805,7 +806,7 @@ export const Staff: React.FC = () => {
       }
     });
 
-    const customBerkasFields = (formQuestions?.berkas || []).filter(field => !BERKAS_FIELD_IDS.has(field.id));
+    const customBerkasFields = (formQuestions?.berkas || []).filter(field => !BERKAS_FIELD_IDS.has(field.id) && !OLD_BERKAS_FIELD_IDS.has(field.id));
     customBerkasFields.forEach(field => {
       if (field.required !== false && !getCustomAnswerValue('berkas', field.id).trim()) {
         errors[`berkas_${field.id}`] = 'Jawaban wajib diisi';
@@ -2262,14 +2263,14 @@ export const Staff: React.FC = () => {
                       <div className="grid grid-cols-1 gap-4 bg-blue-sail/5 p-4 border border-blue-sail/10">
                         {/* Single Google Drive Folder Link */}
                         <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">{formQuestions?.berkas.find(b => b.id === 'driveFolderLink')?.label || 'Link Folder Google Drive (KTM, CV, Repost, Twibbon, Bukti Follow)'} *</label>
+                          <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">Link Folder Google Drive (KTM, CV, Repost SG, Twibbon, Bukti Follow Instagram & TikTok) *</label>
                           <input
                             id="staff-driveFolderLink"
                             name="driveFolderLink"
                             type="text"
                             value={formData.driveFolderLink}
                             onChange={e => setFormData(prev => ({ ...prev, driveFolderLink: e.target.value }))}
-                            placeholder={formQuestions?.berkas.find(b => b.id === 'driveFolderLink')?.placeholder || 'Masukkan link folder Google Drive...'}
+                            placeholder="Masukkan link folder Google Drive..."
                             className={`w-full px-4 py-2.5 text-sm bg-white border-2 rounded-none outline-none text-blue-sail transition-all ${formErrors.driveFolderLink ? 'border-red-inferno focus:shadow-[2px_2px_0_0_#BD1B1F]' : 'border-blue-sail focus:border-blue-sail focus:shadow-[2px_2px_0_0_#2A4C9E]'
                               }`}
                           />
@@ -2277,11 +2278,11 @@ export const Staff: React.FC = () => {
                         </div>
                       </div>
 
-                      {(formQuestions?.berkas || []).some(field => !BERKAS_FIELD_IDS.has(field.id)) && (
+                      {(formQuestions?.berkas || []).some(field => !BERKAS_FIELD_IDS.has(field.id) && !OLD_BERKAS_FIELD_IDS.has(field.id)) && (
                         <div className="space-y-4 pt-2 border-t border-blue-sail/10">
                           <h5 className="font-display font-extrabold text-xs uppercase tracking-wider text-red-inferno">Berkas Tambahan</h5>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-sail/5 p-4 border border-blue-sail/10">
-                            {(formQuestions?.berkas || []).filter(field => !BERKAS_FIELD_IDS.has(field.id)).map(field => (
+                            {(formQuestions?.berkas || []).filter(field => !BERKAS_FIELD_IDS.has(field.id) && !OLD_BERKAS_FIELD_IDS.has(field.id)).map(field => (
                               <div key={field.id} className="space-y-1.5">
                                 <label className="block text-xs font-bold text-blue-sail uppercase tracking-wide">
                                   {field.label}{field.required !== false ? ' *' : ''}
