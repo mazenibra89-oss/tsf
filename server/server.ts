@@ -649,19 +649,26 @@ app.put('/api/form-questions', authenticateToken, async (req: Request, res: Resp
 app.post('/api/reset', authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('Resetting database...');
-    // Run rollback, migrations, and seeds
-    await db.migrate.rollback(undefined, true);
-    await db.migrate.latest();
+    
+    // Delete data from tables in correct dependency order
+    await db('staff_applications').del();
+    await db('vendor_applications').del();
+    await db('competition_registrations').del();
+    await db('thrift_products').del();
+    await db('thrift_vendors').del();
+    await db('competitions').del();
+    await db('sub_events').del();
+    await db('divisions').del();
+    await db('event_phases').del();
+    await db('admin_accounts').del();
+    await db('form_questions_config').del();
+
     // Run seed forcing re-population since we deleted data
-    const phasesCount = await db('event_phases').count('id as count').first();
-    const count = parseInt(phasesCount?.count as string || '0');
-    if (count === 0) {
-      await db.seed.run();
-    }
+    await db.seed.run();
     
     res.json({ message: 'Database reset to default successful' });
   } catch (err) {
-    console.error(err);
+    console.error('Failed to reset database:', err);
     res.status(500).json({ message: 'Failed to reset database' });
   }
 });
