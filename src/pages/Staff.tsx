@@ -1017,7 +1017,7 @@ export const Staff: React.FC = () => {
           <div className="relative overflow-hidden bg-blue-sail border-[3px] border-decor p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-[6px_6px_0_0_#BD1B1F] group">
             <div className="absolute inset-0 grid-pattern opacity-10" />
             <div className="relative z-10 flex items-center gap-4">
-              <div className="bg-decor p-3.5 border-2 border-blue-sail text-ballroom transform skew-x-[-6deg] group-hover:rotate-3 transition-transform duration-300">
+              <div className="bg-decor p-3.5 border-2 border-blue-sail text-black transform skew-x-[-6deg] group-hover:rotate-3 transition-transform duration-300">
                 <Icon name="BookOpen" size={28} />
               </div>
               <div className="space-y-1">
@@ -1031,7 +1031,7 @@ export const Staff: React.FC = () => {
               href="https://drive.google.com/drive/folders/1RiUmpaCUrvYAiKw6uiWbX9xkeVUkVAH_"
               target="_blank"
               rel="noreferrer"
-              className="relative z-10 bg-decor hover:bg-decor/90 text-ballroom font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest border-2 border-ballroom shadow-[3px_3px_0_0_#FFF] active:translate-x-0.5 active:translate-y-0.5 hover:shadow-[1px_1px_0_0_#FFF] hover:translate-x-0.5 hover:translate-y-0.5 transition-all text-center whitespace-nowrap"
+              className="relative z-10 bg-decor hover:bg-decor/90 text-black font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest border-2 border-ballroom shadow-[3px_3px_0_0_#FFF] active:translate-x-0.5 active:translate-y-0.5 hover:shadow-[1px_1px_0_0_#FFF] hover:translate-x-0.5 hover:translate-y-0.5 transition-all text-center whitespace-nowrap"
             >
               BUKA GUIDEBOOK (GDrive)
             </a>
