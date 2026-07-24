@@ -493,7 +493,7 @@ export const Staff: React.FC = () => {
     end_date: '2026-07-15'
   };
 
-  const isClosed = recruitPhase.status !== 'active';
+  const isClosed = true;
 
   // State for selected division modal
   const [selectedDiv, setSelectedDiv] = useState<Division | null>(null);
@@ -1292,25 +1292,8 @@ export const Staff: React.FC = () => {
                   PENDAFTARAN BATCH INI TELAH DITUTUP
                 </h4>
                 <p className="text-sm text-blue-sail/80 max-w-md mx-auto font-sans leading-relaxed">
-                  Terima kasih atas antusiasme yang luar biasa! Pendaftaran staff TSF Festival 2026 telah ditutup karena kuota pendaftar penuh. Subscribe di bawah untuk mendapatkan update langsung jika pendaftaran batch cadangan dibuka kembali.
+                  Terima kasih atas antusiasme yang luar biasa! Pendaftaran staff TSF Festival 2026 telah resmi ditutup.
                 </p>
-
-                {/* Simulated Subscribe box */}
-                <div className="max-w-md mx-auto flex gap-2 border-2 border-blue-sail p-1 rounded-none bg-ballroom shadow-[3px_3px_0_0_#2A4C9E]">
-                  <input
-                    id="subscribe-email"
-                    type="email"
-                    placeholder="Masukkan alamat email kamu"
-                    className="flex-1 px-4 py-2 text-xs font-sans text-blue-sail bg-transparent outline-none"
-                  />
-                  <button
-                    id="subscribe-btn"
-                    onClick={() => alert('Terima kasih! Email Anda telah terdaftar untuk notifikasi Batch selanjutnya.')}
-                    className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-extrabold text-[10px] uppercase px-5 py-2.5 rounded-none border-l-2 border-blue-sail tracking-wider transition-colors shrink-0"
-                  >
-                    Subscribe
-                  </button>
-                </div>
               </div>
             ) : (
               /* FORM COMPONENT WITH WIZARD WORKFLOW */

@@ -173,6 +173,7 @@ export const Admin: React.FC = () => {
     updateThriftProduct,
     deleteThriftProduct,
     updateStaffApplicationStatus,
+    updateStaffApplicationBerkas,
     formQuestions,
     updateFormQuestions,
     resetToDefault
@@ -2668,6 +2669,93 @@ export const Admin: React.FC = () => {
                   <div>
                     <p className="text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide">Email Address</p>
                     <p className="font-mono text-xs text-blue-sail">{selectedApplicant.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section: Hasil Kelulusan Tahap Berkas (Admin Action) */}
+              <div className="bg-decor/5 p-4 border-[2px] border-decor/20 space-y-3">
+                <h4 className="font-display font-extrabold text-xs text-red-inferno uppercase tracking-wider border-b border-decor/10 pb-1.5 flex items-center space-x-1.5">
+                  <Icon name="UserCheck" size={14} />
+                  <span>KONTROL KELULUSAN TAHAP BERKAS (STAFF SELECTION)</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide mb-1">
+                      Status Kelulusan Berkas
+                    </label>
+                    <select
+                      value={selectedApplicant.status_berkas || 'pending'}
+                      onChange={(e) => {
+                        const newStatus = e.target.value as any;
+                        updateStaffApplicationBerkas(
+                          selectedApplicant.id,
+                          newStatus,
+                          selectedApplicant.interview_schedule || '',
+                          selectedApplicant.whatsapp_group_link || ''
+                        );
+                        setSelectedApplicant(prev => prev ? ({ ...prev, status_berkas: newStatus }) : null);
+                      }}
+                      className={`w-full px-3 py-1.5 text-xs font-bold uppercase rounded-none border-2 outline-none font-mono ${
+                        selectedApplicant.status_berkas === 'lolos'
+                          ? 'bg-green-50 border-green-400 text-green-700'
+                          : selectedApplicant.status_berkas === 'gagal'
+                            ? 'bg-red-50 border-red-400 text-red-600'
+                            : 'bg-yellow-50 border-yellow-400 text-yellow-700'
+                      }`}
+                    >
+                      <option value="pending">PENDING</option>
+                      <option value="lolos">LOLOS SELEKSI</option>
+                      <option value="gagal">TIDAK LOLOS</option>
+                    </select>
+                  </div>
+
+                  <div className="col-span-1 sm:col-span-2">
+                    <label className="block text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide mb-1">
+                      Jadwal Wawancara (Hanya jika Lolos)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: Sabtu, 26 Juli 2026, 09:30 WIB (Zoom)"
+                      value={selectedApplicant.interview_schedule || ''}
+                      onChange={(e) => {
+                        const newSched = e.target.value;
+                        setSelectedApplicant(prev => prev ? ({ ...prev, interview_schedule: newSched }) : null);
+                      }}
+                      onBlur={() => {
+                        updateStaffApplicationBerkas(
+                          selectedApplicant.id,
+                          selectedApplicant.status_berkas || 'pending',
+                          selectedApplicant.interview_schedule || '',
+                          selectedApplicant.whatsapp_group_link || ''
+                        );
+                      }}
+                      className="w-full px-3 py-1.5 text-xs bg-white border-2 border-blue-sail/20 rounded-none outline-none font-sans text-blue-sail transition-all focus:border-blue-sail"
+                    />
+                  </div>
+
+                  <div className="col-span-1 sm:col-span-3">
+                    <label className="block text-[10px] text-blue-sail/50 uppercase font-bold tracking-wide mb-1">
+                      Link Grup WhatsApp Koordinasi (Hanya jika Lolos)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: https://chat.whatsapp.com/..."
+                      value={selectedApplicant.whatsapp_group_link || ''}
+                      onChange={(e) => {
+                        const newWa = e.target.value;
+                        setSelectedApplicant(prev => prev ? ({ ...prev, whatsapp_group_link: newWa }) : null);
+                      }}
+                      onBlur={() => {
+                        updateStaffApplicationBerkas(
+                          selectedApplicant.id,
+                          selectedApplicant.status_berkas || 'pending',
+                          selectedApplicant.interview_schedule || '',
+                          selectedApplicant.whatsapp_group_link || ''
+                        );
+                      }}
+                      className="w-full px-3 py-1.5 text-xs bg-white border-2 border-blue-sail/20 rounded-none outline-none font-mono text-blue-sail transition-all focus:border-blue-sail"
+                    />
                   </div>
                 </div>
               </div>

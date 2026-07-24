@@ -11,8 +11,9 @@ import { SubEventPage } from './pages/SubEventPage';
 import { RegistCompetition } from './pages/RegistCompetition';
 import { Thrift } from './pages/Thrift';
 import { Admin } from './pages/Admin';
+import { Announcement } from './pages/Announcement';
 
-type PageType = 'home' | 'staff' | 'pe1' | 'pe2' | 'competition' | 'thrift' | 'admin';
+type PageType = 'home' | 'staff' | 'pe1' | 'pe2' | 'competition' | 'thrift' | 'admin' | 'announcement';
 
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<PageType>('home');
@@ -23,6 +24,8 @@ const AppContent: React.FC = () => {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#/staff') {
         setCurrentPage('staff');
+      } else if (hash === '#/announcement') {
+        setCurrentPage('announcement');
       } else if (hash === '#/pe1') {
         setCurrentPage('pe1');
       } else if (hash === '#/pe2') {
@@ -55,6 +58,8 @@ const AppContent: React.FC = () => {
     switch (currentPage) {
       case 'staff':
         return <Staff />;
+      case 'announcement':
+        return <Announcement />;
       case 'pe1':
         return <SubEventPage slug="pe1" />;
       case 'pe2':

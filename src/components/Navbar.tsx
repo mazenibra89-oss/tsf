@@ -41,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
   const menuItems = [
     { id: 'home', label: 'Home' },
     { id: 'staff', label: 'Staff Recruitment' },
+    { id: 'announcement', label: 'Announcement' },
     { id: 'pe1', label: 'PE1', isComingSoon: true },
     { id: 'pe2', label: 'PE2', isComingSoon: true },
     { id: 'competition', label: 'Regist Competition', isComingSoon: true },

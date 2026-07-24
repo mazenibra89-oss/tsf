@@ -312,6 +312,9 @@ app.delete('/api/divisions/:id', authenticateToken, async (req: Request, res: Re
 
 // Submit staff application (Public)
 app.post('/api/staff-applications', async (req: Request, res: Response): Promise<void> => {
+  res.status(403).json({ message: 'Pendaftaran staff panitia TSF 2026 telah ditutup.' });
+  return;
+
   const data = req.body;
 
   try {
@@ -378,6 +381,59 @@ app.put('/api/staff-applications/:id/status', authenticateToken, async (req: Req
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to update application status' });
+  }
+});
+
+// Update application berkas selection status (Admin)
+app.put('/api/staff-applications/:id/status-berkas', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { status_berkas, interview_schedule, whatsapp_group_link } = req.body;
+
+  if (!['pending', 'lolos', 'gagal'].includes(status_berkas)) {
+    res.status(400).json({ message: 'Invalid status' });
+    return;
+  }
+
+  try {
+    await db('staff_applications').where({ id }).update({
+      status_berkas,
+      interview_schedule: interview_schedule || null,
+      whatsapp_group_link: whatsapp_group_link || null
+    });
+    res.json({ message: 'Application berkas status updated successfully' });
+  } catch (err) {
+    console.error('Error updating berkas status:', err);
+    res.status(500).json({ message: 'Failed to update application berkas status' });
+  }
+});
+
+// Get staff recruitment announcement by NRP/NIM (Public)
+app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<void> => {
+  const { nim } = req.params;
+  if (!nim) {
+    res.status(400).json({ message: 'NRP/NIM is required' });
+    return;
+  }
+
+  try {
+    const applicant = await db('staff_applications').where({ nim }).first();
+    if (!applicant) {
+      res.status(404).json({ message: 'Data pendaftaran tidak ditemukan. Silakan cek kembali NRP Anda.' });
+      return;
+    }
+
+    res.json({
+      full_name: applicant.full_name,
+      nim: applicant.nim,
+      division_priority_1: applicant.division_priority_1,
+      division_priority_2: applicant.division_priority_2,
+      status_berkas: applicant.status_berkas || 'pending',
+      interview_schedule: applicant.interview_schedule || null,
+      whatsapp_group_link: applicant.whatsapp_group_link || null
+    });
+  } catch (err) {
+    console.error('Error fetching announcement:', err);
+    res.status(500).json({ message: 'Gagal mengambil data pengumuman' });
   }
 });
 

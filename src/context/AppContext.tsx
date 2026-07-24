@@ -21,6 +21,7 @@ interface AppContextType extends AppState {
   // Staff
   addStaffApplication: (app: Omit<StaffApplication, 'id' | 'status' | 'submitted_at'>) => void;
   updateStaffApplicationStatus: (id: string, status: StaffApplication['status']) => void;
+  updateStaffApplicationBerkas: (id: string, status_berkas: 'pending' | 'lolos' | 'gagal', interview_schedule: string | null, whatsapp_group_link: string | null) => Promise<void>;
   addDivision: (div: Omit<Division, 'id'>) => void;
   updateDivision: (div: Division) => void;
   deleteDivision: (id: string) => void;
@@ -881,6 +882,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateStaffApplicationBerkas = async (
+    id: string,
+    status_berkas: 'pending' | 'lolos' | 'gagal',
+    interview_schedule: string | null,
+    whatsapp_group_link: string | null
+  ) => {
+    try {
+      const res = await authFetch(`/api/staff-applications/${id}/status-berkas`, {
+        method: 'PUT',
+        body: JSON.stringify({ status_berkas, interview_schedule, whatsapp_group_link })
+      });
+      if (!res.ok) throw new Error('Failed to update berkas status');
+      setState(prev => ({
+        ...prev,
+        staffApplications: prev.staffApplications.map(a => 
+          a.id === id ? { ...a, status_berkas, interview_schedule, whatsapp_group_link } : a
+        )
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui status kelulusan berkas.');
+    }
+  };
+
   const addDivision = async (div: Omit<Division, 'id'>) => {
     try {
       const res = await authFetch('/api/divisions', {
@@ -1165,6 +1190,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updatePhase,
       addStaffApplication,
       updateStaffApplicationStatus,
+      updateStaffApplicationBerkas,
       addDivision,
       updateDivision,
       deleteDivision,

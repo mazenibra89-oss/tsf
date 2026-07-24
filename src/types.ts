@@ -69,6 +69,9 @@ export interface StaffApplication {
   div_task_answer_2?: string;
   custom_form_answers?: Record<string, string>;
   status: 'pending' | 'accepted' | 'rejected';
+  status_berkas?: 'pending' | 'lolos' | 'gagal';
+  interview_schedule?: string | null;
+  whatsapp_group_link?: string | null;
   submitted_at: string;
 }
 
