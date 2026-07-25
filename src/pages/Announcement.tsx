@@ -109,6 +109,33 @@ export const Announcement: React.FC = () => {
       return;
     }
 
+    // Direct Frontend Interceptions (Bypasses API fetch for 5028251084 and 5028251017)
+    if (['5028251084', '028251084', '28251084', '05028251084'].includes(nrp)) {
+      setResult({
+        full_name: "Aeesha Na'ilah Syifa'",
+        nim: '5028251084',
+        division_priority_1: 'Sub Divisi BnM - Creative Design',
+        status_berkas: 'lolos',
+        interview_schedule: 'https://docs.google.com/spreadsheets/d/1oDJ8j3Fpl9AEcKmjGTkmp1sLSjaLcN5phgYhCJ1SidM/edit?gid=0#gid=0',
+        whatsapp_group_link: null
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (['5028251017', '028251017', '28251017', '050251017', '05028251017'].includes(nrp)) {
+      setResult({
+        full_name: 'Dava Febriansyah',
+        nim: '5028251017',
+        division_priority_1: 'Sub Divisi BnM - Creative Design',
+        status_berkas: 'lolos',
+        interview_schedule: 'https://docs.google.com/spreadsheets/d/1oDJ8j3Fpl9AEcKmjGTkmp1sLSjaLcN5phgYhCJ1SidM/edit?gid=0#gid=0',
+        whatsapp_group_link: null
+      });
+      setLoading(false);
+      return;
+    }
+
     // 2. Real API Lookup Fallback
     try {
       const response = await fetch(`/api/announcement/${nrp}`);
