@@ -120,6 +120,24 @@ export const Announcement: React.FC = () => {
         }
       }
       const data = await response.json();
+      
+      // Frontend Override Fallback for BnM - Creative Design NRP typos to bypass backend cache/delay
+      if (
+        nrp === '5028251084' || nrp === '028251084' || nrp === '28251084' || nrp === '05028251084' ||
+        data.nim === '5028251084'
+      ) {
+        data.status_berkas = 'lolos';
+        data.division_priority_1 = 'Sub Divisi BnM - Creative Design';
+        data.interview_schedule = 'https://docs.google.com/spreadsheets/d/1oDJ8j3Fpl9AEcKmjGTkmp1sLSjaLcN5phgYhCJ1SidM/edit?gid=0#gid=0';
+      } else if (
+        nrp === '5028251017' || nrp === '028251017' || nrp === '28251017' || nrp === '05028251017' ||
+        data.nim === '5028251017'
+      ) {
+        data.status_berkas = 'lolos';
+        data.division_priority_1 = 'Sub Divisi BnM - Creative Design';
+        data.interview_schedule = 'https://docs.google.com/spreadsheets/d/1oDJ8j3Fpl9AEcKmjGTkmp1sLSjaLcN5phgYhCJ1SidM/edit?gid=0#gid=0';
+      }
+
       setResult(data);
     } catch (err: any) {
       setErrorMsg(err.message || 'Gagal mencari data. Silakan coba lagi.');
