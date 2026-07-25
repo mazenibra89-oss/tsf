@@ -415,6 +415,20 @@ app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<v
     return;
   }
 
+  // Direct hardcoded override for Malikha Syarifa Dewi to bypass DB migration lag
+  if (nim === '5027251032' || nim === '027251032' || nim === '27251032') {
+    res.json({
+      full_name: 'Malikha Syarifa Dewi',
+      nim: '5027251032',
+      division_priority_1: 'Sub Divisi Finance - Fundraising',
+      division_priority_2: 'Sub Divisi Finance - Sponsorship',
+      status_berkas: 'lolos',
+      interview_schedule: 'https://docs.google.com/spreadsheets/d/1oDJ8j3Fpl9AEcKmjGTkmp1sLSjaLcN5phgYhCJ1SidM/edit?gid=0#gid=0',
+      whatsapp_group_link: null
+    });
+    return;
+  }
+
   // Fallback search options for specific candidate with NRP typo
   let searchNims = [nim];
   if (nim === '5027251032' || nim === '027251032' || nim === '27251032') {
@@ -422,7 +436,10 @@ app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<v
   }
 
   try {
-    const applicant = await db('staff_applications').whereIn('nim', searchNims).first();
+    const applicant = await db('staff_applications').whereIn(
+      'nim',
+      searchNims
+    ).first();
     if (!applicant) {
       res.status(404).json({ message: 'Data pendaftaran tidak ditemukan. Silakan cek kembali NRP Anda.' });
       return;
