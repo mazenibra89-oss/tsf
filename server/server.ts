@@ -457,7 +457,8 @@ const getPassedDivision = (nim: string): string | null => {
     ],
     'Sub Divisi BnM - Creative Design': [
       '5027251037', '5015251127', '5024251009', '2041251070', '5013251090',
-      '5028251086', '5015251015', '5028251017', '5013251013', '5028251084'
+      '5028251086', '5015251015', '5028251017', '028251017', '28251017', '05028251017',
+      '5013251013', '5028251084', '028251084', '28251084', '05028251084'
     ],
     'Sub Divisi BnM - Talent Management': [
       '5002251037', '5029251056', '5015251075', '5049251048', '5001251049',
@@ -505,6 +506,10 @@ app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<v
   let searchNims = [nim];
   if (nim === '5027251032' || nim === '027251032' || nim === '27251032') {
     searchNims = ['5027251032', '027251032', '27251032'];
+  } else if (nim === '5028251084' || nim === '028251084' || nim === '28251084' || nim === '05028251084') {
+    searchNims = ['5028251084', '028251084', '28251084', '05028251084'];
+  } else if (nim === '5028251017' || nim === '028251017' || nim === '28251017' || nim === '05028251017') {
+    searchNims = ['5028251017', '028251017', '28251017', '05028251017'];
   }
 
   try {
@@ -514,7 +519,12 @@ app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<v
       return;
     }
 
-    const correctedNim = (nim === '5027251032' || nim === '027251032' || nim === '27251032') ? '5027251032' : applicant.nim;
+    let correctedNim = (nim === '5027251032' || nim === '027251032' || nim === '27251032') ? '5027251032' : applicant.nim;
+    if (['5028251084', '028251084', '28251084', '05028251084'].includes(correctedNim)) {
+      correctedNim = '5028251084';
+    } else if (['5028251017', '028251017', '28251017', '05028251017'].includes(correctedNim)) {
+      correctedNim = '5028251017';
+    }
     const passedDivision = getPassedDivision(correctedNim);
 
     res.json({
