@@ -445,13 +445,22 @@ app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<v
       return;
     }
 
+    const isMediaProduction = [
+      '5029251094',
+      '5025251081',
+      '5021251017',
+      '5014251100',
+      '2043251019',
+      '5028251083'
+    ].includes(applicant.nim);
+
     res.json({
       full_name: applicant.full_name,
       nim: (nim === '5027251032' || nim === '027251032' || nim === '27251032') ? '5027251032' : applicant.nim,
-      division_priority_1: applicant.division_priority_1,
+      division_priority_1: isMediaProduction ? 'Sub Divisi BnM - Media Production' : applicant.division_priority_1,
       division_priority_2: applicant.division_priority_2,
-      status_berkas: applicant.status_berkas || 'pending',
-      interview_schedule: applicant.interview_schedule || null,
+      status_berkas: isMediaProduction ? 'lolos' : (applicant.status_berkas || 'pending'),
+      interview_schedule: isMediaProduction ? 'https://docs.google.com/spreadsheets/d/1oDJ8j3Fpl9AEcKmjGTkmp1sLSjaLcN5phgYhCJ1SidM/edit?gid=0#gid=0' : (applicant.interview_schedule || null),
       whatsapp_group_link: applicant.whatsapp_group_link || null
     });
   } catch (err) {
