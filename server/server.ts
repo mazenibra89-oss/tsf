@@ -415,8 +415,14 @@ app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<v
     return;
   }
 
+  // Fallback search options for specific candidate with NRP typo
+  let searchNims = [nim];
+  if (nim === '5027251032' || nim === '027251032' || nim === '27251032') {
+    searchNims = ['5027251032', '027251032', '27251032'];
+  }
+
   try {
-    const applicant = await db('staff_applications').where({ nim }).first();
+    const applicant = await db('staff_applications').whereIn('nim', searchNims).first();
     if (!applicant) {
       res.status(404).json({ message: 'Data pendaftaran tidak ditemukan. Silakan cek kembali NRP Anda.' });
       return;
@@ -424,7 +430,7 @@ app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<v
 
     res.json({
       full_name: applicant.full_name,
-      nim: applicant.nim,
+      nim: (nim === '5027251032' || nim === '027251032' || nim === '27251032') ? '5027251032' : applicant.nim,
       division_priority_1: applicant.division_priority_1,
       division_priority_2: applicant.division_priority_2,
       status_berkas: applicant.status_berkas || 'pending',
