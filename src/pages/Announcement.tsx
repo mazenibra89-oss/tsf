@@ -136,6 +136,33 @@ export const Announcement: React.FC = () => {
       return;
     }
 
+    // Direct Frontend Interceptions for Have Fun overrides
+    if (nrp === '5053251003') {
+      setResult({
+        full_name: 'Aurelia Pradnyaswari',
+        nim: '5053251003',
+        division_priority_1: 'Sub Divisi BnM - Marketing Strategist',
+        status_berkas: 'lolos',
+        interview_schedule: 'https://docs.google.com/spreadsheets/d/1oDJ8j3Fpl9AEcKmjGTkmp1sLSjaLcN5phgYhCJ1SidM/edit?gid=0#gid=0',
+        whatsapp_group_link: null
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (nrp === '55555555') {
+      setResult({
+        full_name: 'Ibra dan Rafie',
+        nim: '55555555',
+        division_priority_1: 'Sub Divisi Public Relation',
+        status_berkas: 'lolos',
+        interview_schedule: 'https://docs.google.com/spreadsheets/d/1oDJ8j3Fpl9AEcKmjGTkmp1sLSjaLcN5phgYhCJ1SidM/edit?gid=0#gid=0',
+        whatsapp_group_link: null
+      });
+      setLoading(false);
+      return;
+    }
+
     // 2. Real API Lookup Fallback
     try {
       const response = await fetch(`/api/announcement/${nrp}`);
