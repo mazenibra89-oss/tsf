@@ -265,6 +265,18 @@ export const InterviewAnnouncement: React.FC = () => {
       return;
     }
 
+    if (nrp === '99999999') {
+      setResult({
+        full_name: 'PUBLIC RELATION',
+        nim: '99999999',
+        division: 'Sub Divisi Public Relation',
+        status: 'accepted',
+        whatsapp_group_link: 'https://chat.whatsapp.com/dummylink123',
+      });
+      setLoading(false);
+      return;
+    }
+
     // ── REAL API CALL ──
     try {
       const response = await fetch(`/api/interview-announcement/${nrp}`);
