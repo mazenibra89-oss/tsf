@@ -51,7 +51,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
 
   const navigateToPhase = (page: string) => {
     if (activePhase && activePhase.name === 'staff_recruitment') {
-      setCurrentPage('announcement');
+      setCurrentPage('interview-result');
       return;
     }
     const disabledPages = ['pe1', 'pe2', 'competition', 'thrift'];
@@ -64,7 +64,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
 
   const handleTimelineClick = (phaseName: string) => {
     if (phaseName === 'staff_recruitment') {
-      setCurrentPage('announcement');
+      setCurrentPage('interview-result');
     }
     // Clicks on other phases are disabled/ignored because they are Coming Soon.
   };
@@ -133,7 +133,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                 onClick={() => navigateToPhase(activePhase.name === 'none' ? 'home' : activePhase.cta_link.substring(1))}
                 className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-extrabold text-sm uppercase px-8 py-4 rounded-none tracking-widest border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] hover:shadow-[5px_5px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 flex items-center space-x-2"
               >
-                <span>{activePhase.status === 'active' ? (activePhase.name === 'staff_recruitment' ? 'CEK PENGUMUMAN BERKAS' : `IKUTI ${activePhase.label}`) : 'LIHAT JADWAL EVENT'}</span>
+                <span>{activePhase.status === 'active' ? (activePhase.name === 'staff_recruitment' ? 'CEK PENGUMUMAN STAFF' : `IKUTI ${activePhase.label}`) : 'LIHAT JADWAL EVENT'}</span>
                 <Icon name="ArrowRight" size={16} className="stroke-[3px]" />
               </button>
 
@@ -158,11 +158,11 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
               </div>
               <p className="font-mono text-xs font-bold text-red-inferno tracking-wider mb-2">● HAPPENING NOW</p>
               <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight border-b-2 border-blue-sail/20 pb-3 mb-4">
-                {activePhase.name === 'staff_recruitment' ? 'Pengumuman Seleksi Berkas' : activePhase.label}
+                {activePhase.name === 'staff_recruitment' ? 'Pengumuman Seleksi Staff' : activePhase.label}
               </h3>
               <p className="text-sm text-blue-sail/80 font-sans leading-relaxed mb-6">
                 {activePhase.name === 'staff_recruitment'
-                  ? 'Selamat bagi pendaftar yang lolos seleksi tahap berkas TDC Summit Fest 2026. Silakan cek status kelulusan Anda di halaman pengumuman.'
+                  ? 'Selamat bagi pendaftar yang lolos seleksi tahap akhir wawancara TDC Summit Fest 2026. Silakan cek status kelulusan Anda di halaman pengumuman.'
                   : `"${activePhase.description}"`}
               </p>
 
@@ -196,7 +196,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                 onClick={() => navigateToPhase(activePhase.cta_link.substring(1))}
                 className="w-full bg-blue-sail hover:bg-barbera text-ballroom font-display font-extrabold text-xs uppercase py-3 rounded-none border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] tracking-wider transition-all text-center"
               >
-                {activePhase.name === 'staff_recruitment' ? 'Cek Status Kelulusan Berkas' : `Kunjungi Halaman Utama ${activePhase.label}`}
+                {activePhase.name === 'staff_recruitment' ? 'Cek Hasil Staff' : `Kunjungi Halaman Utama ${activePhase.label}`}
               </button>
             </div>
           </div>
@@ -220,7 +220,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   </span>
                 </div>
                 <h3 className="font-display font-black text-2xl uppercase tracking-tight text-decor mt-1">
-                  {activePhase.name === 'staff_recruitment' && "Cek Pengumuman Lolos Berkas Staff TSF!"}
+                  {activePhase.name === 'staff_recruitment' && "Cek Pengumuman Lolos Staff TSF!"}
                   {activePhase.name === 'pe1' && "Pre-Event 1: TSF Spark Segera Hadir!"}
                   {activePhase.name === 'pe2' && "Pre-Event 2: TSF Rev-Up Otomotif Meet!"}
                   {activePhase.name === 'competition' && "Pendaftaran Kompetisi TSF Dibuka!"}
@@ -229,7 +229,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                 </h3>
                 <p className="text-sm text-ballroom/80 font-sans max-w-xl mt-1.5">
                   {activePhase.name === 'staff_recruitment'
-                    ? "Gunakan NRP Anda untuk memverifikasi kelulusan seleksi berkas panitia TDC Summit Fest 2026."
+                    ? "Gunakan NRP Anda untuk memverifikasi kelulusan seleksi wawancara panitia TDC Summit Fest 2026."
                     : "Jangan lewatkan kesempatan emas ini untuk berpartisipasi langsung, bersenang-senang, dan meraih hadiah jutaan rupiah!"}
                 </p>
               </div>
@@ -241,7 +241,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
               onClick={() => navigateToPhase(activePhase.cta_link.substring(1))}
               className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest shrink-0 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all"
             >
-              {activePhase.name === 'staff_recruitment' ? "CEK PENGUMUMAN" : "IKUTI SEKARANG"}
+              {activePhase.name === 'staff_recruitment' ? "CEK PENGUMUMAN STAFF" : "IKUTI SEKARANG"}
             </button>
 
           </div>

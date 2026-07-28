@@ -45,7 +45,12 @@ import {
   ArrowLeft,
   Database,
   Megaphone,
-  Palette
+  Palette,
+  Crown,
+  Star,
+  Sparkles,
+  Award,
+  PartyPopper
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -94,7 +99,12 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   ArrowLeft,
   Database,
   Megaphone,
-  Palette
+  Palette,
+  Crown,
+  Star,
+  Sparkles,
+  Award,
+  PartyPopper
 };
 
 interface IconProps {
