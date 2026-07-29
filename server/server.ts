@@ -589,7 +589,26 @@ app.get('/api/interview-announcement/:nim', async (req: Request, res: Response):
   ]);
 
   try {
-    const applicant = await db('staff_applications').whereIn('nim', searchNims).first();
+    let applicant = await db('staff_applications').whereIn('nim', searchNims).first();
+    
+    // Hardcoded fallback for Aeesha and Dava if their record is not found in database
+    if (!applicant) {
+      const cleanNim = (nim === '5027251032' || nim === '027251032' || nim === '27251032') ? '5027251032' : nim;
+      if (['5028251084', '028251084', '28251084', '05028251084'].includes(cleanNim)) {
+        applicant = {
+          full_name: "Aeesha Na'ilah Syifa'",
+          nim: '5028251084',
+          division_priority_1: 'Sub Divisi BnM - Creative Design'
+        };
+      } else if (['5028251017', '028251017', '28251017', '05028251017'].includes(cleanNim)) {
+        applicant = {
+          full_name: 'Dava Febriansyah',
+          nim: '5028251017',
+          division_priority_1: 'Sub Divisi BnM - Creative Design'
+        };
+      }
+    }
+
     if (!applicant) {
       res.status(404).json({ message: 'Data pendaftaran tidak ditemukan. Silakan cek kembali NRP Anda.' });
       return;

@@ -324,8 +324,15 @@ export const InterviewAnnouncement: React.FC = () => {
       ]);
 
       if (passedInterviewNims.has(cleanNrp)) {
+        let fallbackName = 'Panitia TDC Summit Fest 2026';
+        if (['5028251084', '028251084', '28251084', '05028251084'].includes(cleanNrp)) {
+          fallbackName = "Aeesha Na'ilah Syifa'";
+        } else if (['5028251017', '028251017', '28251017', '05028251017'].includes(cleanNrp)) {
+          fallbackName = 'Dava Febriansyah';
+        }
+
         setResult({
-          full_name: 'Panitia TDC Summit Fest 2026',
+          full_name: fallbackName,
           nim: cleanNrp,
           division: 'Staff TSF 2026',
           status: 'accepted',
