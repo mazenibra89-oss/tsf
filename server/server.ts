@@ -537,8 +537,79 @@ app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<v
       whatsapp_group_link: null
     });
   } catch (err) {
-    console.error('Error fetching announcement:', err);
-    res.status(500).json({ message: 'Gagal mengambil data pengumuman' });
+// Get staff recruitment final interview announcement by NRP/NIM (Public)
+app.get('/api/interview-announcement/:nim', async (req: Request, res: Response): Promise<void> => {
+  const { nim } = req.params;
+  if (!nim) {
+    res.status(400).json({ message: 'NRP/NIM is required' });
+    return;
+  }
+
+  // Fallback search options for specific candidate with NRP typo
+  let searchNims = [nim];
+  if (nim === '5027251032' || nim === '027251032' || nim === '27251032') {
+    searchNims = ['5027251032', '027251032', '27251032'];
+  } else if (nim === '5028251084' || nim === '028251084' || nim === '28251084' || nim === '05028251084') {
+    searchNims = ['5028251084', '028251084', '28251084', '05028251084'];
+  } else if (nim === '5028251017' || nim === '028251017' || nim === '28251017' || nim === '05028251017') {
+    searchNims = ['5028251017', '028251017', '28251017', '05028251017'];
+  }
+
+  // Set of NRPs that officially passed the interview
+  const passedInterviewNims = new Set([
+    '5010251074', '5003251097', '5015251154', '5015251093', '5008251103',
+    '5008251203', '5016251041', '5026251177', '5015251058', '5010251077',
+    '2043251079', '5015251105', '5018251006', '5026251188', '2043251107',
+    '5027251047', '5016251021', '5033251063', '2041251031', '5019251112',
+    '5010251170', '5015251077', '5048251003', '5015251155', '5015251045',
+    '5045251029', '5007251187', '5003251106', '5003251111', '5016251070',
+    '5016251055', '2036251088', '5020251115', '5008251043', '5046251045',
+    '5048251065', '5056251030', '5049251053', '5022251178', '5003251023',
+    '5003251104', '5003251176', '5033251002', '5003251052', '5057251037',
+    '5049251047', '5014251076', '5027251011', '5057251011', '5033251077',
+    '2043251068', '5004251039', '5002251114', '2039251031', '5031251011',
+    '5061251009', '5023251021', '5031251018', '5021251006', '5012251171',
+    '5027251056', '5029251103', '5033251035', '5029251094', '5025251081',
+    '5021251017', '2043251019', '5028251083', '5027251037', '5015251127',
+    '5013251090', '5028251086', '5015251015', '5028251017', '5013251013',
+    '5028251084', '2036251054', '5056251010', '5002251037', '5029251056',
+    '5049251048', '5015251108', '5014251082', '5007251153', '5008251154',
+    '5029251099', '5026251028', '5025251273', '2042251120', '5028251058',
+    '2036251045', '5019251138', '5053251027', '5028251048', '5031251076',
+    '5026251027', '5026251068', '5016251114', '5031251053', '5030251092',
+    '5057251004', '5015251112', '5029251109', '5050251048', '2039251020',
+    '5030251141',
+    // include dummy test NRPs as accepted
+    '5053251003', '99999999'
+  ]);
+
+  try {
+    const applicant = await db('staff_applications').whereIn('nim', searchNims).first();
+    if (!applicant) {
+      res.status(404).json({ message: 'Data pendaftaran tidak ditemukan. Silakan cek kembali NRP Anda.' });
+      return;
+    }
+
+    let correctedNim = (nim === '5027251032' || nim === '027251032' || nim === '27251032') ? '5027251032' : applicant.nim;
+    if (['5028251084', '028251084', '28251084', '05028251084'].includes(correctedNim)) {
+      correctedNim = '5028251084';
+    } else if (['5028251017', '028251017', '28251017', '05028251017'].includes(correctedNim)) {
+      correctedNim = '5028251017';
+    }
+
+    const passedDivision = getPassedDivision(correctedNim);
+    const isAccepted = passedInterviewNims.has(correctedNim);
+
+    res.json({
+      full_name: applicant.full_name,
+      nim: correctedNim,
+      division: passedDivision ? passedDivision : applicant.division_priority_1,
+      status: isAccepted ? 'accepted' : 'rejected',
+      whatsapp_group_link: isAccepted ? 'https://chat.whatsapp.com/dummylink123' : null
+    });
+  } catch (err) {
+    console.error('Error fetching interview announcement:', err);
+    res.status(500).json({ message: 'Gagal mengambil data pengumuman wawancara' });
   }
 });
 

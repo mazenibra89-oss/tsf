@@ -555,8 +555,8 @@ export const InterviewAnnouncement: React.FC = () => {
                     </motion.div>
                   )}
 
-                  {/* WhatsApp Group Link */}
-                  {celebrationPhase >= 4 && result.whatsapp_group_link && (
+                  {/* WhatsApp Contact Person Overrides */}
+                  {celebrationPhase >= 4 && (
                     <motion.div
                       className="bg-decor/10 p-5 border-[2px] border-decor/30 space-y-3"
                       initial={{ opacity: 0, y: 20 }}
@@ -569,17 +569,26 @@ export const InterviewAnnouncement: React.FC = () => {
                           <span>LANGKAH SELANJUTNYA:</span>
                         </h4>
                         <p className="text-xs text-blue-sail/70 font-sans pl-5 leading-relaxed">
-                          Selamat bergabung! Segera masuk ke grup WhatsApp divisi Anda untuk informasi terbaru mengenai orientasi dan kegiatan staff.
+                          Selamat bergabung! Silakan hubungi Contact Person (CP) berikut untuk koordinasi lebih lanjut mengenai kegiatan dan orientasi staff:
                         </p>
-                        <div className="pl-5 pt-1">
+                        <div className="pl-5 pt-2 flex flex-col sm:flex-row gap-3">
                           <a
-                            href={result.whatsapp_group_link}
+                            href="https://wa.me/6285175268520"
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center space-x-2 bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-[10px] uppercase px-5 py-3 rounded-none tracking-wider border-2 border-blue-sail shadow-[3px_3px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                            className="inline-flex items-center justify-center space-x-2 bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-[10px] uppercase px-5 py-3 rounded-none tracking-wider border-2 border-blue-sail shadow-[3px_3px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all text-center"
                           >
-                            <span>GABUNG GRUP WHATSAPP</span>
-                            <Icon name="ExternalLink" size={11} />
+                            <span>CP FARHAN (+62 851-7526-8520)</span>
+                            <Icon name="Phone" size={11} />
+                          </a>
+                          <a
+                            href="https://wa.me/6281234555854"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center justify-center space-x-2 bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-[10px] uppercase px-5 py-3 rounded-none tracking-wider border-2 border-blue-sail shadow-[3px_3px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all text-center"
+                          >
+                            <span>CP IBRA (+62 812-3455-5854)</span>
+                            <Icon name="Phone" size={11} />
                           </a>
                         </div>
                       </div>
