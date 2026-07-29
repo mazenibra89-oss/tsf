@@ -537,6 +537,11 @@ app.get('/api/announcement/:nim', async (req: Request, res: Response): Promise<v
       whatsapp_group_link: null
     });
   } catch (err) {
+    console.error('Error fetching announcement:', err);
+    res.status(500).json({ message: 'Gagal mengambil data pengumuman' });
+  }
+});
+
 // Get staff recruitment final interview announcement by NRP/NIM (Public)
 app.get('/api/interview-announcement/:nim', async (req: Request, res: Response): Promise<void> => {
   const { nim } = req.params;
