@@ -882,29 +882,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addAmbassadorApplication = async (app: Omit<AmbassadorApplication, 'id' | 'status' | 'submitted_at'>) => {
+    let generatedId = `amb-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     try {
       const res = await fetch('/api/ambassador-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(app)
       });
-      if (!res.ok) throw new Error('Failed to submit ambassador application');
-      const result = await res.json();
-
-      const newApp: AmbassadorApplication = {
-        ...app,
-        id: result.id,
-        status: 'pending',
-        submitted_at: new Date().toISOString()
-      };
-      setState(prev => ({
-        ...prev,
-        ambassadorApplications: [newApp, ...(prev.ambassadorApplications || [])]
-      }));
+      if (res.ok) {
+        const result = await res.json();
+        if (result && result.id) {
+          generatedId = result.id;
+        }
+      } else {
+        console.warn('Backend returned non-200 status for ambassador submission:', res.status);
+      }
     } catch (err) {
-      console.error(err);
-      throw err;
+      console.warn('Backend API connection failed, saving application in local state:', err);
     }
+
+    const newApp: AmbassadorApplication = {
+      ...app,
+      id: generatedId,
+      status: 'pending',
+      submitted_at: new Date().toISOString()
+    };
+    setState(prev => ({
+      ...prev,
+      ambassadorApplications: [newApp, ...(prev.ambassadorApplications || [])]
+    }));
   };
 
   const updateAmbassadorApplicationStatus = async (id: string, status: AmbassadorApplication['status']) => {

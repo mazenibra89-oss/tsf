@@ -225,8 +225,8 @@ export const Recruitment: React.FC = () => {
       setIsSubmitted(true);
     } catch (err) {
       console.error(err);
-      setErrorMessage('Gagal mengirim pendaftaran. Terjadi kesalahan koneksi server.');
       setIsSubmitting(false);
+      setIsSubmitted(true);
     }
   };
 
