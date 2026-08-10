@@ -560,26 +560,17 @@ export const Recruitment: React.FC = () => {
                   telah resmi terdata oleh panitia TDC Summit Fest 2026.
                 </p>
 
-                <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
-                  <a
-                    href="https://wa.me/6287812126693"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-blue-sail text-decor font-display font-extrabold text-xs uppercase px-8 py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] hover:bg-barbera transition-all"
-                  >
-                    <span>GABUNG GROUP WHATSAPP OFFICIAL</span>
-                    <Icon name="ArrowRight" size={16} />
-                  </a>
-
+                <div className="pt-4 flex justify-center items-center">
                   <button
                     type="button"
                     onClick={() => {
                       setIsSubmitted(false);
                       handleResetRoleChoice();
                     }}
-                    className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-ballroom text-blue-sail font-display font-bold text-xs uppercase px-6 py-4 border-2 border-blue-sail hover:bg-decor/20 transition-all"
+                    className="inline-flex items-center justify-center space-x-2 bg-blue-sail text-decor font-display font-black text-xs uppercase px-8 py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] hover:bg-barbera transition-all cursor-pointer tracking-wider"
                   >
-                    <span>Isi Formulir Baru</span>
+                    <span>ISI FORMULIR BARU</span>
+                    <Icon name="ArrowRight" size={16} />
                   </button>
                 </div>
               </motion.div>
