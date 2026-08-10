@@ -87,6 +87,22 @@ async function initDatabase() {
       console.log('Created ambassador_applications table.');
     }
 
+    // Auto update p-1 phase to ambassador_recruitment and active status
+    if (await db.schema.hasTable('event_phases')) {
+      await db('event_phases')
+        .where({ id: 'p-1' })
+        .orWhere({ name: 'staff_recruitment' })
+        .update({
+          name: 'ambassador_recruitment',
+          label: 'Recruitment CI & SA',
+          status: 'active',
+          start_date: '2026-08-01',
+          end_date: '2026-08-31',
+          description: 'Open Recruitment Campus Influencer (ITS) & Student Ambassador (SMA/SMK Surabaya) TDC Summit Fest 2026!',
+          cta_link: '/recruitment'
+        });
+    }
+
     console.log('Running database seeds...');
     // Seed run will automatically skip if database already has data
     await db.seed.run();

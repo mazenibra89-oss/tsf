@@ -39,13 +39,13 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('event_phases').insert([
     {
       id: 'p-1',
-      name: 'staff_recruitment',
-      label: 'Perekrutan Staff',
+      name: 'ambassador_recruitment',
+      label: 'Recruitment CI & SA',
       status: 'active',
-      start_date: '2026-07-01',
-      end_date: '2026-07-15',
-      description: 'Buka peluang karir organisasi & kepanitiaan bersama tim TSF! Pilih divisi impianmu sekarang.',
-      cta_link: '/staff'
+      start_date: '2026-08-01',
+      end_date: '2026-08-31',
+      description: 'Open Recruitment Campus Influencer (ITS) & Student Ambassador (SMA/SMK Surabaya) TDC Summit Fest 2026!',
+      cta_link: '/recruitment'
     },
     {
       id: 'p-2',
