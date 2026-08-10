@@ -12,36 +12,17 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
   const { phases } = useApp();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Find active phase
-  const activePhase = phases.find(p => p.status === 'active');
-
-  // Determine dynamic CTA button text and destination
-  let ctaText = 'Daftar Staff TSF';
-  let ctaPage = 'staff';
-
-  if (activePhase) {
-    switch (activePhase.name) {
-      case 'staff_recruitment':
-        ctaText = 'Daftar Staff TSF';
-        ctaPage = 'staff';
-        break;
-      case 'pe1':
-      case 'pe2':
-      case 'competition':
-      case 'thrift':
-        ctaText = 'Daftar Staff TSF';
-        ctaPage = 'staff';
-        break;
-      default:
-        ctaText = 'Daftar Staff TSF';
-        ctaPage = 'staff';
-    }
-  }
+  // Dynamic CTA button toggle for Ambassador / Influencer Recruitment
+  const showCta = true;
+  let ctaText = 'Daftar Ambassador';
+  let ctaPage = 'recruitment';
 
   const menuItems = [
     { id: 'home', label: 'Home' },
-    { id: 'staff', label: 'Staff Recruitment' },
-    { id: 'interview-result', label: 'STAFF RESULTS' },
+    { id: 'recruitment', label: 'Recruitment' },
+    // Staff Recruitment & Staff Results are deactivated and hidden from navbar options (code preserved)
+    // { id: 'staff', label: 'Staff Recruitment' },
+    // { id: 'interview-result', label: 'STAFF RESULTS' },
     { id: 'pe1', label: 'PE1', isComingSoon: true },
     { id: 'pe2', label: 'PE2', isComingSoon: true },
     { id: 'competition', label: 'Regist Competition', isComingSoon: true },

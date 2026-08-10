@@ -51,23 +51,22 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   }, [activePhase]);
 
   const navigateToPhase = (page: string) => {
-    if (activePhase && activePhase.name === 'staff_recruitment') {
-      setCurrentPage('interview-result');
+    if (page === 'recruitment' || page === 'ambassador_recruitment' || activePhase?.name === 'ambassador_recruitment') {
+      setCurrentPage('recruitment');
       return;
     }
-    const disabledPages = ['pe1', 'pe2', 'competition', 'thrift'];
+    const disabledPages = ['pe1', 'pe2', 'competition', 'thrift', 'staff', 'interview-result', 'announcement'];
     if (disabledPages.includes(page)) {
-      setCurrentPage('staff');
+      setCurrentPage('recruitment');
     } else {
       setCurrentPage(page);
     }
   };
 
   const handleTimelineClick = (phaseName: string) => {
-    if (phaseName === 'staff_recruitment') {
-      setCurrentPage('interview-result');
+    if (phaseName === 'ambassador_recruitment' || phaseName === 'staff_recruitment') {
+      setCurrentPage('recruitment');
     }
-    // Clicks on other phases are disabled/ignored because they are Coming Soon.
   };
 
   const faqs = [
@@ -159,11 +158,13 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
               </div>
               <p className="font-mono text-xs font-bold text-red-inferno tracking-wider mb-2">● HAPPENING NOW</p>
               <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight border-b-2 border-blue-sail/20 pb-3 mb-4">
-                {activePhase.name === 'staff_recruitment' ? 'Pengumuman Seleksi Staff' : activePhase.label}
+                {activePhase.name === 'ambassador_recruitment' ? 'Recruitment Campus Influencer & Student Ambassador' : activePhase.name === 'staff_recruitment' ? 'Pengumuman Seleksi Staff' : activePhase.label}
               </h3>
               <p className="text-sm text-blue-sail/80 font-sans leading-relaxed mb-6">
-                {activePhase.name === 'staff_recruitment'
-                  ? 'Selamat bagi pendaftar yang lolos seleksi tahap akhir wawancara TDC Summit Fest 2026. Silakan cek status kelulusan Anda di halaman pengumuman.'
+                {activePhase.name === 'ambassador_recruitment'
+                  ? 'Buka peluang emas menjadi perwakilan & kreator resmi TDC Summit Fest 2026! Bangun personal branding dan perluas jejaring se-Indonesia.'
+                  : activePhase.name === 'staff_recruitment'
+                  ? 'Selamat bagi pendaftar yang lolos seleksi tahap akhir wawancara TDC Summit Fest 2026.'
                   : `"${activePhase.description}"`}
               </p>
 
@@ -221,6 +222,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   </span>
                 </div>
                 <h3 className="font-display font-black text-2xl uppercase tracking-tight text-decor mt-1">
+                  {activePhase.name === 'ambassador_recruitment' && "Open Recruitment Campus Influencer & Student Ambassador TSF 2026!"}
                   {activePhase.name === 'staff_recruitment' && "Cek Pengumuman Lolos Staff TSF!"}
                   {activePhase.name === 'pe1' && "Pre-Event 1: TSF Spark Segera Hadir!"}
                   {activePhase.name === 'pe2' && "Pre-Event 2: TSF Rev-Up Otomotif Meet!"}
@@ -229,7 +231,9 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   {activePhase.name === 'none' && "Rangkaian TSF Bersiap Dimulai!"}
                 </h3>
                 <p className="text-sm text-ballroom/80 font-sans max-w-xl mt-1.5">
-                  {activePhase.name === 'staff_recruitment'
+                  {activePhase.name === 'ambassador_recruitment'
+                    ? "Daftarkan dirimu sekarang dan jadilah wajah resmi TSF 2026 di kampusmu! Dapatkan benefit e-certificate, VIP access, & reward eksklusif."
+                    : activePhase.name === 'staff_recruitment'
                     ? "Gunakan NRP Anda untuk memverifikasi kelulusan seleksi wawancara panitia TDC Summit Fest 2026."
                     : "Jangan lewatkan kesempatan emas ini untuk berpartisipasi langsung, bersenang-senang, dan meraih hadiah jutaan rupiah!"}
                 </p>
@@ -242,7 +246,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
               onClick={() => navigateToPhase(activePhase.cta_link.substring(1))}
               className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest shrink-0 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all"
             >
-              {activePhase.name === 'staff_recruitment' ? "CEK PENGUMUMAN STAFF" : "IKUTI SEKARANG"}
+              {activePhase.name === 'ambassador_recruitment' ? "DAFTAR AMBASSADOR" : activePhase.name === 'staff_recruitment' ? "CEK PENGUMUMAN STAFF" : "IKUTI SEKARANG"}
             </button>
 
           </div>

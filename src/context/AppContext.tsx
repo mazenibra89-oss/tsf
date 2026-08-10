@@ -11,7 +11,8 @@ import {
   ThriftVendor,
   VendorApplication,
   FormQuestionsConfig,
-  QuestionConfig
+  QuestionConfig,
+  AmbassadorApplication
 } from '../types';
 
 interface AppContextType extends AppState {
@@ -22,6 +23,11 @@ interface AppContextType extends AppState {
   addStaffApplication: (app: Omit<StaffApplication, 'id' | 'status' | 'submitted_at'>) => void;
   updateStaffApplicationStatus: (id: string, status: StaffApplication['status']) => void;
   updateStaffApplicationBerkas: (id: string, status_berkas: 'pending' | 'lolos' | 'gagal', interview_schedule: string | null, whatsapp_group_link: string | null) => Promise<void>;
+  
+  // Ambassador & Influencer
+  addAmbassadorApplication: (app: Omit<AmbassadorApplication, 'id' | 'status' | 'submitted_at'>) => Promise<void>;
+  updateAmbassadorApplicationStatus: (id: string, status: AmbassadorApplication['status']) => Promise<void>;
+  
   addDivision: (div: Omit<Division, 'id'>) => void;
   updateDivision: (div: Division) => void;
   deleteDivision: (id: string) => void;
@@ -55,13 +61,23 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const SEED_PHASES: EventPhase[] = [
   {
+    id: 'p-0',
+    name: 'ambassador_recruitment',
+    label: 'Campus Influencer & Student Ambassador',
+    status: 'active',
+    start_date: '2026-08-10',
+    end_date: '2026-08-31',
+    description: 'Pendaftaran Campus Influencer & Student Ambassador TDC Summit Fest 2026 telah resmi dibuka!',
+    cta_link: '/recruitment'
+  },
+  {
     id: 'p-1',
     name: 'staff_recruitment',
     label: 'Perekrutan Staff',
-    status: 'active',
+    status: 'closed',
     start_date: '2026-07-01',
     end_date: '2026-07-15',
-    description: 'Buka peluang karir organisasi & kepanitiaan bersama tim TSF! Pilih divisi impianmu sekarang.',
+    description: 'Perekrutan Staff Panitia TSF 2026 telah selesai dan ditutup.',
     cta_link: '/staff'
   },
   {
@@ -69,9 +85,9 @@ const SEED_PHASES: EventPhase[] = [
     name: 'pe1',
     label: 'Pre-Event 1 (PE1)',
     status: 'upcoming',
-    start_date: '2026-08-10',
-    end_date: '2026-08-15',
-    description: 'Coming Soon',
+    start_date: '2026-09-01',
+    end_date: '2026-09-15',
+    description: 'Pre-Event 1: TSF Spark Segera Hadir! Nantikan informasi selengkapnya.',
     cta_link: '/pe1'
   },
   {
@@ -848,7 +864,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       if (!res.ok) throw new Error('Failed to submit staff application');
       const result = await res.json();
-      
+
       const newApp: StaffApplication = {
         ...app,
         id: result.id,
@@ -862,6 +878,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.error(err);
       alert('Gagal mengirim pendaftaran.');
+    }
+  };
+
+  const addAmbassadorApplication = async (app: Omit<AmbassadorApplication, 'id' | 'status' | 'submitted_at'>) => {
+    try {
+      const res = await fetch('/api/ambassador-applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(app)
+      });
+      if (!res.ok) throw new Error('Failed to submit ambassador application');
+      const result = await res.json();
+
+      const newApp: AmbassadorApplication = {
+        ...app,
+        id: result.id,
+        status: 'pending',
+        submitted_at: new Date().toISOString()
+      };
+      setState(prev => ({
+        ...prev,
+        ambassadorApplications: [newApp, ...(prev.ambassadorApplications || [])]
+      }));
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+  const updateAmbassadorApplicationStatus = async (id: string, status: AmbassadorApplication['status']) => {
+    try {
+      const res = await authFetch(`/api/ambassador-applications/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) throw new Error('Failed to update ambassador status');
+      setState(prev => ({
+        ...prev,
+        ambassadorApplications: (prev.ambassadorApplications || []).map(a => a.id === id ? { ...a, status } : a)
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui status pendaftaran.');
     }
   };
 
@@ -896,7 +955,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (!res.ok) throw new Error('Failed to update berkas status');
       setState(prev => ({
         ...prev,
-        staffApplications: prev.staffApplications.map(a => 
+        staffApplications: prev.staffApplications.map(a =>
           a.id === id ? { ...a, status_berkas, interview_schedule, whatsapp_group_link } : a
         )
       }));
@@ -1191,6 +1250,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addStaffApplication,
       updateStaffApplicationStatus,
       updateStaffApplicationBerkas,
+      addAmbassadorApplication,
+      updateAmbassadorApplicationStatus,
       addDivision,
       updateDivision,
       deleteDivision,

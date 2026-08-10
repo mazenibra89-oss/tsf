@@ -54,6 +54,39 @@ async function initDatabase() {
     await db.migrate.latest();
     console.log('Migrations complete.');
 
+    const hasAmbassadorTable = await db.schema.hasTable('ambassador_applications');
+    if (!hasAmbassadorTable) {
+      await db.schema.createTable('ambassador_applications', (table) => {
+        table.string('id').primary();
+        table.string('role_choice').notNullable();
+        table.string('email').notNullable();
+        table.string('full_name').notNullable();
+        table.string('nrp').nullable();
+        table.string('department').nullable();
+        table.string('faculty').nullable();
+        table.string('grade_class').nullable();
+        table.string('school').nullable();
+        table.string('instagram').nullable();
+        table.string('tiktok').nullable();
+        table.string('whatsapp').notNullable();
+        table.text('q1_tsf_knowledge').nullable();
+        table.text('q2_role_knowledge').nullable();
+        table.text('q3_motivation').nullable();
+        table.string('q4_commitment_scale').nullable();
+        table.text('q5_commitment_reason').nullable();
+        table.text('q6_promotion_strategy').nullable();
+        table.text('q7_content_type_strategy').nullable();
+        table.text('q8_additional_benefits').nullable();
+        table.string('q9_info_source').nullable();
+        table.string('q9_info_source_friend').nullable();
+        table.string('drive_folder_url').notNullable();
+        table.string('reels_video_url').notNullable();
+        table.string('status').notNullable().defaultTo('pending');
+        table.timestamp('submitted_at').notNullable().defaultTo(db.fn.now());
+      });
+      console.log('Created ambassador_applications table.');
+    }
+
     console.log('Running database seeds...');
     // Seed run will automatically skip if database already has data
     await db.seed.run();
@@ -143,6 +176,9 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
     const phases = await db('event_phases').orderBy('id', 'asc');
     const divisions = await db('divisions').orderBy('id', 'asc');
     const staffApplications = await db('staff_applications').orderBy('submitted_at', 'desc');
+    const ambassadorApplications = (await db.schema.hasTable('ambassador_applications'))
+      ? await db('ambassador_applications').orderBy('submitted_at', 'desc')
+      : [];
     const subEvents = await db('sub_events').orderBy('id', 'asc');
     const competitions = await db('competitions').orderBy('id', 'asc');
     const competitionRegistrations = await db('competition_registrations').orderBy('submitted_at', 'desc');
@@ -163,6 +199,7 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
         skills: d.skills || ''
       })),
       staffApplications: staffApplications.map(a => ({ ...a, custom_form_answers: parseJson(a.custom_form_answers) })),
+      ambassadorApplications,
       subEvents: subEvents.map(e => ({
         ...e,
         lineup: parseJson(e.lineup),
@@ -303,6 +340,102 @@ app.delete('/api/divisions/:id', authenticateToken, async (req: Request, res: Re
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to delete division' });
+  }
+});
+
+// -------------------------------------------------------------
+// AMBASSADOR & INFLUENCER APPLICATIONS ENDPOINTS
+// -------------------------------------------------------------
+
+// Submit Ambassador Application (Public)
+app.post('/api/ambassador-applications', async (req: Request, res: Response): Promise<void> => {
+  const {
+    role_choice,
+    email,
+    full_name,
+    nrp,
+    department,
+    faculty,
+    grade_class,
+    school,
+    instagram,
+    tiktok,
+    whatsapp,
+    q1_tsf_knowledge,
+    q2_role_knowledge,
+    q3_motivation,
+    q4_commitment_scale,
+    q5_commitment_reason,
+    q6_promotion_strategy,
+    q7_content_type_strategy,
+    q8_additional_benefits,
+    q9_info_source,
+    q9_info_source_friend,
+    drive_folder_url,
+    reels_video_url
+  } = req.body;
+
+  if (!email || !full_name || !whatsapp || !drive_folder_url || !reels_video_url) {
+    res.status(400).json({ message: 'Lengkapi seluruh data wajib!' });
+    return;
+  }
+
+  const id = `amb-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const submitted_at = new Date().toISOString();
+
+  try {
+    await db('ambassador_applications').insert({
+      id,
+      role_choice,
+      email,
+      full_name,
+      nrp: nrp || null,
+      department: department || null,
+      faculty: faculty || null,
+      grade_class: grade_class || null,
+      school: school || null,
+      instagram: instagram || null,
+      tiktok: tiktok || null,
+      whatsapp,
+      q1_tsf_knowledge: q1_tsf_knowledge || null,
+      q2_role_knowledge: q2_role_knowledge || null,
+      q3_motivation: q3_motivation || null,
+      q4_commitment_scale: q4_commitment_scale || null,
+      q5_commitment_reason: q5_commitment_reason || null,
+      q6_promotion_strategy: q6_promotion_strategy || null,
+      q7_content_type_strategy: q7_content_type_strategy || null,
+      q8_additional_benefits: q8_additional_benefits || null,
+      q9_info_source: q9_info_source || null,
+      q9_info_source_friend: q9_info_source_friend || null,
+      drive_folder_url,
+      reels_video_url,
+      status: 'pending',
+      submitted_at
+    });
+
+    res.status(201).json({ id, message: 'Pendaftaran berhasil dikirim' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal mengirim pendaftaran' });
+  }
+});
+
+// Update Ambassador Application Status (Admin Authenticated)
+app.put('/api/ambassador-applications/:id/status', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!['pending', 'accepted', 'rejected'].includes(status)) {
+    res.status(400).json({ message: 'Status tidak valid' });
+    return;
+  }
+
+  try {
+    await db('ambassador_applications').where({ id }).update({ status });
+    res.json({ message: 'Status pendaftar berhasil diperbarui' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal memperbarui status pendaftar' });
   }
 });
 

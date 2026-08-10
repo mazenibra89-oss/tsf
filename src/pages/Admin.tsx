@@ -156,6 +156,7 @@ export const Admin: React.FC = () => {
     phases,
     divisions,
     staffApplications,
+    ambassadorApplications,
     subEvents,
     competitions,
     competitionRegistrations,
@@ -174,6 +175,7 @@ export const Admin: React.FC = () => {
     deleteThriftProduct,
     updateStaffApplicationStatus,
     updateStaffApplicationBerkas,
+    updateAmbassadorApplicationStatus,
     formQuestions,
     updateFormQuestions,
     resetToDefault
@@ -213,11 +215,17 @@ export const Admin: React.FC = () => {
   }, [isAuthenticated]);
 
   // Active sub-dashboard section tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'ambassadors' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control'>('overview');
 
   // Staff Applications Filtering States
   const [filterDivision, setFilterDivision] = useState<string>('');
   const [filterPriority, setFilterPriority] = useState<string>('');
+
+  // Ambassador Applications Filtering States
+  const [filterAmbassadorRole, setFilterAmbassadorRole] = useState<string>('');
+  const [filterAmbassadorStatus, setFilterAmbassadorStatus] = useState<string>('');
+  const [searchAmbassadorQuery, setSearchAmbassadorQuery] = useState<string>('');
+  const [selectedAmbassadorApp, setSelectedAmbassadorApp] = useState<any>(null);
 
   // Form Questions Config states
   const [formSubTab, setFormSubTab] = useState<'dataDiri' | 'generalTask' | 'berkas' | 'divisionTasks'>('dataDiri');
@@ -573,6 +581,36 @@ export const Admin: React.FC = () => {
     downloadCSV('TSF_Sewa_Booth_Vendor.csv', headers, rows);
   };
 
+  const exportAmbassadorCSV = () => {
+    const headers = [
+      'Peran Pilihan', 'Nama Lengkap', 'Email', 'No WA', 'NRP/Kelas', 'Departemen/Sekolah', 'Fakultas',
+      'Instagram', 'TikTok', 'Folder Drive', 'Reels Video', 'Komitmen Skala', 'Alasan Komitmen',
+      'Strategi Promosi', 'Jenis Konten', 'Harapan', 'Sumber Info', 'Status', 'Tanggal Daftar'
+    ];
+    const rows = (ambassadorApplications || []).map(app => [
+      app.role_choice,
+      app.full_name,
+      app.email,
+      app.whatsapp,
+      app.nrp || app.grade_class || '-',
+      app.department || app.school || '-',
+      app.faculty || '-',
+      app.instagram || '-',
+      app.tiktok || '-',
+      app.drive_folder_url,
+      app.reels_video_url,
+      app.q4_commitment_scale || '-',
+      app.q5_commitment_reason || '-',
+      app.q6_promotion_strategy || '-',
+      app.q7_content_type_strategy || '-',
+      app.q8_additional_benefits || '-',
+      app.q9_info_source === 'Teman' ? `Teman: ${app.q9_info_source_friend}` : (app.q9_info_source || '-'),
+      app.status,
+      new Date(app.submitted_at).toLocaleDateString('id-ID')
+    ]);
+    downloadCSV('TSF_Pendaftar_Ambassador_Influencer.csv', headers, rows);
+  };
+
   // Division submit
   const handleDivSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -704,8 +742,20 @@ export const Admin: React.FC = () => {
     );
   }
 
-  // Find active phase
-  const activePhase = phases.find(p => p.status === 'active');
+  const filteredAmbassadors = (ambassadorApplications || []).filter(app => {
+    if (filterAmbassadorRole && app.role_choice !== filterAmbassadorRole) return false;
+    if (filterAmbassadorStatus && app.status !== filterAmbassadorStatus) return false;
+    if (searchAmbassadorQuery) {
+      const q = searchAmbassadorQuery.toLowerCase();
+      const matchName = app.full_name.toLowerCase().includes(q);
+      const matchEmail = app.email.toLowerCase().includes(q);
+      const matchNrp = app.nrp?.toLowerCase().includes(q) || false;
+      const matchSchool = app.school?.toLowerCase().includes(q) || false;
+      const matchWa = app.whatsapp.toLowerCase().includes(q);
+      if (!matchName && !matchEmail && !matchNrp && !matchSchool && !matchWa) return false;
+    }
+    return true;
+  });
 
   const filteredStaffApplications = staffApplications.filter(app => {
     if (filterDivision) {
@@ -757,6 +807,18 @@ export const Admin: React.FC = () => {
           >
             <Icon name="Sliders" size={16} />
             <span>Kontrol Utama / Fase</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ambassadors')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              activeTab === 'ambassadors'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="Award" size={16} />
+            <span>Pendaftar Ambassador ({(ambassadorApplications || []).length})</span>
           </button>
 
           <button
@@ -955,6 +1017,193 @@ export const Admin: React.FC = () => {
                   );
                 })}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* SECTION TAB: AMBASSADOR & INFLUENCER APPLICATIONS */}
+        {activeTab === 'ambassadors' && (
+          <div className="space-y-6">
+            {/* Top Header & Export */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-ballroom p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E]">
+              <div>
+                <h2 className="font-display font-black text-2xl uppercase tracking-tight text-blue-sail">
+                  Pendaftar Ambassador & Influencer
+                </h2>
+                <p className="text-xs text-blue-sail/70 mt-1 font-sans">
+                  Manajemen data calon Campus Influencer (ITS 2026) dan Student Ambassador (SMA/SMK Surabaya).
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={exportAmbassadorCSV}
+                className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-5 py-3 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center space-x-2 cursor-pointer"
+              >
+                <Icon name="Download" size={16} />
+                <span>EKSPOR CSV (EXCEL)</span>
+              </button>
+            </div>
+
+            {/* Stats Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
+                <span className="block text-[10px] font-mono font-bold uppercase text-blue-sail/60">TOTAL PENDAFTAR</span>
+                <span className="block font-display font-black text-2xl text-blue-sail">{(ambassadorApplications || []).length}</span>
+              </div>
+              <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
+                <span className="block text-[10px] font-mono font-bold uppercase text-blue-sail/60">CAMPUS INFLUENCER</span>
+                <span className="block font-display font-black text-2xl text-blue-sail">
+                  {(ambassadorApplications || []).filter(a => a.role_choice === 'Campus Influencer').length}
+                </span>
+              </div>
+              <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
+                <span className="block text-[10px] font-mono font-bold uppercase text-blue-sail/60">STUDENT AMBASSADOR</span>
+                <span className="block font-display font-black text-2xl text-blue-sail">
+                  {(ambassadorApplications || []).filter(a => a.role_choice === 'Student Ambassador').length}
+                </span>
+              </div>
+              <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
+                <span className="block text-[10px] font-mono font-bold uppercase text-emerald-600">DITERIMA (ACCEPTED)</span>
+                <span className="block font-display font-black text-2xl text-emerald-600">
+                  {(ambassadorApplications || []).filter(a => a.status === 'accepted').length}
+                </span>
+              </div>
+            </div>
+
+            {/* Filter Controls */}
+            <div className="bg-white p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-wrap items-center gap-4">
+              {/* Role filter */}
+              <div className="flex items-center space-x-2">
+                <label className="text-xs font-mono font-bold uppercase text-blue-sail">Peran:</label>
+                <select
+                  value={filterAmbassadorRole}
+                  onChange={(e) => setFilterAmbassadorRole(e.target.value)}
+                  className="p-2 border-2 border-blue-sail text-xs font-bold outline-none cursor-pointer"
+                >
+                  <option value="">Semua Peran</option>
+                  <option value="Campus Influencer">Campus Influencer (ITS)</option>
+                  <option value="Student Ambassador">Student Ambassador (SMA/SMK)</option>
+                </select>
+              </div>
+
+              {/* Status filter */}
+              <div className="flex items-center space-x-2">
+                <label className="text-xs font-mono font-bold uppercase text-blue-sail">Status:</label>
+                <select
+                  value={filterAmbassadorStatus}
+                  onChange={(e) => setFilterAmbassadorStatus(e.target.value)}
+                  className="p-2 border-2 border-blue-sail text-xs font-bold outline-none cursor-pointer"
+                >
+                  <option value="">Semua Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="accepted">Diterima (Accepted)</option>
+                  <option value="rejected">Ditolak (Rejected)</option>
+                </select>
+              </div>
+
+              {/* Search */}
+              <div className="flex-1 min-w-[200px]">
+                <input
+                  type="text"
+                  value={searchAmbassadorQuery}
+                  onChange={(e) => setSearchAmbassadorQuery(e.target.value)}
+                  placeholder="Cari nama, email, NRP/sekolah, WA..."
+                  className="w-full p-2 border-2 border-blue-sail text-xs outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Table Data */}
+            <div className="bg-white border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
+              {filteredAmbassadors.length === 0 ? (
+                <div className="p-12 text-center text-blue-sail">
+                  <Icon name="Award" size={40} className="text-blue-sail/30 mx-auto mb-2" />
+                  <p className="text-sm font-semibold">Belum Ada Data Pendaftar Ambassador / Influencer</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-sans border-collapse">
+                    <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                      <tr>
+                        <th className="p-4">Identitas Pendaftar</th>
+                        <th className="p-4">Peran & Akademik</th>
+                        <th className="p-4">Kontak & Sosmed</th>
+                        <th className="p-4">Berkas & Video</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y-2 divide-blue-sail/15">
+                      {filteredAmbassadors.map((app) => (
+                        <tr key={app.id} className="hover:bg-gray-50/60">
+                          <td className="p-4 space-y-1">
+                            <p className="font-bold text-blue-sail text-sm">{app.full_name}</p>
+                            <p className="font-mono text-[10px] text-blue-sail/60">{app.email}</p>
+                            <span className="inline-block text-[10px] font-mono text-blue-sail/40">Tgl: {new Date(app.submitted_at).toLocaleDateString('id-ID')}</span>
+                          </td>
+                          <td className="p-4 space-y-1">
+                            <span className={`inline-block font-mono text-[10px] font-bold px-2 py-0.5 border ${
+                              app.role_choice === 'Campus Influencer'
+                                ? 'bg-red-inferno text-white border-blue-sail'
+                                : 'bg-decor text-blue-sail border-blue-sail'
+                            }`}>
+                              {app.role_choice}
+                            </span>
+                            {app.role_choice === 'Campus Influencer' ? (
+                              <p className="text-[11px] font-mono text-blue-sail/80">
+                                NRP: {app.nrp} ({app.department} / {app.faculty})
+                              </p>
+                            ) : (
+                              <p className="text-[11px] font-mono text-blue-sail/80">
+                                {app.grade_class} — {app.school}
+                              </p>
+                            )}
+                          </td>
+                          <td className="p-4 space-y-1">
+                            <a href={`https://${app.whatsapp}`} target="_blank" rel="noreferrer" className="text-emerald-600 hover:underline font-mono text-xs font-bold block">
+                              WA: {app.whatsapp}
+                            </a>
+                            {app.instagram && <p className="text-[10px] text-blue-sail/70">IG: {app.instagram}</p>}
+                            {app.tiktok && <p className="text-[10px] text-blue-sail/70">TT: {app.tiktok}</p>}
+                          </td>
+                          <td className="p-4 space-y-1">
+                            <a href={app.drive_folder_url} target="_blank" rel="noreferrer" className="text-blue-sail hover:underline font-bold text-[11px] flex items-center space-x-1">
+                              <Icon name="ExternalLink" size={12} />
+                              <span>Folder Drive</span>
+                            </a>
+                            <a href={app.reels_video_url} target="_blank" rel="noreferrer" className="text-red-inferno hover:underline font-bold text-[11px] flex items-center space-x-1">
+                              <Icon name="Video" size={12} />
+                              <span>Reels Video</span>
+                            </a>
+                          </td>
+                          <td className="p-4">
+                            <span className={`inline-block font-mono text-[10px] font-bold px-2.5 py-1 uppercase tracking-wider border ${
+                              app.status === 'accepted'
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-500'
+                                : app.status === 'rejected'
+                                ? 'bg-red-100 text-red-800 border-red-500'
+                                : 'bg-amber-100 text-amber-800 border-amber-500'
+                            }`}>
+                              {app.status === 'accepted' ? 'DITERIMA' : app.status === 'rejected' ? 'DITOLAK' : 'PENDING'}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAmbassadorApp(app)}
+                              className="bg-blue-sail hover:bg-decor hover:text-blue-sail text-ballroom font-mono text-xs font-bold px-3 py-1.5 border border-blue-sail transition-all flex items-center space-x-1 cursor-pointer"
+                            >
+                              <Icon name="Eye" size={12} />
+                              <span>Detail</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -2997,6 +3246,183 @@ export const Admin: React.FC = () => {
                 className="bg-blue-sail hover:bg-blue-sail/95 text-white font-display font-black text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail transition-all cursor-pointer"
               >
                 TUTUP DETAIL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AMBASSADOR APPLICANT DETAIL MODAL */}
+      {selectedAmbassadorApp && (
+        <div className="fixed inset-0 bg-blue-sail/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-ballroom border-4 border-blue-sail shadow-[12px_12px_0_0_#BD1B1F] w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 text-blue-sail font-sans relative">
+            <div className="flex justify-between items-start border-b-2 border-blue-sail/20 pb-4">
+              <div>
+                <span className="font-mono text-xs font-bold text-red-inferno uppercase tracking-widest block mb-1">
+                  DETAIL PENDAFTAR AMBASSADOR & INFLUENCER
+                </span>
+                <h3 className="font-display font-black text-2xl uppercase tracking-tight">
+                  {selectedAmbassadorApp.full_name}
+                </h3>
+                <p className="font-mono text-xs text-blue-sail/70 mt-0.5">
+                  Peran: <strong>{selectedAmbassadorApp.role_choice}</strong> | Email: {selectedAmbassadorApp.email}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedAmbassadorApp(null)}
+                className="bg-red-inferno text-ballroom p-2 border border-blue-sail hover:bg-red-700 transition-colors cursor-pointer"
+              >
+                <Icon name="X" size={18} />
+              </button>
+            </div>
+
+            {/* Section 1: Data Diri */}
+            <div className="bg-blue-sail/5 p-4 border-2 border-blue-sail space-y-2">
+              <h4 className="font-display font-bold text-xs uppercase tracking-wider text-blue-sail border-b border-blue-sail/10 pb-1">
+                Data Diri & Identitas Pendaftar
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <p><strong>Nama Lengkap:</strong> {selectedAmbassadorApp.full_name}</p>
+                <p><strong>Email:</strong> {selectedAmbassadorApp.email}</p>
+                <p><strong>No WhatsApp:</strong> {selectedAmbassadorApp.whatsapp}</p>
+                {selectedAmbassadorApp.role_choice === 'Campus Influencer' ? (
+                  <>
+                    <p><strong>NRP:</strong> {selectedAmbassadorApp.nrp || '-'}</p>
+                    <p><strong>Departemen / Fakultas:</strong> {selectedAmbassadorApp.department} ({selectedAmbassadorApp.faculty})</p>
+                  </>
+                ) : (
+                  <>
+                    <p><strong>Kelas:</strong> {selectedAmbassadorApp.grade_class || '-'}</p>
+                    <p><strong>Asal Sekolah:</strong> {selectedAmbassadorApp.school || '-'}</p>
+                  </>
+                )}
+                <p><strong>Instagram:</strong> {selectedAmbassadorApp.instagram || '-'}</p>
+                <p><strong>TikTok:</strong> {selectedAmbassadorApp.tiktok || '-'}</p>
+              </div>
+            </div>
+
+            {/* Section 2: Jawaban Esai */}
+            <div className="space-y-4">
+              <h4 className="font-display font-black text-sm uppercase tracking-wider text-blue-sail border-b-2 border-blue-sail pb-1">
+                Jawaban Pertanyaan Seleksi (Page 2)
+              </h4>
+
+              <div className="space-y-3 text-xs">
+                <div className="bg-white p-3 border border-blue-sail/20">
+                  <p className="font-bold uppercase text-[11px] text-blue-sail mb-1">1. Pemahaman tentang TSF 2026:</p>
+                  <p className="text-blue-sail/90 whitespace-pre-wrap">{selectedAmbassadorApp.q1_tsf_knowledge || '-'}</p>
+                </div>
+
+                <div className="bg-white p-3 border border-blue-sail/20">
+                  <p className="font-bold uppercase text-[11px] text-blue-sail mb-1">2. Pemahaman Peran {selectedAmbassadorApp.role_choice}:</p>
+                  <p className="text-blue-sail/90 whitespace-pre-wrap">{selectedAmbassadorApp.q2_role_knowledge || '-'}</p>
+                </div>
+
+                <div className="bg-white p-3 border border-blue-sail/20">
+                  <p className="font-bold uppercase text-[11px] text-blue-sail mb-1">3. Motivasi Mendaftar:</p>
+                  <p className="text-blue-sail/90 whitespace-pre-wrap">{selectedAmbassadorApp.q3_motivation || '-'}</p>
+                </div>
+
+                <div className="bg-white p-3 border border-blue-sail/20 flex justify-between items-center">
+                  <p className="font-bold uppercase text-[11px] text-blue-sail">4. Skala Komitmen (1-10):</p>
+                  <span className="font-mono text-sm font-black bg-red-inferno text-white px-3 py-0.5">{selectedAmbassadorApp.q4_commitment_scale || '-'}/10</span>
+                </div>
+
+                <div className="bg-white p-3 border border-blue-sail/20">
+                  <p className="font-bold uppercase text-[11px] text-blue-sail mb-1">5. Alasan Skala Komitmen:</p>
+                  <p className="text-blue-sail/90 whitespace-pre-wrap">{selectedAmbassadorApp.q5_commitment_reason || '-'}</p>
+                </div>
+
+                <div className="bg-white p-3 border border-blue-sail/20">
+                  <p className="font-bold uppercase text-[11px] text-blue-sail mb-1">6. Strategi Promosi TSF:</p>
+                  <p className="text-blue-sail/90 whitespace-pre-wrap">{selectedAmbassadorApp.q6_promotion_strategy || '-'}</p>
+                </div>
+
+                <div className="bg-white p-3 border border-blue-sail/20">
+                  <p className="font-bold uppercase text-[11px] text-blue-sail mb-1">7. Konsep & Jenis Konten:</p>
+                  <p className="text-blue-sail/90 whitespace-pre-wrap">{selectedAmbassadorApp.q7_content_type_strategy || '-'}</p>
+                </div>
+
+                <div className="bg-white p-3 border border-blue-sail/20">
+                  <p className="font-bold uppercase text-[11px] text-blue-sail mb-1">8. Manfaat Tambahan yang Diharapkan:</p>
+                  <p className="text-blue-sail/90 whitespace-pre-wrap">{selectedAmbassadorApp.q8_additional_benefits || '-'}</p>
+                </div>
+
+                <div className="bg-white p-3 border border-blue-sail/20">
+                  <p className="font-bold uppercase text-[11px] text-blue-sail mb-1">9. Sumber Informasi:</p>
+                  <p className="text-blue-sail/90">
+                    {selectedAmbassadorApp.q9_info_source === 'Teman'
+                      ? `Teman (${selectedAmbassadorApp.q9_info_source_friend})`
+                      : selectedAmbassadorApp.q9_info_source}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Links */}
+            <div className="bg-decor/30 p-4 border-2 border-blue-sail space-y-2">
+              <h4 className="font-display font-bold text-xs uppercase tracking-wider text-blue-sail">
+                Berkas & Link Video Reels (Page 3)
+              </h4>
+              <div className="flex flex-col sm:flex-row gap-4 pt-1">
+                <a
+                  href={selectedAmbassadorApp.drive_folder_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex-1 bg-blue-sail text-decor hover:bg-barbera font-display font-bold text-xs uppercase p-3 border border-blue-sail flex items-center justify-center space-x-2"
+                >
+                  <Icon name="Folder" size={16} />
+                  <span>Buka Folder Drive</span>
+                  <Icon name="ExternalLink" size={12} />
+                </a>
+
+                <a
+                  href={selectedAmbassadorApp.reels_video_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex-1 bg-red-inferno text-white hover:bg-red-700 font-display font-bold text-xs uppercase p-3 border border-blue-sail flex items-center justify-center space-x-2"
+                >
+                  <Icon name="Video" size={16} />
+                  <span>Tonton Reels Video</span>
+                  <Icon name="ExternalLink" size={12} />
+                </a>
+              </div>
+            </div>
+
+            {/* Section 4: Status Actions */}
+            <div className="pt-4 border-t-2 border-blue-sail/20 flex flex-wrap justify-between items-center gap-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono font-bold uppercase">Ubah Status:</span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await updateAmbassadorApplicationStatus(selectedAmbassadorApp.id, 'accepted');
+                    setSelectedAmbassadorApp(prev => prev ? { ...prev, status: 'accepted' } : null);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs font-bold px-3 py-1.5 border border-blue-sail shadow-[2px_2px_0_0_#000] cursor-pointer"
+                >
+                  ✓ Terima (Accepted)
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await updateAmbassadorApplicationStatus(selectedAmbassadorApp.id, 'rejected');
+                    setSelectedAmbassadorApp(prev => prev ? { ...prev, status: 'rejected' } : null);
+                  }}
+                  className="bg-red-inferno hover:bg-red-700 text-white font-mono text-xs font-bold px-3 py-1.5 border border-blue-sail shadow-[2px_2px_0_0_#000] cursor-pointer"
+                >
+                  ✕ Tolak (Rejected)
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedAmbassadorApp(null)}
+                className="bg-ballroom hover:bg-decor/20 text-blue-sail font-mono text-xs font-bold px-4 py-2 border-2 border-blue-sail cursor-pointer"
+              >
+                Tutup Modal
               </button>
             </div>
           </div>

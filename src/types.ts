@@ -5,7 +5,7 @@
 
 export interface EventPhase {
   id: string;
-  name: 'staff_recruitment' | 'pe1' | 'pe2' | 'competition' | 'thrift' | 'none';
+  name: 'staff_recruitment' | 'pe1' | 'pe2' | 'competition' | 'thrift' | 'ambassador_recruitment' | 'none';
   label: string;
   status: 'upcoming' | 'active' | 'closed';
   start_date: string;
@@ -183,10 +183,40 @@ export interface FormQuestionsConfig {
   divisionTasks: Record<string, QuestionConfig[]>;
 }
 
+export interface AmbassadorApplication {
+  id: string;
+  role_choice: 'Campus Influencer' | 'Student Ambassador';
+  email: string;
+  full_name: string;
+  nrp?: string;
+  department?: string;
+  faculty?: string;
+  grade_class?: string;
+  school?: string;
+  instagram?: string;
+  tiktok?: string;
+  whatsapp: string;
+  q1_tsf_knowledge?: string;
+  q2_role_knowledge?: string;
+  q3_motivation?: string;
+  q4_commitment_scale?: string;
+  q5_commitment_reason?: string;
+  q6_promotion_strategy?: string;
+  q7_content_type_strategy?: string;
+  q8_additional_benefits?: string;
+  q9_info_source?: string;
+  q9_info_source_friend?: string;
+  drive_folder_url: string;
+  reels_video_url: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  submitted_at: string;
+}
+
 export interface AppState {
   phases: EventPhase[];
   divisions: Division[];
   staffApplications: StaffApplication[];
+  ambassadorApplications?: AmbassadorApplication[];
   subEvents: SubEvent[];
   competitions: Competition[];
   competitionRegistrations: CompetitionRegistration[];

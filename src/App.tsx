@@ -13,8 +13,9 @@ import { Thrift } from './pages/Thrift';
 import { Admin } from './pages/Admin';
 import { Announcement } from './pages/Announcement';
 import { InterviewAnnouncement } from './pages/InterviewAnnouncement';
+import { Recruitment } from './pages/Recruitment';
 
-type PageType = 'home' | 'staff' | 'pe1' | 'pe2' | 'competition' | 'thrift' | 'admin' | 'announcement' | 'interview-result';
+type PageType = 'home' | 'staff' | 'pe1' | 'pe2' | 'competition' | 'thrift' | 'admin' | 'announcement' | 'interview-result' | 'recruitment';
 
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<PageType>('home');
@@ -23,7 +24,9 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#/staff') {
+      if (hash === '#/recruitment') {
+        setCurrentPage('recruitment');
+      } else if (hash === '#/staff') {
         setCurrentPage('staff');
       } else if (hash === '#/announcement') {
         setCurrentPage('announcement');
@@ -59,6 +62,8 @@ const AppContent: React.FC = () => {
 
   const renderPage = () => {
     switch (currentPage) {
+      case 'recruitment':
+        return <Recruitment />;
       case 'staff':
         return <Staff />;
       case 'announcement':
