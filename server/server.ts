@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 const JWT_SECRET = process.env.JWT_SECRET || 'tsf_super_secret_key_2026';
 
 // Middleware
