@@ -366,31 +366,30 @@ app.delete('/api/divisions/:id', authenticateToken, async (req: Request, res: Re
 
 // Submit Ambassador Application (Public)
 app.post('/api/ambassador-applications', async (req: Request, res: Response): Promise<void> => {
-  const {
-    role_choice,
-    email,
-    full_name,
-    nrp,
-    department,
-    faculty,
-    grade_class,
-    school,
-    instagram,
-    tiktok,
-    whatsapp,
-    q1_tsf_knowledge,
-    q2_role_knowledge,
-    q3_motivation,
-    q4_commitment_scale,
-    q5_commitment_reason,
-    q6_promotion_strategy,
-    q7_content_type_strategy,
-    q8_additional_benefits,
-    q9_info_source,
-    q9_info_source_friend,
-    drive_folder_url,
-    reels_video_url
-  } = req.body;
+  const body = req.body || {};
+  const role_choice = body.role_choice || body.roleChoice || 'Campus Influencer';
+  const email = body.email;
+  const full_name = body.full_name || body.fullName || body.name;
+  const nrp = body.nrp;
+  const department = body.department;
+  const faculty = body.faculty;
+  const grade_class = body.grade_class || body.gradeClass;
+  const school = body.school;
+  const instagram = body.instagram;
+  const tiktok = body.tiktok;
+  const whatsapp = body.whatsapp || body.phone;
+  const q1_tsf_knowledge = body.q1_tsf_knowledge || body.q1_tsfKnowledge;
+  const q2_role_knowledge = body.q2_role_knowledge || body.q2_roleKnowledge;
+  const q3_motivation = body.q3_motivation;
+  const q4_commitment_scale = body.q4_commitment_scale || body.q4_commitmentScale;
+  const q5_commitment_reason = body.q5_commitment_reason || body.q5_commitmentReason;
+  const q6_promotion_strategy = body.q6_promotion_strategy || body.q6_promotionStrategy;
+  const q7_content_type_strategy = body.q7_content_type_strategy || body.q7_contentTypeStrategy;
+  const q8_additional_benefits = body.q8_additional_benefits || body.q8_additionalBenefits;
+  const q9_info_source = body.q9_info_source || body.q9_infoSource;
+  const q9_info_source_friend = body.q9_info_source_friend || body.q9_infoSourceFriend;
+  const drive_folder_url = body.drive_folder_url || body.driveFolderUrl || '-';
+  const reels_video_url = body.reels_video_url || body.reelsVideoUrl || '-';
 
   if (!email || !full_name || !whatsapp) {
     res.status(400).json({ message: 'Lengkapi seluruh data wajib (email, nama lengkap, whatsapp)!' });
@@ -403,7 +402,7 @@ app.post('/api/ambassador-applications', async (req: Request, res: Response): Pr
   try {
     await db('ambassador_applications').insert({
       id,
-      role_choice: role_choice || 'Campus Influencer',
+      role_choice,
       email,
       full_name,
       nrp: nrp || null,
@@ -424,12 +423,13 @@ app.post('/api/ambassador-applications', async (req: Request, res: Response): Pr
       q8_additional_benefits: q8_additional_benefits || null,
       q9_info_source: q9_info_source || null,
       q9_info_source_friend: q9_info_source_friend || null,
-      drive_folder_url: drive_folder_url || '-',
-      reels_video_url: reels_video_url || '-',
+      drive_folder_url,
+      reels_video_url,
       status: 'pending',
       submitted_at
     });
 
+    console.log(`Successfully stored ambassador application [${id}] for ${full_name}`);
     res.status(201).json({ id, message: 'Pendaftaran berhasil dikirim' });
   } catch (err) {
     console.error('Error inserting ambassador application:', err);
