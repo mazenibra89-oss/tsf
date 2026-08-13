@@ -391,8 +391,8 @@ app.post('/api/ambassador-applications', async (req: Request, res: Response): Pr
     reels_video_url
   } = req.body;
 
-  if (!email || !full_name || !whatsapp || !drive_folder_url || !reels_video_url) {
-    res.status(400).json({ message: 'Lengkapi seluruh data wajib!' });
+  if (!email || !full_name || !whatsapp) {
+    res.status(400).json({ message: 'Lengkapi seluruh data wajib (email, nama lengkap, whatsapp)!' });
     return;
   }
 
@@ -402,7 +402,7 @@ app.post('/api/ambassador-applications', async (req: Request, res: Response): Pr
   try {
     await db('ambassador_applications').insert({
       id,
-      role_choice,
+      role_choice: role_choice || 'Campus Influencer',
       email,
       full_name,
       nrp: nrp || null,
@@ -423,15 +423,15 @@ app.post('/api/ambassador-applications', async (req: Request, res: Response): Pr
       q8_additional_benefits: q8_additional_benefits || null,
       q9_info_source: q9_info_source || null,
       q9_info_source_friend: q9_info_source_friend || null,
-      drive_folder_url,
-      reels_video_url,
+      drive_folder_url: drive_folder_url || '-',
+      reels_video_url: reels_video_url || '-',
       status: 'pending',
       submitted_at
     });
 
     res.status(201).json({ id, message: 'Pendaftaran berhasil dikirim' });
   } catch (err) {
-    console.error(err);
+    console.error('Error inserting ambassador application:', err);
     res.status(500).json({ message: 'Gagal mengirim pendaftaran' });
   }
 });

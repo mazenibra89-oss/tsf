@@ -769,6 +769,12 @@ const saveAmbassadorAppsToStorage = (apps: AmbassadorApplication[]) => {
   }
 };
 
+const getApiUrl = (endpoint: string) => {
+  const envApi = import.meta.env.VITE_API_URL || '';
+  const baseUrl = envApi ? envApi.replace(/\/$/, '') : '';
+  return `${baseUrl}${endpoint}`;
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AppState>({
     phases: SEED_PHASES,
@@ -794,12 +800,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...(options.headers || {}),
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
-    return fetch(url, { ...options, headers });
+    return fetch(getApiUrl(url), { ...options, headers });
   };
 
   const fetchState = async () => {
     try {
-      const res = await fetch('/api/state');
+      const res = await fetch(getApiUrl('/api/state'));
       if (res.ok) {
         const data = await res.json();
         const storedApps = getStoredAmbassadorApps();
@@ -841,6 +847,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     fetchState();
+    // Poll state every 15 seconds to sync data across devices
+    const interval = setInterval(fetchState, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const resetToDefault = async () => {
@@ -906,7 +915,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Staff application management
   const addStaffApplication = async (app: Omit<StaffApplication, 'id' | 'status' | 'submitted_at'>) => {
     try {
-      const res = await fetch('/api/staff-applications', {
+      const res = await fetch(getApiUrl('/api/staff-applications'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(app)
@@ -933,7 +942,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addAmbassadorApplication = async (app: Omit<AmbassadorApplication, 'id' | 'status' | 'submitted_at'>) => {
     let generatedId = `amb-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     try {
-      const res = await fetch('/api/ambassador-applications', {
+      const res = await fetch(getApiUrl('/api/ambassador-applications'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(app)
@@ -944,7 +953,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           generatedId = result.id;
         }
       } else {
-        console.warn('Backend returned non-200 status for ambassador submission:', res.status);
+        const errText = await res.text();
+        console.warn('Backend returned non-200 status for ambassador submission:', res.status, errText);
       }
     } catch (err) {
       console.warn('Backend API connection failed, saving application in local state:', err);
