@@ -1013,6 +1013,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ambassadorApplications: updated
       };
     });
+
+    // Trigger immediate backend sync
+    await fetchState();
   };
 
   const updateAmbassadorApplicationStatus = async (id: string, status: AmbassadorApplication['status']) => {
