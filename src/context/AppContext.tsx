@@ -749,15 +749,52 @@ const SEED_PRODUCTS: ThriftProduct[] = [
   }
 ];
 
+const SEED_AMBASSADOR_APPLICATIONS: AmbassadorApplication[] = [
+  {
+    id: 'amb-seed-1',
+    role_choice: 'Campus Influencer',
+    email: 'aeesha.syifa@student.its.ac.id',
+    full_name: "Aeesha Na'ilah Syifa'",
+    nrp: '5028251084',
+    department: 'Desain Komunikasi Visual',
+    faculty: 'FDKBD',
+    instagram: 'instagram.com/aeeshasyifa',
+    tiktok: 'tiktok.com/@aeesha.syifa',
+    whatsapp: '081234567890',
+    q1_tsf_knowledge: 'TDC Summit Fest merupakan event tahunan akbar technopreneurship & otomotif ITS.',
+    q2_role_knowledge: 'Campus Influencer berperan sebagai perwakilan branding TSF 2026 di lingkungan kampus.',
+    q3_motivation: 'Ingin mengasah personal branding dan memperluas networking se-ITS.',
+    q4_commitment_scale: '10',
+    q5_commitment_reason: 'Siap berkomitmen penuh mengikuti seluruh rangkaian kegiatan TSF 2026.',
+    q6_promotion_strategy: 'Membuat konten Reels kreatif & melakukan pendekatan interaktif di kampus.',
+    q7_content_type_strategy: 'Vlog edukatif, behind the scenes, dan aesthetic mini video.',
+    q8_additional_benefits: 'Meningkatkan awareness TSF di kalangan mahasiswa baru 2026.',
+    q9_info_source: 'Instagram Official TSF',
+    drive_folder_url: 'https://drive.google.com/drive/folders/sample-aeesha',
+    reels_video_url: 'https://www.instagram.com/reel/sample-aeesha',
+    status: 'pending',
+    submitted_at: '2026-08-10T10:00:00.000Z'
+  }
+];
+
 const AMBASSADOR_STORAGE_KEY = 'tsf_ambassador_applications';
 
 const getStoredAmbassadorApps = (): AmbassadorApplication[] => {
   try {
     const raw = localStorage.getItem(AMBASSADOR_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (raw) {
+      const parsed: AmbassadorApplication[] = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+        const appMap = new Map<string, AmbassadorApplication>();
+        SEED_AMBASSADOR_APPLICATIONS.forEach(a => appMap.set(a.id, a));
+        parsed.forEach(a => appMap.set(a.id, a));
+        return Array.from(appMap.values());
+      }
+    }
+    return SEED_AMBASSADOR_APPLICATIONS;
   } catch (err) {
     console.error('Failed to read ambassador applications from localStorage:', err);
-    return [];
+    return SEED_AMBASSADOR_APPLICATIONS;
   }
 };
 
@@ -811,8 +848,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const storedApps = getStoredAmbassadorApps();
         const serverApps: AmbassadorApplication[] = data.ambassadorApplications || [];
 
-        // Merge server & local applications by ID to avoid data loss
+        // Merge seed, server & local applications by ID to avoid data loss
         const appMap = new Map<string, AmbassadorApplication>();
+        SEED_AMBASSADOR_APPLICATIONS.forEach(app => appMap.set(app.id, app));
         serverApps.forEach(app => appMap.set(app.id, app));
         storedApps.forEach(app => {
           if (!appMap.has(app.id)) {
