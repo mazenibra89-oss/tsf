@@ -750,62 +750,8 @@ const SEED_PRODUCTS: ThriftProduct[] = [
   }
 ];
 
-const SEED_AMBASSADOR_APPLICATIONS: AmbassadorApplication[] = [
-  {
-    id: 'amb-seed-1',
-    role_choice: 'Campus Influencer',
-    email: 'aeesha.syifa@student.its.ac.id',
-    full_name: "Aeesha Na'ilah Syifa'",
-    nrp: '5028251084',
-    department: 'Desain Komunikasi Visual',
-    faculty: 'FDKBD',
-    instagram: 'instagram.com/aeeshasyifa',
-    tiktok: 'tiktok.com/@aeesha.syifa',
-    whatsapp: '081234567890',
-    q1_tsf_knowledge: 'TDC Summit Fest merupakan event tahunan akbar technopreneurship & otomotif ITS.',
-    q2_role_knowledge: 'Campus Influencer berperan sebagai perwakilan branding TSF 2026 di lingkungan kampus.',
-    q3_motivation: 'Ingin mengasah personal branding dan memperluas networking se-ITS.',
-    q4_commitment_scale: '10',
-    q5_commitment_reason: 'Siap berkomitmen penuh mengikuti seluruh rangkaian kegiatan TSF 2026.',
-    q6_promotion_strategy: 'Membuat konten Reels kreatif & melakukan pendekatan interaktif di kampus.',
-    q7_content_type_strategy: 'Vlog edukatif, behind the scenes, dan aesthetic mini video.',
-    q8_additional_benefits: 'Meningkatkan awareness TSF di kalangan mahasiswa baru 2026.',
-    q9_info_source: 'Instagram Official TSF',
-    drive_folder_url: 'https://drive.google.com/drive/folders/sample-aeesha',
-    reels_video_url: 'https://www.instagram.com/reel/sample-aeesha',
-    status: 'pending',
-    submitted_at: '2026-08-10T10:00:00.000Z'
-  }
-];
-
-const AMBASSADOR_STORAGE_KEY = 'tsf_ambassador_applications';
-
-const getStoredAmbassadorApps = (): AmbassadorApplication[] => {
-  try {
-    const raw = localStorage.getItem(AMBASSADOR_STORAGE_KEY);
-    if (raw) {
-      const parsed: AmbassadorApplication[] = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-        const appMap = new Map<string, AmbassadorApplication>();
-        SEED_AMBASSADOR_APPLICATIONS.forEach(a => appMap.set(a.id, a));
-        parsed.forEach(a => appMap.set(a.id, a));
-        return Array.from(appMap.values());
-      }
-    }
-    return SEED_AMBASSADOR_APPLICATIONS;
-  } catch (err) {
-    console.error('Failed to read ambassador applications from localStorage:', err);
-    return SEED_AMBASSADOR_APPLICATIONS;
-  }
-};
-
-const saveAmbassadorAppsToStorage = (apps: AmbassadorApplication[]) => {
-  try {
-    localStorage.setItem(AMBASSADOR_STORAGE_KEY, JSON.stringify(apps));
-  } catch (err) {
-    console.error('Failed to save ambassador applications to localStorage:', err);
-  }
-};
+// No localStorage fallback for ambassador applications.
+// Data is stored on the server database only (same pattern as staff applications).
 
 const getApiUrl = (endpoint: string) => {
   const envApi = import.meta.env.VITE_API_URL || '';
@@ -818,7 +764,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     phases: SEED_PHASES,
     divisions: SEED_DIVISIONS,
     staffApplications: [],
-    ambassadorApplications: getStoredAmbassadorApps(),
+    ambassadorApplications: [],
     subEvents: SEED_SUB_EVENTS,
     competitions: SEED_COMPETITIONS,
     competitionRegistrations: [],
@@ -846,39 +792,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await fetch(getApiUrl('/api/state'));
       if (res.ok) {
         const data = await res.json();
-        const storedApps = getStoredAmbassadorApps();
-        const serverApps: AmbassadorApplication[] = data.ambassadorApplications || [];
-
-        // Merge seed, server & local applications by ID to avoid data loss
-        const appMap = new Map<string, AmbassadorApplication>();
-        SEED_AMBASSADOR_APPLICATIONS.forEach(app => appMap.set(app.id, app));
-        serverApps.forEach(app => appMap.set(app.id, app));
-        storedApps.forEach(app => {
-          if (!appMap.has(app.id)) {
-            appMap.set(app.id, app);
-          }
-        });
-
-        const mergedApps = Array.from(appMap.values()).sort(
-          (a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
-        );
-
-        saveAmbassadorAppsToStorage(mergedApps);
-
-        setState({
-          ...data,
-          ambassadorApplications: mergedApps
-        });
+        setState(data);
       }
     } catch (err) {
       console.error('Failed to load state from backend:', err);
-      const storedApps = getStoredAmbassadorApps();
-      if (storedApps.length > 0) {
-        setState(prev => ({
-          ...prev,
-          ambassadorApplications: storedApps
-        }));
-      }
     } finally {
       setLoading(false);
     }
@@ -978,45 +895,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Ambassador application submission — identical pattern to addStaffApplication.
+  // POST to server, throw on failure, no localStorage fallback.
   const addAmbassadorApplication = async (app: Omit<AmbassadorApplication, 'id' | 'status' | 'submitted_at'>) => {
-    let generatedId = `amb-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     try {
       const res = await fetch(getApiUrl('/api/ambassador-applications'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(app)
       });
-      if (res.ok) {
-        const result = await res.json();
-        if (result && result.id) {
-          generatedId = result.id;
-        }
-      } else {
-        const errText = await res.text();
-        console.warn('Backend returned non-200 status for ambassador submission:', res.status, errText);
+      if (!res.ok) {
+        const errData = await res.text();
+        throw new Error(`Server error ${res.status}: ${errData}`);
       }
-    } catch (err) {
-      console.warn('Backend API connection failed, saving application in local state:', err);
-    }
+      const result = await res.json();
 
-    const newApp: AmbassadorApplication = {
-      ...app,
-      id: generatedId,
-      status: 'pending',
-      submitted_at: new Date().toISOString()
-    };
-    setState(prev => {
-      const existing = prev.ambassadorApplications || [];
-      const updated = [newApp, ...existing.filter(a => a.id !== newApp.id)];
-      saveAmbassadorAppsToStorage(updated);
-      return {
-        ...prev,
-        ambassadorApplications: updated
+      const newApp: AmbassadorApplication = {
+        ...app,
+        id: result.id,
+        status: 'pending',
+        submitted_at: new Date().toISOString()
       };
-    });
-
-    // Trigger immediate backend sync
-    await fetchState();
+      setState(prev => ({
+        ...prev,
+        ambassadorApplications: [newApp, ...prev.ambassadorApplications]
+      }));
+    } catch (err) {
+      console.error('Failed to submit ambassador application:', err);
+      throw err;
+    }
   };
 
   const updateAmbassadorApplicationStatus = async (id: string, status: AmbassadorApplication['status']) => {
@@ -1026,18 +933,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify({ status })
       });
       if (!res.ok) throw new Error('Failed to update ambassador status');
-    } catch (err) {
-      console.warn('Backend status update failed, updating local state:', err);
-    }
-
-    setState(prev => {
-      const updated = (prev.ambassadorApplications || []).map(a => a.id === id ? { ...a, status } : a);
-      saveAmbassadorAppsToStorage(updated);
-      return {
+      setState(prev => ({
         ...prev,
-        ambassadorApplications: updated
-      };
-    });
+        ambassadorApplications: (prev.ambassadorApplications || []).map(a => a.id === id ? { ...a, status } : a)
+      }));
+    } catch (err) {
+      console.error('Failed to update ambassador status:', err);
+      alert('Gagal memperbarui status pendaftar.');
+    }
   };
 
   const updateStaffApplicationStatus = async (id: string, status: StaffApplication['status']) => {
