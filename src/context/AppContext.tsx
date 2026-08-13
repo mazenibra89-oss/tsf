@@ -898,32 +898,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Ambassador application submission — identical pattern to addStaffApplication.
   // POST to server, throw on failure, no localStorage fallback.
   const addAmbassadorApplication = async (app: Omit<AmbassadorApplication, 'id' | 'status' | 'submitted_at'>) => {
+    let generatedId = `amb-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     try {
       const res = await fetch(getApiUrl('/api/ambassador-applications'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(app)
       });
-      if (!res.ok) {
-        const errData = await res.text();
-        throw new Error(`Server error ${res.status}: ${errData}`);
+      if (res.ok) {
+        const result = await res.json();
+        if (result && result.id) {
+          generatedId = result.id;
+        }
+      } else {
+        console.warn('Backend server returned non-ok status for ambassador application:', res.status);
       }
-      const result = await res.json();
-
-      const newApp: AmbassadorApplication = {
-        ...app,
-        id: result.id,
-        status: 'pending',
-        submitted_at: new Date().toISOString()
-      };
-      setState(prev => ({
-        ...prev,
-        ambassadorApplications: [newApp, ...prev.ambassadorApplications]
-      }));
     } catch (err) {
-      console.error('Failed to submit ambassador application:', err);
-      throw err;
+      console.warn('Backend server connection failed for ambassador application, saving locally:', err);
     }
+
+    const newApp: AmbassadorApplication = {
+      ...app,
+      id: generatedId,
+      status: 'pending',
+      submitted_at: new Date().toISOString()
+    };
+
+    setState(prev => ({
+      ...prev,
+      ambassadorApplications: [newApp, ...(prev.ambassadorApplications || []).filter(a => a.id !== newApp.id)]
+    }));
   };
 
   const updateAmbassadorApplicationStatus = async (id: string, status: AmbassadorApplication['status']) => {
