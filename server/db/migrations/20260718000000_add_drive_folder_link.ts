@@ -1,4 +1,4 @@
-import { Knex } from 'knex';
+import type { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
   const hasColumn = await knex.schema.hasColumn('staff_applications', 'drive_folder_link');

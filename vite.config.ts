@@ -27,9 +27,14 @@ function expressBackendPlugin() {
   };
 }
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
+  const isDev = command === 'serve';
   return {
-    plugins: [react(), tailwindcss(), expressBackendPlugin()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      ...(isDev ? [expressBackendPlugin()] : [])
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
