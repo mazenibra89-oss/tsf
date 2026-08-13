@@ -670,6 +670,41 @@ export async function seed(knex: Knex): Promise<void> {
     }
   };
 
+  const hasAmbassadorApps = await knex.schema.hasTable('ambassador_applications');
+  if (hasAmbassadorApps) {
+    const ambCount = await knex('ambassador_applications').count('id as count').first();
+    const countAmb = parseInt(ambCount?.count as string || '0');
+    if (countAmb === 0) {
+      await knex('ambassador_applications').insert([
+        {
+          id: 'amb-seed-1',
+          role_choice: 'Campus Influencer',
+          email: 'aeesha.syifa@student.its.ac.id',
+          full_name: "Aeesha Na'ilah Syifa'",
+          nrp: '5028251084',
+          department: 'Desain Komunikasi Visual',
+          faculty: 'FDKBD',
+          instagram: 'instagram.com/aeeshasyifa',
+          tiktok: 'tiktok.com/@aeesha.syifa',
+          whatsapp: '081234567890',
+          q1_tsf_knowledge: 'TDC Summit Fest merupakan event tahunan akbar technopreneurship & otomotif ITS.',
+          q2_role_knowledge: 'Campus Influencer berperan sebagai perwakilan branding TSF 2026 di lingkungan kampus.',
+          q3_motivation: 'Ingin mengasah personal branding dan memperluas networking se-ITS.',
+          q4_commitment_scale: '10',
+          q5_commitment_reason: 'Siap berkomitmen penuh mengikuti seluruh rangkaian kegiatan TSF 2026.',
+          q6_promotion_strategy: 'Membuat konten Reels kreatif & melakukan pendekatan interaktif di kampus.',
+          q7_content_type_strategy: 'Vlog edukatif, behind the scenes, dan aesthetic mini video.',
+          q8_additional_benefits: 'Meningkatkan awareness TSF di kalangan mahasiswa baru 2026.',
+          q9_info_source: 'Instagram Official TSF',
+          drive_folder_url: 'https://drive.google.com/drive/folders/sample-aeesha',
+          reels_video_url: 'https://www.instagram.com/reel/sample-aeesha',
+          status: 'pending',
+          submitted_at: new Date().toISOString()
+        }
+      ]);
+    }
+  }
+
   await knex('form_questions_config').insert([
     { id: 'main_config', config: JSON.stringify(SEED_FORM_QUESTIONS) }
   ]);
