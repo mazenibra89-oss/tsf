@@ -16,6 +16,7 @@ import {
 } from '../types';
 
 interface AppContextType extends AppState {
+  refreshState: () => Promise<void>;
   setActivePhase: (phaseName: EventPhase['name']) => void;
   updatePhase: (phase: EventPhase) => void;
 
@@ -1360,6 +1361,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       ...state,
+      refreshState: fetchState,
       setActivePhase,
       updatePhase,
       addStaffApplication,

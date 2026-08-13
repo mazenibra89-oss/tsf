@@ -157,6 +157,7 @@ export const Admin: React.FC = () => {
     divisions,
     staffApplications,
     ambassadorApplications,
+    refreshState,
     subEvents,
     competitions,
     competitionRegistrations,
@@ -180,6 +181,10 @@ export const Admin: React.FC = () => {
     updateFormQuestions,
     resetToDefault
   } = useApp();
+
+  useEffect(() => {
+    refreshState();
+  }, []);
 
   // Login states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -743,15 +748,16 @@ export const Admin: React.FC = () => {
   }
 
   const filteredAmbassadors = (ambassadorApplications || []).filter(app => {
+    if (!app) return false;
     if (filterAmbassadorRole && app.role_choice !== filterAmbassadorRole) return false;
     if (filterAmbassadorStatus && app.status !== filterAmbassadorStatus) return false;
     if (searchAmbassadorQuery) {
       const q = searchAmbassadorQuery.toLowerCase();
-      const matchName = app.full_name.toLowerCase().includes(q);
-      const matchEmail = app.email.toLowerCase().includes(q);
-      const matchNrp = app.nrp?.toLowerCase().includes(q) || false;
-      const matchSchool = app.school?.toLowerCase().includes(q) || false;
-      const matchWa = app.whatsapp.toLowerCase().includes(q);
+      const matchName = app.full_name ? app.full_name.toLowerCase().includes(q) : false;
+      const matchEmail = app.email ? app.email.toLowerCase().includes(q) : false;
+      const matchNrp = app.nrp ? app.nrp.toLowerCase().includes(q) : false;
+      const matchSchool = app.school ? app.school.toLowerCase().includes(q) : false;
+      const matchWa = app.whatsapp ? app.whatsapp.toLowerCase().includes(q) : false;
       if (!matchName && !matchEmail && !matchNrp && !matchSchool && !matchWa) return false;
     }
     return true;
@@ -1112,6 +1118,16 @@ export const Admin: React.FC = () => {
                   className="w-full p-2 border-2 border-blue-sail text-xs outline-none"
                 />
               </div>
+
+              {/* Refresh Sync Button */}
+              <button
+                type="button"
+                onClick={() => refreshState()}
+                className="bg-blue-sail hover:bg-decor hover:text-blue-sail text-white font-mono font-bold text-xs px-3 py-2 border-2 border-blue-sail flex items-center space-x-1.5 cursor-pointer transition-all shrink-0"
+              >
+                <Icon name="RefreshCw" size={14} />
+                <span>Sinkronkan Data Server</span>
+              </button>
             </div>
 
             {/* Table Data */}
