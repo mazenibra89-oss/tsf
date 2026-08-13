@@ -80,8 +80,8 @@ async function initDatabase() {
         table.text('q8_additional_benefits').nullable();
         table.string('q9_info_source').nullable();
         table.string('q9_info_source_friend').nullable();
-        table.string('drive_folder_url').notNullable();
-        table.string('reels_video_url').notNullable();
+        table.string('drive_folder_url').nullable();
+        table.string('reels_video_url').nullable();
         table.string('status').notNullable().defaultTo('pending');
         table.timestamp('submitted_at').notNullable().defaultTo(db.fn.now());
       });
