@@ -751,10 +751,9 @@ const SEED_PRODUCTS: ThriftProduct[] = [
 ];
 
 // No localStorage fallback for ambassador applications.
-// Data is stored on the server database only (same pattern as staff applications).
-
+// Data is stored on the server database only.
 const getApiUrl = (endpoint: string) => {
-  const envApi = import.meta.env.VITE_API_URL || '';
+  const envApi = (typeof window !== 'undefined' && (window as any).VITE_API_URL) || import.meta.env.VITE_API_URL || (typeof localStorage !== 'undefined' ? localStorage.getItem('VITE_API_URL') : '') || '';
   const baseUrl = envApi ? envApi.replace(/\/$/, '') : '';
   return `${baseUrl}${endpoint}`;
 };
@@ -895,31 +894,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Ambassador application submission — identical pattern to addStaffApplication.
-  // POST to server, throw on failure, no localStorage fallback.
+  // Ambassador application submission
   const addAmbassadorApplication = async (app: Omit<AmbassadorApplication, 'id' | 'status' | 'submitted_at'>) => {
-    let generatedId = `amb-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    try {
-      const res = await fetch(getApiUrl('/api/ambassador-applications'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(app)
-      });
-      if (res.ok) {
-        const result = await res.json();
-        if (result && result.id) {
-          generatedId = result.id;
-        }
-      } else {
-        console.warn('Backend server returned non-ok status for ambassador application:', res.status);
-      }
-    } catch (err) {
-      console.warn('Backend server connection failed for ambassador application, saving locally:', err);
+    const targetUrl = getApiUrl('/api/ambassador-applications');
+    console.log('[SUBMIT AMBASSADOR] Sending payload to backend:', targetUrl, app);
+
+    const res = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(app)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.error(`[SUBMIT ERROR ${res.status}] Failed to store ambassador application at ${targetUrl}:`, errText);
+      throw new Error(`Gagal menyimpan ke server database (HTTP ${res.status}): ${errText || 'Terjadi kesalahan server'}`);
     }
 
+    const result = await res.json();
     const newApp: AmbassadorApplication = {
       ...app,
-      id: generatedId,
+      id: result.id || `amb-${Date.now()}`,
       status: 'pending',
       submitted_at: new Date().toISOString()
     };
@@ -928,6 +923,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...prev,
       ambassadorApplications: [newApp, ...(prev.ambassadorApplications || []).filter(a => a.id !== newApp.id)]
     }));
+
+    // Refresh state from server database immediately
+    await fetchState();
   };
 
   const updateAmbassadorApplicationStatus = async (id: string, status: AmbassadorApplication['status']) => {
