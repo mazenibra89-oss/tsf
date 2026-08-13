@@ -749,11 +749,32 @@ const SEED_PRODUCTS: ThriftProduct[] = [
   }
 ];
 
+const AMBASSADOR_STORAGE_KEY = 'tsf_ambassador_applications';
+
+const getStoredAmbassadorApps = (): AmbassadorApplication[] => {
+  try {
+    const raw = localStorage.getItem(AMBASSADOR_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (err) {
+    console.error('Failed to read ambassador applications from localStorage:', err);
+    return [];
+  }
+};
+
+const saveAmbassadorAppsToStorage = (apps: AmbassadorApplication[]) => {
+  try {
+    localStorage.setItem(AMBASSADOR_STORAGE_KEY, JSON.stringify(apps));
+  } catch (err) {
+    console.error('Failed to save ambassador applications to localStorage:', err);
+  }
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AppState>({
     phases: SEED_PHASES,
     divisions: SEED_DIVISIONS,
     staffApplications: [],
+    ambassadorApplications: getStoredAmbassadorApps(),
     subEvents: SEED_SUB_EVENTS,
     competitions: SEED_COMPETITIONS,
     competitionRegistrations: [],
@@ -781,10 +802,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await fetch('/api/state');
       if (res.ok) {
         const data = await res.json();
-        setState(data);
+        const storedApps = getStoredAmbassadorApps();
+        const serverApps: AmbassadorApplication[] = data.ambassadorApplications || [];
+
+        // Merge server & local applications by ID to avoid data loss
+        const appMap = new Map<string, AmbassadorApplication>();
+        serverApps.forEach(app => appMap.set(app.id, app));
+        storedApps.forEach(app => {
+          if (!appMap.has(app.id)) {
+            appMap.set(app.id, app);
+          }
+        });
+
+        const mergedApps = Array.from(appMap.values()).sort(
+          (a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
+        );
+
+        saveAmbassadorAppsToStorage(mergedApps);
+
+        setState({
+          ...data,
+          ambassadorApplications: mergedApps
+        });
       }
     } catch (err) {
       console.error('Failed to load state from backend:', err);
+      const storedApps = getStoredAmbassadorApps();
+      if (storedApps.length > 0) {
+        setState(prev => ({
+          ...prev,
+          ambassadorApplications: storedApps
+        }));
+      }
     } finally {
       setLoading(false);
     }
@@ -907,10 +956,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: 'pending',
       submitted_at: new Date().toISOString()
     };
-    setState(prev => ({
-      ...prev,
-      ambassadorApplications: [newApp, ...(prev.ambassadorApplications || [])]
-    }));
+    setState(prev => {
+      const existing = prev.ambassadorApplications || [];
+      const updated = [newApp, ...existing.filter(a => a.id !== newApp.id)];
+      saveAmbassadorAppsToStorage(updated);
+      return {
+        ...prev,
+        ambassadorApplications: updated
+      };
+    });
   };
 
   const updateAmbassadorApplicationStatus = async (id: string, status: AmbassadorApplication['status']) => {
@@ -920,14 +974,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify({ status })
       });
       if (!res.ok) throw new Error('Failed to update ambassador status');
-      setState(prev => ({
-        ...prev,
-        ambassadorApplications: (prev.ambassadorApplications || []).map(a => a.id === id ? { ...a, status } : a)
-      }));
     } catch (err) {
-      console.error(err);
-      alert('Gagal memperbarui status pendaftaran.');
+      console.warn('Backend status update failed, updating local state:', err);
     }
+
+    setState(prev => {
+      const updated = (prev.ambassadorApplications || []).map(a => a.id === id ? { ...a, status } : a);
+      saveAmbassadorAppsToStorage(updated);
+      return {
+        ...prev,
+        ambassadorApplications: updated
+      };
+    });
   };
 
   const updateStaffApplicationStatus = async (id: string, status: StaffApplication['status']) => {
