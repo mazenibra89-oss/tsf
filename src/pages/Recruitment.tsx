@@ -161,10 +161,8 @@ export const Recruitment: React.FC = () => {
     }
 
     if (step === 3) {
-      if (!formData.driveFolderUrl || !formData.reelsVideoUrl) {
-        setErrorMessage('Harap lengkapi Link Folder Drive dan Link Video Reels Instagram!');
-        return false;
-      }
+      // Allow optional folder/video links so submission is never blocked
+      return true;
     }
 
     return true;
@@ -218,8 +216,8 @@ export const Recruitment: React.FC = () => {
         q8_additional_benefits: formData.q8_additionalBenefits,
         q9_info_source: formData.q9_infoSource,
         q9_info_source_friend: formData.q9_infoSource === 'Teman' ? formData.q9_infoSourceFriend : undefined,
-        drive_folder_url: formData.driveFolderUrl,
-        reels_video_url: formData.reelsVideoUrl
+        drive_folder_url: formData.driveFolderUrl || '-',
+        reels_video_url: formData.reelsVideoUrl || '-'
       });
       setIsSubmitting(false);
       setIsSubmitted(true);
