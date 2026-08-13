@@ -1,5 +1,5 @@
-import { Knex } from 'knex';
-import bcrypt from 'bcrypt';
+import type { Knex } from 'knex';
+import bcrypt from 'bcryptjs';
 
 export async function seed(knex: Knex): Promise<void> {
   // Check if data already exists in any key table (e.g. event_phases)

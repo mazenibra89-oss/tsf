@@ -27,7 +27,7 @@ const config = usePostgres ? {
     extension: 'ts',
   },
 } : {
-  client: 'better-sqlite3',
+  client: 'sqlite3',
   connection: {
     filename: path.join(__dirname, 'server', 'db', 'tsf_local.sqlite'),
   },
