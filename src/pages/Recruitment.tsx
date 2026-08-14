@@ -221,10 +221,10 @@ export const Recruitment: React.FC = () => {
       });
       setIsSubmitting(false);
       setIsSubmitted(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Submission error:', err);
       setIsSubmitting(false);
-      setIsSubmitted(true);
+      alert('Pendaftaran gagal tersimpan ke server: ' + (err?.message || 'Terjadi kesalahan. Coba lagi.'));
     }
   };
 
