@@ -285,7 +285,7 @@ export const Recruitment: React.FC = () => {
             </button>
 
             <a
-              href="https://drive.google.com"
+              href="https://its.id/m/GuidebookAmbassadorTSF26"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center space-x-2.5 bg-red-inferno hover:bg-red-600 text-ballroom font-display font-extrabold text-xs uppercase px-6 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#F6BB02] hover:shadow-[5px_5px_0_0_#F6BB02] active:translate-x-0.5 active:translate-y-0.5 transition-all tracking-wider"
