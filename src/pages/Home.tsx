@@ -161,10 +161,6 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
               {/* Countdown panel */}
               {activePhase.status === 'active' && (
                 <div className="bg-blue-sail text-decor p-4 rounded-none border-l-4 border-red-inferno border-2 border-blue-sail mb-6">
-                  <p className="text-[10px] text-ballroom/80 font-mono font-bold uppercase tracking-wider mb-2 flex items-center justify-between flex-wrap gap-1">
-                    <span>BATAS WAKTU PENDAFTARAN:</span>
-                    <span className="text-decor font-extrabold">16 AGUSTUS (15.00 WIB)</span>
-                  </p>
                   <div className="grid grid-cols-4 gap-2 text-center">
                     <div className="bg-barbera/30 p-2 rounded-none border border-decor/25">
                       <span className="block font-display font-black text-xl text-ballroom">{timeLeft.days}</span>
