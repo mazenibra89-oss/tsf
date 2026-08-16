@@ -17,15 +17,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   // Find currently active phase
   const activePhase = phases.find(p => p.status === 'active') || phases[0];
 
-  // Function to calculate time left from activePhase.end_date minus today
+  // Function to calculate time left until 16 August at 15.00 WIB
   const calculateTimeLeft = () => {
-    if (activePhase && activePhase.name === 'staff_recruitment') {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-    }
-    if (!activePhase || !activePhase.end_date) {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-    }
-    const target = new Date(`2026-08-31T23:59:59`).getTime();
+    // Target: 16 August 2026 at 15:00:00 WIB
+    const target = new Date('2026-08-16T15:00:00').getTime();
     const now = new Date().getTime();
     const difference = target - now;
     if (difference <= 0) {
@@ -47,7 +42,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
     return () => clearInterval(timer);
-  }, [activePhase]);
+  }, []);
 
   const navigateToPhase = (page: string) => {
     if (page === 'recruitment' || page === 'ambassador_recruitment' || activePhase?.name === 'ambassador_recruitment') {
@@ -166,7 +161,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
               {/* Countdown panel */}
               {activePhase.status === 'active' && (
                 <div className="bg-blue-sail text-decor p-4 rounded-none border-l-4 border-red-inferno border-2 border-blue-sail mb-6">
-                  <p className="text-[10px] text-ballroom/65 font-mono font-bold uppercase tracking-wider mb-2">Batas Waktu Pendaftaran:</p>
+                  <p className="text-[10px] text-ballroom/80 font-mono font-bold uppercase tracking-wider mb-2 flex items-center justify-between flex-wrap gap-1">
+                    <span>BATAS WAKTU PENDAFTARAN:</span>
+                    <span className="text-decor font-extrabold">16 AGUSTUS (15.00 WIB)</span>
+                  </p>
                   <div className="grid grid-cols-4 gap-2 text-center">
                     <div className="bg-barbera/30 p-2 rounded-none border border-decor/25">
                       <span className="block font-display font-black text-xl text-ballroom">{timeLeft.days}</span>
