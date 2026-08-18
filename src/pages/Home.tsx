@@ -17,10 +17,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   // Find currently active phase
   const activePhase = phases.find(p => p.status === 'active') || phases[0];
 
-  // Function to calculate time left until 16 August at 15.00 WIB
+  // Function to calculate time left until 21 August at 18.00 WIB
   const calculateTimeLeft = () => {
-    // Target: 16 August 2026 at 15:00:00 WIB
-    const target = new Date('2026-08-16T15:00:00').getTime();
+    // Target: 21 August 2026 at 18:00:00 WIB
+    const target = new Date('2026-08-21T18:00:00').getTime();
     const now = new Date().getTime();
     const difference = target - now;
     if (difference <= 0) {
