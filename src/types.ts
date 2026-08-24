@@ -212,11 +212,30 @@ export interface AmbassadorApplication {
   submitted_at: string;
 }
 
+export interface PE1Registration {
+  id: string;
+  full_name: string;
+  email: string;
+  whatsapp: string;
+  status_current: 'Siswa SMA' | 'Mahasiswa' | 'Fresh Graduate' | 'Umum';
+  institution: string;
+  major?: string;
+  city: string;
+  package_choice: 'Aspiring CEO' | 'Rising CEO' | 'Executive CEO' | 'Absolute CEO';
+  instagram_username?: string;
+  social_proof_drive_url?: string;
+  payment_method?: 'QRIS' | 'DANA' | 'Bank Transfer';
+  payment_proof_url?: string;
+  status: 'pending' | 'confirmed' | 'rejected';
+  submitted_at: string;
+}
+
 export interface AppState {
   phases: EventPhase[];
   divisions: Division[];
   staffApplications: StaffApplication[];
   ambassadorApplications?: AmbassadorApplication[];
+  pe1Registrations?: PE1Registration[];
   subEvents: SubEvent[];
   competitions: Competition[];
   competitionRegistrations: CompetitionRegistration[];

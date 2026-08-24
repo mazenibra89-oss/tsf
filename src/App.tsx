@@ -14,6 +14,7 @@ import { Admin } from './pages/Admin';
 import { Announcement } from './pages/Announcement';
 import { InterviewAnnouncement } from './pages/InterviewAnnouncement';
 import { Recruitment } from './pages/Recruitment';
+import { PE1 } from './pages/PE1';
 
 type PageType = 'home' | 'staff' | 'pe1' | 'pe2' | 'competition' | 'thrift' | 'admin' | 'announcement' | 'interview-result' | 'recruitment';
 
@@ -71,7 +72,7 @@ const AppContent: React.FC = () => {
       case 'interview-result':
         return <InterviewAnnouncement />;
       case 'pe1':
-        return <SubEventPage slug="pe1" />;
+        return <PE1 />;
       case 'pe2':
         return <SubEventPage slug="pe2" />;
       case 'competition':

@@ -12,7 +12,8 @@ import {
   VendorApplication,
   FormQuestionsConfig,
   QuestionConfig,
-  AmbassadorApplication
+  AmbassadorApplication,
+  PE1Registration
 } from '../types';
 
 interface AppContextType extends AppState {
@@ -28,6 +29,10 @@ interface AppContextType extends AppState {
   // Ambassador & Influencer
   addAmbassadorApplication: (app: Omit<AmbassadorApplication, 'id' | 'status' | 'submitted_at'>) => Promise<void>;
   updateAmbassadorApplicationStatus: (id: string, status: AmbassadorApplication['status']) => Promise<void>;
+  
+  // PE1 Registrations
+  addPE1Registration: (reg: Omit<PE1Registration, 'id' | 'status' | 'submitted_at'>) => Promise<void>;
+  updatePE1RegistrationStatus: (id: string, status: PE1Registration['status']) => Promise<void>;
   
   addDivision: (div: Omit<Division, 'id'>) => void;
   updateDivision: (div: Division) => void;
@@ -928,6 +933,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await fetchState();
   };
 
+  // PE1 Registration submission
+  const addPE1Registration = async (reg: Omit<PE1Registration, 'id' | 'status' | 'submitted_at'>) => {
+    const targetUrl = getApiUrl('/api/pe1-registrations');
+    console.log('[SUBMIT PE1] Sending payload to backend:', targetUrl, reg);
+
+    const res = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reg)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.error(`[SUBMIT PE1 ERROR ${res.status}]:`, errText);
+      throw new Error(`Gagal menyimpan pendaftaran PE1 (HTTP ${res.status}): ${errText || 'Terjadi kesalahan server'}`);
+    }
+
+    const result = await res.json();
+    const newReg: PE1Registration = {
+      ...reg,
+      id: result.id || `pe1-${Date.now()}`,
+      status: 'pending',
+      submitted_at: new Date().toISOString()
+    };
+
+    setState(prev => ({
+      ...prev,
+      pe1Registrations: [newReg, ...(prev.pe1Registrations || []).filter(r => r.id !== newReg.id)]
+    }));
+
+    await fetchState();
+  };
+
+  const updatePE1RegistrationStatus = async (id: string, status: PE1Registration['status']) => {
+    try {
+      const res = await authFetch(`/api/pe1-registrations/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) throw new Error('Failed to update PE1 status');
+      await fetchState();
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui status pendaftar PE1.');
+    }
+  };
+
   const updateAmbassadorApplicationStatus = async (id: string, status: AmbassadorApplication['status']) => {
     try {
       const res = await authFetch(`/api/ambassador-applications/${id}/status`, {
@@ -1274,6 +1326,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateStaffApplicationBerkas,
       addAmbassadorApplication,
       updateAmbassadorApplicationStatus,
+      addPE1Registration,
+      updatePE1RegistrationStatus,
       addDivision,
       updateDivision,
       deleteDivision,

@@ -88,6 +88,29 @@ async function initDatabase() {
       console.log('Created ambassador_applications table.');
     }
 
+    // Auto-create pe1_registrations table if missing
+    const hasPe1Table = await db.schema.hasTable('pe1_registrations');
+    if (!hasPe1Table) {
+      await db.schema.createTable('pe1_registrations', (table) => {
+        table.string('id').primary();
+        table.string('full_name').notNullable();
+        table.string('email').notNullable();
+        table.string('whatsapp').notNullable();
+        table.string('status_current').notNullable();
+        table.string('institution').notNullable();
+        table.string('major').nullable();
+        table.string('city').notNullable();
+        table.string('package_choice').notNullable();
+        table.string('instagram_username').nullable();
+        table.string('social_proof_drive_url').nullable();
+        table.string('payment_method').nullable();
+        table.string('payment_proof_url').nullable();
+        table.string('status').notNullable().defaultTo('pending');
+        table.timestamp('submitted_at').notNullable().defaultTo(db.fn.now());
+      });
+      console.log('Created pe1_registrations table.');
+    }
+
     // Auto update p-1 phase to ambassador_recruitment and active status
     if (await db.schema.hasTable('event_phases')) {
       await db('event_phases')
@@ -196,6 +219,9 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
     const ambassadorApplications = (await db.schema.hasTable('ambassador_applications'))
       ? await db('ambassador_applications').orderBy('submitted_at', 'desc')
       : [];
+    const pe1Registrations = (await db.schema.hasTable('pe1_registrations'))
+      ? await db('pe1_registrations').orderBy('submitted_at', 'desc')
+      : [];
     const subEvents = await db('sub_events').orderBy('id', 'asc');
     const competitions = await db('competitions').orderBy('id', 'asc');
     const competitionRegistrations = await db('competition_registrations').orderBy('submitted_at', 'desc');
@@ -217,6 +243,7 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
       })),
       staffApplications: staffApplications.map(a => ({ ...a, custom_form_answers: parseJson(a.custom_form_answers) })),
       ambassadorApplications,
+      pe1Registrations,
       subEvents: subEvents.map(e => ({
         ...e,
         lineup: parseJson(e.lineup),
@@ -492,6 +519,90 @@ app.put('/api/ambassador-applications/:id/status', authenticateToken, async (req
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Gagal memperbarui status pendaftar' });
+  }
+});
+
+// -------------------------------------------------------------
+// PE1 REGISTRATION ENDPOINTS
+// -------------------------------------------------------------
+
+// Submit PE1 Registration (Public)
+app.post('/api/pe1-registrations', async (req: Request, res: Response): Promise<void> => {
+  const body = req.body || {};
+  const { full_name, email, whatsapp, status_current, institution, major, city, package_choice,
+    instagram_username, social_proof_drive_url, payment_method, payment_proof_url } = body;
+
+  if (!full_name || !email || !whatsapp || !status_current || !institution || !city || !package_choice) {
+    res.status(400).json({ message: 'Lengkapi seluruh data wajib!' });
+    return;
+  }
+
+  const id = `pe1-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const submitted_at = new Date().toISOString();
+
+  try {
+    // Ensure table exists
+    const hasTable = await db.schema.hasTable('pe1_registrations');
+    if (!hasTable) {
+      console.log('[pe1-registrations] Table not found, creating...');
+      await db.schema.createTable('pe1_registrations', (table) => {
+        table.string('id').primary();
+        table.string('full_name').notNullable();
+        table.string('email').notNullable();
+        table.string('whatsapp').notNullable();
+        table.string('status_current').notNullable();
+        table.string('institution').notNullable();
+        table.string('major').nullable();
+        table.string('city').notNullable();
+        table.string('package_choice').notNullable();
+        table.string('instagram_username').nullable();
+        table.string('social_proof_drive_url').nullable();
+        table.string('payment_method').nullable();
+        table.string('payment_proof_url').nullable();
+        table.string('status').notNullable().defaultTo('pending');
+        table.timestamp('submitted_at').notNullable().defaultTo(db.fn.now());
+      });
+      console.log('[pe1-registrations] Table created.');
+    }
+
+    await db('pe1_registrations').insert({
+      id, full_name, email, whatsapp, status_current, institution,
+      major: major || null, city, package_choice,
+      instagram_username: instagram_username || null,
+      social_proof_drive_url: social_proof_drive_url || null,
+      payment_method: payment_method || null,
+      payment_proof_url: payment_proof_url || null,
+      status: 'pending', submitted_at
+    });
+
+    console.log(`[pe1-registrations] Successfully stored [${id}] for ${full_name}`);
+    res.status(201).json({ id, message: 'Pendaftaran PE1 berhasil!' });
+  } catch (err: any) {
+    console.error('[pe1-registrations] INSERT ERROR:', err);
+    res.status(500).json({
+      message: 'Gagal mengirim pendaftaran PE1',
+      error: err?.message || String(err),
+      detail: err?.detail || err?.code || 'unknown'
+    });
+  }
+});
+
+// Update PE1 Registration Status (Admin Authenticated)
+app.put('/api/pe1-registrations/:id/status', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!['pending', 'confirmed', 'rejected'].includes(status)) {
+    res.status(400).json({ message: 'Status tidak valid' });
+    return;
+  }
+
+  try {
+    await db('pe1_registrations').where({ id }).update({ status });
+    res.json({ message: 'Status pendaftar PE1 berhasil diperbarui' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal memperbarui status pendaftar PE1' });
   }
 });
 

@@ -157,6 +157,7 @@ export const Admin: React.FC = () => {
     divisions,
     staffApplications,
     ambassadorApplications,
+    pe1Registrations,
     refreshState,
     subEvents,
     competitions,
@@ -177,6 +178,7 @@ export const Admin: React.FC = () => {
     updateStaffApplicationStatus,
     updateStaffApplicationBerkas,
     updateAmbassadorApplicationStatus,
+    updatePE1RegistrationStatus,
     formQuestions,
     updateFormQuestions,
     resetToDefault
@@ -220,7 +222,7 @@ export const Admin: React.FC = () => {
   }, [isAuthenticated]);
 
   // Active sub-dashboard section tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'ambassadors' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'ambassadors' | 'pe1' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control'>('overview');
 
   // Staff Applications Filtering States
   const [filterDivision, setFilterDivision] = useState<string>('');
@@ -231,6 +233,12 @@ export const Admin: React.FC = () => {
   const [filterAmbassadorStatus, setFilterAmbassadorStatus] = useState<string>('');
   const [searchAmbassadorQuery, setSearchAmbassadorQuery] = useState<string>('');
   const [selectedAmbassadorApp, setSelectedAmbassadorApp] = useState<any>(null);
+
+  // PE1 Registrations Filtering States
+  const [filterPE1Package, setFilterPE1Package] = useState<string>('');
+  const [filterPE1Status, setFilterPE1Status] = useState<string>('');
+  const [searchPE1Query, setSearchPE1Query] = useState<string>('');
+  const [selectedPE1Reg, setSelectedPE1Reg] = useState<any>(null);
 
   // Form Questions Config states
   const [formSubTab, setFormSubTab] = useState<'dataDiri' | 'generalTask' | 'berkas' | 'divisionTasks'>('dataDiri');
@@ -616,6 +624,32 @@ export const Admin: React.FC = () => {
     downloadCSV('TSF_Pendaftar_Ambassador_Influencer.csv', headers, rows);
   };
 
+  const exportPE1CSV = () => {
+    const headers = [
+      'ID', 'Nama Lengkap', 'Email', 'No WhatsApp', 'Status Saat Ini', 'Instansi', 'Jurusan', 'Kota',
+      'Paket Bundling', 'Instagram Username', 'Link Drive Bukti Social', 'Metode Bayar', 'Link Drive Bukti Bayar',
+      'Status Pendaftaran', 'Tanggal Submit'
+    ];
+    const rows = (pe1Registrations || []).map(r => [
+      r.id,
+      r.full_name,
+      r.email,
+      r.whatsapp,
+      r.status_current,
+      r.institution,
+      r.major || '-',
+      r.city,
+      r.package_choice,
+      r.instagram_username || '-',
+      r.social_proof_drive_url || '-',
+      r.payment_method || '-',
+      r.payment_proof_url || '-',
+      r.status,
+      new Date(r.submitted_at).toLocaleDateString('id-ID')
+    ]);
+    downloadCSV('TSF_Pendaftar_PE1_CEO_For_A_Day.csv', headers, rows);
+  };
+
   // Division submit
   const handleDivSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -763,6 +797,22 @@ export const Admin: React.FC = () => {
     return true;
   });
 
+  const filteredPE1Regs = (pe1Registrations || []).filter(reg => {
+    if (!reg) return false;
+    if (filterPE1Package && reg.package_choice !== filterPE1Package) return false;
+    if (filterPE1Status && reg.status !== filterPE1Status) return false;
+    if (searchPE1Query) {
+      const q = searchPE1Query.toLowerCase();
+      const matchName = reg.full_name ? reg.full_name.toLowerCase().includes(q) : false;
+      const matchEmail = reg.email ? reg.email.toLowerCase().includes(q) : false;
+      const matchInst = reg.institution ? reg.institution.toLowerCase().includes(q) : false;
+      const matchCity = reg.city ? reg.city.toLowerCase().includes(q) : false;
+      const matchWa = reg.whatsapp ? reg.whatsapp.toLowerCase().includes(q) : false;
+      if (!matchName && !matchEmail && !matchInst && !matchCity && !matchWa) return false;
+    }
+    return true;
+  });
+
   const filteredStaffApplications = staffApplications.filter(app => {
     if (filterDivision) {
       if (filterPriority === 'p1') {
@@ -825,6 +875,18 @@ export const Admin: React.FC = () => {
           >
             <Icon name="Award" size={16} />
             <span>Pendaftar Ambassador ({(ambassadorApplications || []).length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('pe1')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              activeTab === 'pe1'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="Briefcase" size={16} />
+            <span>Pendaftar PE1 CEO For A Day ({(pe1Registrations || []).length})</span>
           </button>
 
           <button
@@ -1212,6 +1274,203 @@ export const Admin: React.FC = () => {
                             >
                               <Icon name="Eye" size={12} />
                               <span>Detail</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* SECTION TAB: PE1 CEO FOR A DAY APPLICATIONS */}
+        {activeTab === 'pe1' && (
+          <div className="space-y-6">
+            {/* Top Header & Export */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-ballroom p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E]">
+              <div>
+                <h2 className="font-display font-black text-2xl uppercase tracking-tight text-blue-sail">
+                  Pendaftar Pre-Event 1 (CEO For A Day)
+                </h2>
+                <p className="text-xs text-blue-sail/70 mt-1 font-sans">
+                  Manajemen data peserta webinar CEO For A Day: "Brand Yourself, Lead the Future".
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={exportPE1CSV}
+                className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-5 py-3 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center space-x-2 cursor-pointer"
+              >
+                <Icon name="Download" size={16} />
+                <span>EKSPOR CSV (EXCEL)</span>
+              </button>
+            </div>
+
+            {/* Stats Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
+                <span className="block text-[10px] font-mono font-bold uppercase text-blue-sail/60">TOTAL PENDAFTAR</span>
+                <span className="block font-display font-black text-2xl text-blue-sail">{(pe1Registrations || []).length}</span>
+              </div>
+              <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
+                <span className="block text-[10px] font-mono font-bold uppercase text-emerald-600">ASPIRING (FREE)</span>
+                <span className="block font-display font-black text-2xl text-emerald-600">
+                  {(pe1Registrations || []).filter(r => r.package_choice === 'Aspiring CEO').length}
+                </span>
+              </div>
+              <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
+                <span className="block text-[10px] font-mono font-bold uppercase text-blue-600">RISING CEO</span>
+                <span className="block font-display font-black text-2xl text-blue-600">
+                  {(pe1Registrations || []).filter(r => r.package_choice === 'Rising CEO').length}
+                </span>
+              </div>
+              <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
+                <span className="block text-[10px] font-mono font-bold uppercase text-purple-600">EXECUTIVE CEO</span>
+                <span className="block font-display font-black text-2xl text-purple-600">
+                  {(pe1Registrations || []).filter(r => r.package_choice === 'Executive CEO').length}
+                </span>
+              </div>
+              <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
+                <span className="block text-[10px] font-mono font-bold uppercase text-amber-600">ABSOLUTE CEO</span>
+                <span className="block font-display font-black text-2xl text-amber-600">
+                  {(pe1Registrations || []).filter(r => r.package_choice === 'Absolute CEO').length}
+                </span>
+              </div>
+            </div>
+
+            {/* Filter Controls Bar */}
+            <div className="bg-ballroom p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-col md:flex-row md:items-center gap-4">
+              <div className="w-full md:w-48 space-y-1">
+                <label className="block text-[10px] font-mono font-bold uppercase text-blue-sail/70">PILIH PAKET</label>
+                <select
+                  value={filterPE1Package}
+                  onChange={(e) => setFilterPE1Package(e.target.value)}
+                  className="w-full bg-white border-2 border-blue-sail text-xs font-sans p-2 outline-none"
+                >
+                  <option value="">Semua Paket</option>
+                  <option value="Aspiring CEO">Aspiring CEO (Free)</option>
+                  <option value="Rising CEO">Rising CEO (22K)</option>
+                  <option value="Executive CEO">Executive CEO (39K)</option>
+                  <option value="Absolute CEO">Absolute CEO (49K)</option>
+                </select>
+              </div>
+
+              <div className="w-full md:w-48 space-y-1">
+                <label className="block text-[10px] font-mono font-bold uppercase text-blue-sail/70">STATUS VERIFIKASI</label>
+                <select
+                  value={filterPE1Status}
+                  onChange={(e) => setFilterPE1Status(e.target.value)}
+                  className="w-full bg-white border-2 border-blue-sail text-xs font-sans p-2 outline-none"
+                >
+                  <option value="">Semua Status</option>
+                  <option value="pending">Pending (Perlu Verifikasi)</option>
+                  <option value="confirmed">Confirmed (Disetujui)</option>
+                  <option value="rejected">Rejected (Ditolak)</option>
+                </select>
+              </div>
+
+              <div className="flex-1 space-y-1">
+                <label className="block text-[10px] font-mono font-bold uppercase text-blue-sail/70">CARI PENDAFTAR</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cari nama, email, instansi, kota..."
+                    value={searchPE1Query}
+                    onChange={(e) => setSearchPE1Query(e.target.value)}
+                    className="w-full bg-white border-2 border-blue-sail text-xs font-sans p-2 pl-8 outline-none"
+                  />
+                  <Icon name="Search" size={14} className="absolute left-2.5 top-2.5 text-blue-sail/50" />
+                </div>
+              </div>
+            </div>
+
+            {/* Applications Table */}
+            <div className="bg-ballroom border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
+              {filteredPE1Regs.length === 0 ? (
+                <div className="p-12 text-center text-blue-sail/60">
+                  <Icon name="Inbox" size={40} className="mx-auto mb-3 text-blue-sail/30" />
+                  <p className="text-sm font-semibold">Belum Ada Data Pendaftar PE1</p>
+                  <p className="text-xs text-blue-sail/40 mt-1">Data pendaftar webinar CEO For A Day akan muncul di sini.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-blue-sail text-ballroom font-mono text-[10px] uppercase tracking-wider border-b-2 border-blue-sail">
+                        <th className="p-3">No</th>
+                        <th className="p-3">Pendaftar</th>
+                        <th className="p-3">Status / Instansi</th>
+                        <th className="p-3">Paket</th>
+                        <th className="p-3">Metode Bayar</th>
+                        <th className="p-3">Status Verifikasi</th>
+                        <th className="p-3 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-sail/10 font-sans text-xs">
+                      {filteredPE1Regs.map((reg, idx) => (
+                        <tr key={reg.id} className="hover:bg-blue-sail/5 transition-colors">
+                          <td className="p-3 font-mono font-bold">{idx + 1}</td>
+                          <td className="p-3">
+                            <p className="font-bold text-blue-sail">{reg.full_name}</p>
+                            <p className="text-[11px] text-blue-sail/60">{reg.email}</p>
+                            <p className="text-[11px] text-blue-sail/60 font-mono">WA: {reg.whatsapp}</p>
+                          </td>
+                          <td className="p-3">
+                            <span className="inline-block bg-blue-sail/10 text-blue-sail font-mono text-[10px] font-bold px-2 py-0.5 uppercase mb-1">
+                              {reg.status_current}
+                            </span>
+                            <p className="text-xs font-semibold">{reg.institution}</p>
+                            {reg.major && <p className="text-[11px] text-blue-sail/60">{reg.major}</p>}
+                            <p className="text-[10px] text-blue-sail/50">📍 {reg.city}</p>
+                          </td>
+                          <td className="p-3">
+                            <span className={`inline-block font-mono text-[10px] font-bold px-2 py-1 border border-blue-sail uppercase ${
+                              reg.package_choice === 'Aspiring CEO'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : reg.package_choice === 'Rising CEO'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : reg.package_choice === 'Executive CEO'
+                                    ? 'bg-purple-100 text-purple-800'
+                                    : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {reg.package_choice}
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono">
+                            {reg.payment_method ? (
+                              <span className="font-bold">{reg.payment_method}</span>
+                            ) : (
+                              <span className="text-blue-sail/40 italic">Free Task</span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <select
+                              value={reg.status}
+                              onChange={(e) => updatePE1RegistrationStatus(reg.id, e.target.value as any)}
+                              className={`font-mono text-[11px] font-bold px-2 py-1 border border-blue-sail outline-none uppercase cursor-pointer ${
+                                reg.status === 'confirmed'
+                                  ? 'bg-emerald-500 text-white'
+                                  : reg.status === 'rejected'
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-amber-400 text-blue-sail'
+                              }`}
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="confirmed">Confirmed</option>
+                              <option value="rejected">Rejected</option>
+                            </select>
+                          </td>
+                          <td className="p-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPE1Reg(reg)}
+                              className="bg-blue-sail hover:bg-barbera text-ballroom font-mono text-[10px] font-bold px-3 py-1.5 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] uppercase tracking-wider cursor-pointer"
+                            >
+                              Detail
                             </button>
                           </td>
                         </tr>
@@ -3436,6 +3695,130 @@ export const Admin: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedAmbassadorApp(null)}
+                className="bg-ballroom hover:bg-decor/20 text-blue-sail font-mono text-xs font-bold px-4 py-2 border-2 border-blue-sail cursor-pointer"
+              >
+                Tutup Modal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PE1 REGISTRATION DETAIL MODAL */}
+      {selectedPE1Reg && (
+        <div className="fixed inset-0 bg-blue-sail/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-ballroom border-4 border-blue-sail shadow-[12px_12px_0_0_#BD1B1F] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 text-blue-sail font-sans relative">
+            <div className="flex justify-between items-start border-b-2 border-blue-sail/20 pb-4">
+              <div>
+                <span className="font-mono text-xs font-bold text-red-inferno uppercase tracking-widest block mb-1">
+                  DETAIL PENDAFTAR PE1 (CEO FOR A DAY)
+                </span>
+                <h3 className="font-display font-black text-2xl uppercase tracking-tight">
+                  {selectedPE1Reg.full_name}
+                </h3>
+                <p className="font-mono text-xs text-blue-sail/70 mt-0.5">
+                  Paket: <strong>{selectedPE1Reg.package_choice}</strong> | Email: {selectedPE1Reg.email}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedPE1Reg(null)}
+                className="bg-red-inferno text-ballroom p-2 border border-blue-sail hover:bg-red-700 transition-colors cursor-pointer"
+              >
+                <Icon name="X" size={18} />
+              </button>
+            </div>
+
+            {/* Section 1: Data Diri */}
+            <div className="bg-blue-sail/5 p-4 border-2 border-blue-sail space-y-2">
+              <h4 className="font-display font-bold text-xs uppercase tracking-wider text-blue-sail border-b border-blue-sail/10 pb-1">
+                Data Diri Peserta
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <p><strong>Nama Lengkap:</strong> {selectedPE1Reg.full_name}</p>
+                <p><strong>Email:</strong> {selectedPE1Reg.email}</p>
+                <p><strong>No WhatsApp:</strong> {selectedPE1Reg.whatsapp}</p>
+                <p><strong>Status Saat Ini:</strong> {selectedPE1Reg.status_current}</p>
+                <p><strong>Instansi:</strong> {selectedPE1Reg.institution}</p>
+                {selectedPE1Reg.major && <p><strong>Jurusan / Prodi:</strong> {selectedPE1Reg.major}</p>}
+                <p><strong>Kota Domisili:</strong> {selectedPE1Reg.city}</p>
+                <p><strong>Waktu Submit:</strong> {new Date(selectedPE1Reg.submitted_at).toLocaleString('id-ID')}</p>
+              </div>
+            </div>
+
+            {/* Section 2: Paket & Persyaratan */}
+            <div className="bg-blue-sail/5 p-4 border-2 border-blue-sail space-y-2">
+              <h4 className="font-display font-bold text-xs uppercase tracking-wider text-blue-sail border-b border-blue-sail/10 pb-1">
+                Paket & Bukti Persyaratan / Pembayaran
+              </h4>
+              <div className="space-y-2 text-xs">
+                <p><strong>Paket Dibatasi:</strong> <span className="font-bold text-red-inferno">{selectedPE1Reg.package_choice}</span></p>
+
+                {selectedPE1Reg.package_choice === 'Aspiring CEO' ? (
+                  <>
+                    <p><strong>Instagram Username:</strong> {selectedPE1Reg.instagram_username || '-'}</p>
+                    <div>
+                      <strong>Link Drive Bukti Social Tasks:</strong>
+                      {selectedPE1Reg.social_proof_drive_url ? (
+                        <a href={selectedPE1Reg.social_proof_drive_url} target="_blank" rel="noreferrer"
+                          className="block text-blue-600 font-bold underline break-all mt-0.5">
+                          {selectedPE1Reg.social_proof_drive_url}
+                        </a>
+                      ) : <span className="text-gray-400"> -</span>}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p><strong>Metode Pembayaran:</strong> {selectedPE1Reg.payment_method || '-'}</p>
+                    <div>
+                      <strong>Link Drive Bukti Pembayaran:</strong>
+                      {selectedPE1Reg.payment_proof_url ? (
+                        <a href={selectedPE1Reg.payment_proof_url} target="_blank" rel="noreferrer"
+                          className="block text-blue-600 font-bold underline break-all mt-0.5">
+                          {selectedPE1Reg.payment_proof_url}
+                        </a>
+                      ) : <span className="text-gray-400"> -</span>}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Status Update Control */}
+            <div className="bg-decor/20 p-4 border-2 border-blue-sail flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div>
+                <span className="font-mono text-[10px] font-bold uppercase text-blue-sail/70 block">GANTI STATUS PENDAFTAR</span>
+                <span className="font-display font-bold text-sm uppercase text-blue-sail">Status: {selectedPE1Reg.status}</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await updatePE1RegistrationStatus(selectedPE1Reg.id, 'confirmed');
+                    setSelectedPE1Reg((prev: any) => ({ ...prev, status: 'confirmed' }));
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs font-bold px-3 py-1.5 border border-blue-sail cursor-pointer"
+                >
+                  ✓ Confirm (Setuju)
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await updatePE1RegistrationStatus(selectedPE1Reg.id, 'rejected');
+                    setSelectedPE1Reg((prev: any) => ({ ...prev, status: 'rejected' }));
+                  }}
+                  className="bg-red-inferno hover:bg-red-700 text-white font-mono text-xs font-bold px-3 py-1.5 border border-blue-sail cursor-pointer"
+                >
+                  ✕ Reject (Tolak)
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedPE1Reg(null)}
                 className="bg-ballroom hover:bg-decor/20 text-blue-sail font-mono text-xs font-bold px-4 py-2 border-2 border-blue-sail cursor-pointer"
               >
                 Tutup Modal

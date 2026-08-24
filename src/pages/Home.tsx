@@ -45,11 +45,15 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   }, []);
 
   const navigateToPhase = (page: string) => {
+    if (page === 'pe1') {
+      setCurrentPage('pe1');
+      return;
+    }
     if (page === 'recruitment' || page === 'ambassador_recruitment' || activePhase?.name === 'ambassador_recruitment') {
       setCurrentPage('recruitment');
       return;
     }
-    const disabledPages = ['pe1', 'pe2', 'competition', 'thrift', 'staff', 'interview-result', 'announcement'];
+    const disabledPages = ['pe2', 'competition', 'thrift', 'staff', 'interview-result', 'announcement'];
     if (disabledPages.includes(page)) {
       setCurrentPage('recruitment');
     } else {
@@ -58,6 +62,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   };
 
   const handleTimelineClick = (phaseName: string) => {
+    if (phaseName === 'pe1') {
+      setCurrentPage('pe1');
+      return;
+    }
     if (phaseName === 'ambassador_recruitment' || phaseName === 'staff_recruitment') {
       setCurrentPage('recruitment');
     }
