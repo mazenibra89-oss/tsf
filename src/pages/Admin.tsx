@@ -949,44 +949,13 @@ export const Admin: React.FC = () => {
             <span>Pengaturan Form</span>
           </button>
 
-          <div className="pt-6 border-t border-ballroom/10 mt-6 space-y-3">
+          <div className="pt-6 border-t border-ballroom/10 mt-6">
             <button
               onClick={handleLogout}
               className="w-full text-left px-4 py-2.5 rounded-none flex items-center space-x-2.5 bg-red-inferno/10 text-red-inferno hover:bg-red-inferno hover:text-ballroom transition-all border-2 border-red-inferno cursor-pointer shadow-[3px_3px_0_0_#8B011A]"
             >
               <Icon name="LogOut" size={14} />
               <span>Keluar (Logout)</span>
-            </button>
-
-            <button
-              onClick={async () => {
-                const password = prompt('Masukkan kata sandi admin Anda untuk mengonfirmasi reset database:');
-                if (password === null) return; // Cancelled
-                
-                const currentUsername = localStorage.getItem('tsf_admin_username') || 'admin';
-                try {
-                  const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: currentUsername, password })
-                  });
-                  if (res.ok) {
-                    if (confirm('Apakah Anda yakin ingin menyetel ulang database simulasi ke setelan awal?')) {
-                      resetToDefault();
-                      alert('Database berhasil disetel ulang ke setelan awal.');
-                    }
-                  } else {
-                    const data = await res.json().catch(() => ({}));
-                    alert(data.message || 'Kata sandi salah. Reset database dibatalkan.');
-                  }
-                } catch (err) {
-                  alert('Koneksi ke server gagal. Gagal memverifikasi kata sandi.');
-                }
-              }}
-              className="w-full text-left px-4 py-2.5 rounded-none flex items-center space-x-2.5 text-red-inferno hover:bg-red-inferno hover:text-ballroom transition-all border-2 border-red-inferno cursor-pointer shadow-[3px_3px_0_0_#8B011A]"
-            >
-              <Icon name="XCircle" size={14} />
-              <span>Reset Database</span>
             </button>
           </div>
         </nav>
