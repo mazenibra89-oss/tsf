@@ -4,7 +4,7 @@ import { Icon } from '../components/Icon';
 import { motion, AnimatePresence } from 'motion/react';
 import qrisImg from '../qristsf.jpeg';
 
-type FormStep = 'info' | 'form-data' | 'form-package' | 'form-social' | 'form-payment' | 'success';
+type FormStep = 'info' | 'form-data' | 'form-package' | 'form-ebook' | 'form-social' | 'form-payment' | 'success';
 
 interface PE1FormData {
   fullName: string;
@@ -15,6 +15,7 @@ interface PE1FormData {
   major: string;
   city: string;
   packageChoice: string;
+  selectedEbook: string;
   instagramUsername: string;
   socialProofDriveUrl: string;
   paymentMethod: string;
@@ -23,7 +24,7 @@ interface PE1FormData {
 
 const INITIAL_FORM: PE1FormData = {
   fullName: '', email: '', whatsapp: '', statusCurrent: '', institution: '',
-  major: '', city: '', packageChoice: '', instagramUsername: '',
+  major: '', city: '', packageChoice: '', selectedEbook: '', instagramUsername: '',
   socialProofDriveUrl: '', paymentMethod: '', paymentProofUrl: ''
 };
 
@@ -47,7 +48,6 @@ const PACKAGES: PackageItem[] = [
     priceNum: 0,
     badgeBg: 'bg-emerald-500 text-white',
     perks: [
-      { iconName: 'Award', text: 'Mendapat E-Certificate' },
       { iconName: 'CheckSquare', text: 'S&K: Complete Simple Tasks' },
     ]
   },
@@ -59,14 +59,14 @@ const PACKAGES: PackageItem[] = [
     priceNum: 22000,
     badgeBg: 'bg-blue-600 text-white',
     perks: [
-      { iconName: 'Layers', text: 'Everything in Aspiring CEO' },
+      { iconName: 'Video', text: 'Exclusive Access to Full Zoom Recording' },
       { iconName: 'Presentation', text: "Speakers' Presentation Slides/Deck Learning Materials" },
     ]
   },
   {
-    id: 'Executive CEO',
+    id: 'Strategic CEO',
     iconName: 'Target',
-    name: 'Executive CEO',
+    name: 'Strategic CEO',
     price: 'Rp 39.000',
     priceNum: 39000,
     badgeBg: 'bg-purple-600 text-white',
@@ -84,7 +84,7 @@ const PACKAGES: PackageItem[] = [
     badgeBg: 'bg-amber-500 text-blue-sail',
     popular: true,
     perks: [
-      { iconName: 'Star', text: 'Complete Package (Everything in Executive CEO)' },
+      { iconName: 'Star', text: 'Complete Package (Everything in Strategic CEO)' },
       { iconName: 'Library', text: 'Get Both Exclusive Winning Formula E-Books' },
     ]
   }
@@ -156,6 +156,7 @@ export const PE1: React.FC = () => {
         major: (form.statusCurrent === 'Siswa SMA' || form.statusCurrent === 'Mahasiswa') ? form.major : undefined,
         city: form.city,
         package_choice: form.packageChoice as any,
+        selected_ebook: form.selectedEbook || undefined,
         instagram_username: form.instagramUsername || undefined,
         social_proof_drive_url: form.socialProofDriveUrl || undefined,
         payment_method: (form.packageChoice === 'Aspiring CEO' ? undefined : (form.paymentMethod || 'Bank Transfer')) as any,
@@ -634,8 +635,9 @@ export const PE1: React.FC = () => {
                     ))}
                   </div>
 
-                  <p className="text-center text-xs text-blue-sail/50 font-sans mt-5 italic">
-                    All registrants receive a CFAD 2026 E-Certificate.
+                  {/* Prominent Bold Certificate Banner Note */}
+                  <p className="text-center text-xs font-bold text-blue-sail font-sans mt-6 uppercase tracking-wider bg-decor/20 border-2 border-blue-sail p-3 max-w-lg mx-auto shadow-[3px_3px_0_0_#BD1B1F]">
+                    ✨ All registrants receive a CFAD 2026 E-Certificate. ✨
                   </p>
 
                   <div className="flex justify-between mt-8">
@@ -650,8 +652,16 @@ export const PE1: React.FC = () => {
                           return;
                         }
                         if (form.packageChoice === 'Aspiring CEO') {
+                          updateField('selectedEbook', '');
                           setStep('form-social');
+                        } else if (form.packageChoice === 'Strategic CEO') {
+                          setStep('form-ebook');
+                        } else if (form.packageChoice === 'Rising CEO') {
+                          updateField('selectedEbook', '');
+                          updateField('paymentMethod', 'Bank Transfer');
+                          setStep('form-payment');
                         } else {
+                          updateField('selectedEbook', 'Both E-Books (BPC x BCC & Pitch Deck Edition)');
                           updateField('paymentMethod', 'Bank Transfer');
                           setStep('form-payment');
                         }
@@ -660,6 +670,96 @@ export const PE1: React.FC = () => {
                       className="inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] tracking-widest transition-all cursor-pointer"
                     >
                       <span>LANJUTKAN</span>
+                      <Icon name="ArrowRight" size={16} />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ─── STEP 3C: E-BOOK SELECTION (Strategic CEO) ─── */}
+            {step === 'form-ebook' && (
+              <motion.div
+                key="form-ebook"
+                initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
+                className="max-w-2xl mx-auto"
+              >
+                <div className="bg-ballroom border-[3px] border-blue-sail p-6 sm:p-8 shadow-[5px_5px_0_0_#2A4C9E]">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-blue-sail text-decor px-3 py-1.5 font-display font-black text-sm border border-decor">3</div>
+                    <h3 className="font-display font-black text-lg text-blue-sail uppercase">Pick Your Winning Formula</h3>
+                  </div>
+                  
+                  <p className="text-xs sm:text-sm text-blue-sail/85 font-sans leading-relaxed mb-6 bg-blue-sail/5 p-4 border border-blue-sail/20">
+                    You're one step closer to level up! Since you've chosen the <strong>Strategic CEO</strong> package, you get to pick <strong>1 exclusive Winner Formula E-Book</strong> to help you prep for competition season.
+                  </p>
+
+                  <div className="space-y-4 mb-6">
+                    {[
+                      {
+                        id: 'TSF Winner Formula BPC × BCC Edition',
+                        title: 'TSF Winner Formula BPC × BCC Edition',
+                        desc: 'Panduan lengkap & strategi memenangkan Business Plan Competition (BPC) dan Business Case Competition (BCC).',
+                        icon: 'BookOpen'
+                      },
+                      {
+                        id: 'TSF Winner Formula Pitch Deck Edition: Smart Tricks to Nail Your Winning BPC and BCC Deck!',
+                        title: 'TSF Winner Formula Pitch Deck Edition: Smart Tricks to Nail Your Winning BPC and BCC Deck!',
+                        desc: 'Trik pintar merancang pitch deck yang memikat juri dan investor untuk kompetisi BPC/BCC.',
+                        icon: 'Presentation'
+                      }
+                    ].map((ebook) => (
+                      <button
+                        key={ebook.id}
+                        type="button"
+                        onClick={() => updateField('selectedEbook', ebook.id)}
+                        className={`w-full p-4 text-left border-[3px] transition-all cursor-pointer flex items-start gap-4 ${
+                          form.selectedEbook === ebook.id
+                            ? 'border-decor bg-blue-sail/5 shadow-[4px_4px_0_0_#F6BB02] -translate-y-0.5'
+                            : 'border-blue-sail/30 hover:border-blue-sail/60 hover:bg-white'
+                        }`}
+                      >
+                        <div className="bg-blue-sail text-decor p-3 border border-blue-sail shrink-0 mt-0.5">
+                          <Icon name={ebook.icon} size={20} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-display font-black text-xs sm:text-sm text-blue-sail uppercase pr-2 leading-snug">{ebook.title}</h4>
+                            {form.selectedEbook === ebook.id && (
+                              <span className="bg-decor text-blue-sail font-mono text-[9px] font-bold px-2 py-0.5 uppercase border border-blue-sail shrink-0">
+                                DIPILIH
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-blue-sail/70 font-sans mt-1.5">{ebook.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {errors.selectedEbook && (
+                    <p className="text-red-500 text-xs font-bold mb-4">{errors.selectedEbook}</p>
+                  )}
+
+                  <div className="flex justify-between mt-8">
+                    <button onClick={() => { setStep('form-package'); scrollToFormSection(); }}
+                      className="inline-flex items-center gap-2 bg-ballroom hover:bg-gray-100 text-blue-sail font-display font-bold text-xs uppercase px-6 py-3 border-2 border-blue-sail/40 tracking-widest transition-all cursor-pointer">
+                      <Icon name="ArrowLeft" size={14} /> <span>KEMBALI</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!form.selectedEbook) {
+                          setErrors({ selectedEbook: 'Silakan pilih 1 E-Book Formula terlebih dahulu!' });
+                          return;
+                        }
+                        updateField('paymentMethod', 'Bank Transfer');
+                        setStep('form-payment');
+                        scrollToFormSection();
+                      }}
+                      className="inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] tracking-widest transition-all cursor-pointer"
+                    >
+                      <span>LANJUT KE PEMBAYARAN</span>
                       <Icon name="ArrowRight" size={16} />
                     </button>
                   </div>
@@ -743,7 +843,7 @@ export const PE1: React.FC = () => {
               </motion.div>
             )}
 
-            {/* ─── STEP 3B: PAYMENT (Rising / Executive / Absolute CEO) ─── */}
+            {/* ─── STEP 3B: PAYMENT (Rising / Strategic / Absolute CEO) ─── */}
             {step === 'form-payment' && (
               <motion.div
                 key="form-payment"
@@ -753,7 +853,9 @@ export const PE1: React.FC = () => {
               >
                 <div className="bg-ballroom border-[3px] border-blue-sail p-6 sm:p-8 shadow-[5px_5px_0_0_#2A4C9E]">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="bg-blue-sail text-decor px-3 py-1.5 font-display font-black text-sm border border-decor">3</div>
+                    <div className="bg-blue-sail text-decor px-3 py-1.5 font-display font-black text-sm border border-decor">
+                      {form.packageChoice === 'Strategic CEO' ? '4' : '3'}
+                    </div>
                     <h3 className="font-display font-black text-lg text-blue-sail uppercase">Pembayaran — {form.packageChoice}</h3>
                   </div>
                   <p className="text-xs text-blue-sail/60 font-sans mb-6">Pilih metode pembayaran (Bank Transfer / QRIS) lalu upload bukti pembayaran.</p>
@@ -767,6 +869,9 @@ export const PE1: React.FC = () => {
                           <Icon name={selectedPkg.iconName} size={20} className="text-red-inferno" />
                           <span>{selectedPkg.name}</span>
                         </h4>
+                        {(form.packageChoice === 'Strategic CEO' || form.packageChoice === 'Absolute CEO') && form.selectedEbook && (
+                          <p className="text-xs text-blue-sail/80 font-sans mt-1">📚 <strong>E-Book:</strong> {form.selectedEbook}</p>
+                        )}
                       </div>
                       <div className="text-center sm:text-right border-t sm:border-t-0 sm:border-l border-blue-sail/20 pt-2 sm:pt-0 sm:pl-4">
                         <span className="font-mono text-[10px] font-bold text-red-inferno uppercase tracking-widest block">TOTAL NOMINAL TRANSFER</span>
@@ -874,7 +979,14 @@ export const PE1: React.FC = () => {
                   </div>
 
                   <div className="flex justify-between mt-8">
-                    <button onClick={() => { setStep('form-package'); scrollToFormSection(); }}
+                    <button onClick={() => {
+                      if (form.packageChoice === 'Strategic CEO') {
+                        setStep('form-ebook');
+                      } else {
+                        setStep('form-package');
+                      }
+                      scrollToFormSection();
+                    }}
                       className="inline-flex items-center gap-2 bg-ballroom hover:bg-gray-100 text-blue-sail font-display font-bold text-xs uppercase px-6 py-3 border-2 border-blue-sail/40 tracking-widest transition-all cursor-pointer">
                       <Icon name="ArrowLeft" size={14} /> <span>KEMBALI</span>
                     </button>

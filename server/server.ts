@@ -530,7 +530,7 @@ app.put('/api/ambassador-applications/:id/status', authenticateToken, async (req
 app.post('/api/pe1-registrations', async (req: Request, res: Response): Promise<void> => {
   const body = req.body || {};
   const { full_name, email, whatsapp, status_current, institution, major, city, package_choice,
-    instagram_username, social_proof_drive_url, payment_method, payment_proof_url } = body;
+    selected_ebook, instagram_username, social_proof_drive_url, payment_method, payment_proof_url } = body;
 
   if (!full_name || !email || !whatsapp || !status_current || !institution || !city || !package_choice) {
     res.status(400).json({ message: 'Lengkapi seluruh data wajib!' });
@@ -555,6 +555,7 @@ app.post('/api/pe1-registrations', async (req: Request, res: Response): Promise<
         table.string('major').nullable();
         table.string('city').notNullable();
         table.string('package_choice').notNullable();
+        table.string('selected_ebook').nullable();
         table.string('instagram_username').nullable();
         table.string('social_proof_drive_url').nullable();
         table.string('payment_method').nullable();
@@ -563,6 +564,13 @@ app.post('/api/pe1-registrations', async (req: Request, res: Response): Promise<
         table.timestamp('submitted_at').notNullable().defaultTo(db.fn.now());
       });
       console.log('[pe1-registrations] Table created.');
+    } else {
+      const hasEbookCol = await db.schema.hasColumn('pe1_registrations', 'selected_ebook');
+      if (!hasEbookCol) {
+        await db.schema.alterTable('pe1_registrations', (table) => {
+          table.string('selected_ebook').nullable();
+        });
+      }
     }
 
     const isPaidPackage = package_choice && package_choice !== 'Aspiring CEO';
@@ -571,6 +579,7 @@ app.post('/api/pe1-registrations', async (req: Request, res: Response): Promise<
     await db('pe1_registrations').insert({
       id, full_name, email, whatsapp, status_current, institution,
       major: major || null, city, package_choice,
+      selected_ebook: selected_ebook || null,
       instagram_username: instagram_username || null,
       social_proof_drive_url: social_proof_drive_url || null,
       payment_method: finalPaymentMethod,

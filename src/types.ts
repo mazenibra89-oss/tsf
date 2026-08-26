@@ -221,7 +221,8 @@ export interface PE1Registration {
   institution: string;
   major?: string;
   city: string;
-  package_choice: 'Aspiring CEO' | 'Rising CEO' | 'Executive CEO' | 'Absolute CEO';
+  package_choice: 'Aspiring CEO' | 'Rising CEO' | 'Strategic CEO' | 'Absolute CEO';
+  selected_ebook?: string;
   instagram_username?: string;
   social_proof_drive_url?: string;
   payment_method?: 'QRIS' | 'DANA' | 'Bank Transfer';

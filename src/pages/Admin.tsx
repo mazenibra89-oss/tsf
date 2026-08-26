@@ -1298,9 +1298,9 @@ export const Admin: React.FC = () => {
                 </span>
               </div>
               <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
-                <span className="block text-[10px] font-mono font-bold uppercase text-purple-600">EXECUTIVE CEO</span>
+                <span className="block text-[10px] font-mono font-bold uppercase text-purple-600">STRATEGIC CEO</span>
                 <span className="block font-display font-black text-2xl text-purple-600">
-                  {(pe1Registrations || []).filter(r => r.package_choice === 'Executive CEO').length}
+                  {(pe1Registrations || []).filter(r => r.package_choice === 'Strategic CEO').length}
                 </span>
               </div>
               <div className="bg-white p-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E]">
@@ -1323,7 +1323,7 @@ export const Admin: React.FC = () => {
                   <option value="">Semua Paket</option>
                   <option value="Aspiring CEO">Aspiring CEO (Free)</option>
                   <option value="Rising CEO">Rising CEO (22K)</option>
-                  <option value="Executive CEO">Executive CEO (39K)</option>
+                  <option value="Strategic CEO">Strategic CEO (39K)</option>
                   <option value="Absolute CEO">Absolute CEO (49K)</option>
                 </select>
               </div>
@@ -1402,7 +1402,7 @@ export const Admin: React.FC = () => {
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : reg.package_choice === 'Rising CEO'
                                   ? 'bg-blue-100 text-blue-800'
-                                  : reg.package_choice === 'Executive CEO'
+                                  : reg.package_choice === 'Strategic CEO'
                                     ? 'bg-purple-100 text-purple-800'
                                     : 'bg-amber-100 text-amber-800'
                             }`}>
@@ -3723,6 +3723,13 @@ export const Admin: React.FC = () => {
               </h4>
               <div className="space-y-2 text-xs">
                 <p><strong>Paket Dibatasi:</strong> <span className="font-bold text-red-inferno">{selectedPE1Reg.package_choice}</span></p>
+
+                {selectedPE1Reg.selected_ebook && (
+                  <div className="bg-amber-50 p-2.5 border-2 border-amber-400 text-amber-950 font-sans my-1">
+                    <span className="font-mono text-[10px] uppercase font-bold text-amber-700 block">E-BOOK FORMULA PILIHAN PESERTA:</span>
+                    <p className="font-bold text-xs mt-0.5">📚 {selectedPE1Reg.selected_ebook}</p>
+                  </div>
+                )}
 
                 {selectedPE1Reg.package_choice === 'Aspiring CEO' ? (
                   <>
