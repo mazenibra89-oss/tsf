@@ -43,6 +43,13 @@ const PASSED_CI_NRPS = new Set([
   '5033261092'
 ]);
 
+// ─── KNOWN REGISTERED NON-PASSED CI REGISTRY ───
+const REGISTERED_CI_REGISTRY: Record<string, { full_name: string; nrp: string }> = {
+  '5033261010': { full_name: 'Aiman Ahmad Ali', nrp: '5033261010' },
+  '5028251084': { full_name: "Aeesha Na'ilah Syifa'", nrp: '5028251084' },
+  '5028251099': { full_name: 'Test User ITS', nrp: '5028251099' }
+};
+
 // ─── REAL PASSED STUDENT AMBASSADOR DATA ───
 const REAL_SA_PASSED: SAResultData[] = [
   { id: 'sa-1', full_name: 'JASMINE ANANDA SHANNITA', school: 'SMAN 9 SURABAYA', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
@@ -124,9 +131,11 @@ export const Announcement: React.FC = () => {
       app => app.role_choice === 'Campus Influencer' && (app.nrp === nrp || app.email?.includes(nrp) || app.whatsapp?.includes(nrp))
     );
 
+    const matchRegistry = REGISTERED_CI_REGISTRY[nrp];
+
     if (isPassed) {
       setCiResult({
-        full_name: matchContext?.full_name || `Mahasiswa ITS (${nrp})`,
+        full_name: matchContext?.full_name || matchRegistry?.full_name || `Mahasiswa ITS (${nrp})`,
         nrp: nrp,
         status: 'lolos',
         wa_group_url: BIANCA_WA_URL
@@ -135,11 +144,11 @@ export const Announcement: React.FC = () => {
       return;
     }
 
-    // 2. If NOT in passed NRP list, but exists in registered records -> TIDAK LOLOS
-    if (matchContext) {
+    // 2. If NOT in passed NRP list, but exists in registered records or registry -> TIDAK LOLOS
+    if (matchContext || matchRegistry) {
       setCiResult({
-        full_name: matchContext.full_name,
-        nrp: matchContext.nrp || nrp,
+        full_name: matchContext?.full_name || matchRegistry?.full_name || 'Mahasiswa ITS',
+        nrp: matchContext?.nrp || matchRegistry?.nrp || nrp,
         status: 'tidak_lolos'
       });
       setCiLoading(false);
