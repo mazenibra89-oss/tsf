@@ -157,7 +157,7 @@ export const PE1: React.FC = () => {
         package_choice: form.packageChoice as any,
         instagram_username: form.instagramUsername || undefined,
         social_proof_drive_url: form.socialProofDriveUrl || undefined,
-        payment_method: form.paymentMethod as any || undefined,
+        payment_method: (form.packageChoice === 'Aspiring CEO' ? undefined : 'Bank Transfer') as any,
         payment_proof_url: form.paymentProofUrl || undefined,
       });
       setStep('success');
@@ -651,6 +651,7 @@ export const PE1: React.FC = () => {
                         if (form.packageChoice === 'Aspiring CEO') {
                           setStep('form-social');
                         } else {
+                          updateField('paymentMethod', 'Bank Transfer');
                           setStep('form-payment');
                         }
                         scrollToFormSection();
@@ -750,7 +751,7 @@ export const PE1: React.FC = () => {
                     <div className="bg-blue-sail text-decor px-3 py-1.5 font-display font-black text-sm border border-decor">3</div>
                     <h3 className="font-display font-black text-lg text-blue-sail uppercase">Pembayaran — {form.packageChoice}</h3>
                   </div>
-                  <p className="text-xs text-blue-sail/60 font-sans mb-6">Pilih metode pembayaran dan upload bukti transfer sesuai nominal paket.</p>
+                  <p className="text-xs text-blue-sail/60 font-sans mb-6">Lakukan transfer bank ke rekening resmi di bawah ini lalu upload bukti transfer.</p>
 
                   {/* Selected Package Nominal Summary Card */}
                   {selectedPkg && (
@@ -771,71 +772,51 @@ export const PE1: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Payment Method Selection */}
-                  <div className="space-y-4">
+                  {/* Single Bank Transfer Details Card */}
+                  <div className="space-y-5">
                     <div>
-                      <label className="block text-xs font-mono font-bold text-blue-sail/80 uppercase tracking-wider mb-2">Metode Pembayaran *</label>
-                      <div className="grid grid-cols-3 gap-3">
-                        {(['QRIS', 'DANA', 'Bank Transfer'] as const).map((method) => (
-                          <button
-                            key={method}
-                            type="button"
-                            onClick={() => updateField('paymentMethod', method)}
-                            className={`p-3 border-2 text-center font-display font-bold text-xs uppercase transition-all cursor-pointer ${
-                              form.paymentMethod === method
-                                ? 'border-decor bg-blue-sail/5 shadow-[2px_2px_0_0_#F6BB02] text-blue-sail'
-                                : 'border-blue-sail/30 hover:border-blue-sail/60 text-blue-sail/70'
-                            }`}
-                          >
-                            {method}
-                          </button>
-                        ))}
-                      </div>
-                      {errors.paymentMethod && <p className="text-red-500 text-xs mt-1">{errors.paymentMethod}</p>}
-                    </div>
+                      <label className="block text-xs font-mono font-bold text-blue-sail/80 uppercase tracking-wider mb-2">
+                        Metode Pembayaran Resmi (Bank Transfer) *
+                      </label>
+                      <div className="bg-blue-sail text-ballroom p-5 border-3 border-blue-sail shadow-[4px_4px_0_0_#F6BB02] space-y-3">
+                        <div className="flex items-center justify-between border-b border-ballroom/20 pb-3">
+                          <span className="font-display font-black text-sm text-decor uppercase tracking-wider flex items-center gap-2">
+                            <Icon name="Briefcase" size={18} />
+                            <span>BANK JAGO</span>
+                          </span>
+                          <span className="bg-decor text-blue-sail font-mono text-[9px] font-bold px-2.5 py-0.5 uppercase tracking-wider">
+                            OFFICIAL ACCOUNT
+                          </span>
+                        </div>
 
-                    {/* Payment Details based on selection */}
-                    {form.paymentMethod && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                        className="bg-blue-sail/5 border-2 border-blue-sail/20 p-5"
-                      >
-                        {form.paymentMethod === 'QRIS' && (
-                          <div className="text-center">
-                            <p className="text-sm font-display font-bold text-blue-sail uppercase mb-1">Scan QRIS Pembayaran</p>
-                            <p className="text-xs text-red-inferno font-bold mb-3">Nominal: {selectedPkg?.price}</p>
-                            <div className="bg-white p-4 inline-block border-2 border-blue-sail/20 mb-2">
-                              <div className="w-48 h-48 bg-gray-100 flex items-center justify-center text-blue-sail/40 text-xs font-mono">
-                                [Gambar QRIS]
-                              </div>
-                            </div>
-                            <p className="text-xs text-blue-sail/60 font-sans italic">QRIS akan diupdate segera</p>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono text-decor uppercase font-bold tracking-wider block">NOMOR REKENING</span>
+                          <div className="flex items-center justify-between bg-ballroom/10 p-2.5 border border-ballroom/20">
+                            <span className="font-mono font-black text-xl text-ballroom tracking-widest">06265590338</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText('06265590338');
+                                alert('Nomor rekening berhasil disalin!');
+                              }}
+                              className="bg-decor hover:bg-decor/90 text-blue-sail font-mono text-[10px] font-bold px-3 py-1.5 border border-blue-sail cursor-pointer transition-all uppercase"
+                            >
+                              Salin Rekening
+                            </button>
                           </div>
-                        )}
-                        {form.paymentMethod === 'DANA' && (
-                          <div className="text-center space-y-2">
-                            <p className="text-sm font-display font-bold text-blue-sail uppercase">Transfer via DANA</p>
-                            <p className="text-xs text-red-inferno font-bold">Nominal: {selectedPkg?.price}</p>
-                            <p className="font-mono text-lg font-black text-red-inferno">[Nomor DANA]</p>
-                            <p className="text-sm text-blue-sail/80 font-sans">a.n. <strong>[Nama Penerima]</strong></p>
-                          </div>
-                        )}
-                        {form.paymentMethod === 'Bank Transfer' && (
-                          <div className="text-center space-y-2">
-                            <p className="text-sm font-display font-bold text-blue-sail uppercase">Transfer Bank</p>
-                            <p className="text-xs text-red-inferno font-bold">Nominal: {selectedPkg?.price}</p>
-                            <p className="font-mono text-lg font-black text-red-inferno">[Nomor Rekening]</p>
-                            <p className="text-sm text-blue-sail/80 font-sans">a.n. <strong>[Nama Penerima]</strong></p>
-                            <p className="text-xs text-blue-sail/50 font-sans">[Nama Bank]</p>
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
+                        </div>
+
+                        <div className="pt-1">
+                          <span className="text-[10px] font-mono text-decor uppercase font-bold tracking-wider block">ATAS NAMA</span>
+                          <p className="font-display font-extrabold text-sm text-ballroom uppercase">Ahmad Andra Rizky Maulana</p>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Proof of Payment */}
                     <div>
                       <label className="block text-xs font-mono font-bold text-blue-sail/80 uppercase tracking-wider mb-1">
-                        Proof of Payment (Link Drive) *
+                        Proof of Payment (Link Google Drive) *
                       </label>
                       <p className="text-[10px] text-blue-sail/50 font-sans mb-2">
                         Format nama file: <strong>NamaLengkap_NamaPaket</strong>
@@ -896,7 +877,7 @@ export const PE1: React.FC = () => {
 
                   <div className="flex flex-wrap justify-center gap-3">
                     <a
-                      href="#"
+                      href="https://chat.whatsapp.com/CiP3Gm7vDedC7WcEBsL1wi?mode=gi_t"
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-black text-xs uppercase px-6 py-3.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#166534] tracking-widest transition-all"

@@ -565,12 +565,15 @@ app.post('/api/pe1-registrations', async (req: Request, res: Response): Promise<
       console.log('[pe1-registrations] Table created.');
     }
 
+    const isPaidPackage = package_choice && package_choice !== 'Aspiring CEO';
+    const finalPaymentMethod = isPaidPackage ? (payment_method || 'Bank Transfer') : null;
+
     await db('pe1_registrations').insert({
       id, full_name, email, whatsapp, status_current, institution,
       major: major || null, city, package_choice,
       instagram_username: instagram_username || null,
       social_proof_drive_url: social_proof_drive_url || null,
-      payment_method: payment_method || null,
+      payment_method: finalPaymentMethod,
       payment_proof_url: payment_proof_url || null,
       status: 'pending', submitted_at
     });
