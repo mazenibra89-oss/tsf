@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
 import { motion, AnimatePresence } from 'motion/react';
+import qrisImg from '../qristsf.jpeg';
 
 type FormStep = 'info' | 'form-data' | 'form-package' | 'form-social' | 'form-payment' | 'success';
 
@@ -46,7 +47,7 @@ const PACKAGES: PackageItem[] = [
     priceNum: 0,
     badgeBg: 'bg-emerald-500 text-white',
     perks: [
-      { iconName: 'Video', text: 'Zoom Recording (Access Anytime)' },
+      { iconName: 'Award', text: 'Mendapat E-Certificate' },
       { iconName: 'CheckSquare', text: 'S&K: Complete Simple Tasks' },
     ]
   },
@@ -157,7 +158,7 @@ export const PE1: React.FC = () => {
         package_choice: form.packageChoice as any,
         instagram_username: form.instagramUsername || undefined,
         social_proof_drive_url: form.socialProofDriveUrl || undefined,
-        payment_method: (form.packageChoice === 'Aspiring CEO' ? undefined : 'Bank Transfer') as any,
+        payment_method: (form.packageChoice === 'Aspiring CEO' ? undefined : (form.paymentMethod || 'Bank Transfer')) as any,
         payment_proof_url: form.paymentProofUrl || undefined,
       });
       setStep('success');
@@ -228,7 +229,7 @@ export const PE1: React.FC = () => {
                 className="text-sm sm:text-base text-ballroom/85 font-sans leading-relaxed mb-6 sm:mb-8 max-w-xl mx-auto lg:mx-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
               >
-                HI, Future Leaders! Pernah kepikiran, gimana caranya membangun <strong>personal branding</strong> yang kuat sekaligus jadi pemimpin yang menciptakan <strong>dampak berkelanjutan</strong>?
+                HI, Future Innovators! Pernah kepikiran, gimana caranya membangun <strong>personal branding</strong> yang kuat sekaligus jadi pemimpin yang menciptakan <strong>dampak berkelanjutan</strong>?
                 <br /><br />
                 Webinar ini akan membahas bagaimana membangun personal branding, hingga leadership dan inovasi yang berdampak di bidang bisnis, dipandu oleh pembicara yang berpengalaman di bidangnya.
               </motion.p>
@@ -372,11 +373,11 @@ export const PE1: React.FC = () => {
                     MATERI 01
                   </span>
                   <h3 className="font-display font-black text-lg text-blue-sail uppercase leading-tight mb-2">
-                    Personal Branding for Future Leaders
+                    Personal Branding for Future Innovators
                   </h3>
                   <div className="inline-flex items-center gap-1.5 bg-blue-sail/5 px-3 py-1 border border-blue-sail/20 text-xs text-blue-sail font-sans font-semibold">
                     <Icon name="UserCheck" size={14} className="text-red-inferno" />
-                    <span className="italic">[Nama Pembicara 1]</span>
+                    <span className="font-bold">Muhammad Zaki Raihansyah</span>
                   </div>
                 </div>
               </div>
@@ -400,7 +401,7 @@ export const PE1: React.FC = () => {
                   </h3>
                   <div className="inline-flex items-center gap-1.5 bg-blue-sail/5 px-3 py-1 border border-blue-sail/20 text-xs text-blue-sail font-sans font-semibold">
                     <Icon name="UserCheck" size={14} className="text-red-inferno" />
-                    <span className="italic">[Nama Pembicara 2]</span>
+                    <span className="font-bold">Singgih Ardiansyah, S.T.</span>
                   </div>
                 </div>
               </div>
@@ -702,12 +703,16 @@ export const PE1: React.FC = () => {
                           <span>Screenshot bukti follow Instagram <a href="https://instagram.com/tdcsummitfest_its" target="_blank" rel="noreferrer" className="text-red-inferno font-bold underline">@tdcsummitfest_its</a></span>
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <Icon name="Linkedin" size={16} className="text-blue-700 shrink-0" />
-                          <span>Screenshot bukti connect/follow LinkedIn <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="text-red-inferno font-bold underline">TDC Summit Fest 2026</a></span>
-                        </li>
-                        <li className="flex items-center gap-2.5">
                           <Icon name="Video" size={16} className="text-slate-800 shrink-0" />
                           <span>Screenshot bukti follow TikTok <a href="https://tiktok.com/@tdcsummitfest_its" target="_blank" rel="noreferrer" className="text-red-inferno font-bold underline">@tdcsummitfest_its</a></span>
+                        </li>
+                        <li className="flex items-center gap-2.5">
+                          <Icon name="MessageSquareShare" size={16} className="text-blue-600 shrink-0" />
+                          <span>Screenshot bukti komen di postingan CEO FOR A DAY di IG TSF</span>
+                        </li>
+                        <li className="flex items-center gap-2.5">
+                          <Icon name="Share2" size={16} className="text-emerald-600 shrink-0" />
+                          <span>Screenshot bukti repost feeds CEO FOR A DAY di IG TSF</span>
                         </li>
                       </ul>
                     </div>
@@ -751,7 +756,7 @@ export const PE1: React.FC = () => {
                     <div className="bg-blue-sail text-decor px-3 py-1.5 font-display font-black text-sm border border-decor">3</div>
                     <h3 className="font-display font-black text-lg text-blue-sail uppercase">Pembayaran — {form.packageChoice}</h3>
                   </div>
-                  <p className="text-xs text-blue-sail/60 font-sans mb-6">Lakukan transfer bank ke rekening resmi di bawah ini lalu upload bukti transfer.</p>
+                  <p className="text-xs text-blue-sail/60 font-sans mb-6">Pilih metode pembayaran (Bank Transfer / QRIS) lalu upload bukti pembayaran.</p>
 
                   {/* Selected Package Nominal Summary Card */}
                   {selectedPkg && (
@@ -772,45 +777,85 @@ export const PE1: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Single Bank Transfer Details Card */}
+                  {/* Payment Method Selection (Bank Transfer & QRIS) */}
                   <div className="space-y-5">
                     <div>
                       <label className="block text-xs font-mono font-bold text-blue-sail/80 uppercase tracking-wider mb-2">
-                        Metode Pembayaran Resmi (Bank Transfer) *
+                        Metode Pembayaran *
                       </label>
-                      <div className="bg-blue-sail text-ballroom p-5 border-3 border-blue-sail shadow-[4px_4px_0_0_#F6BB02] space-y-3">
-                        <div className="flex items-center justify-between border-b border-ballroom/20 pb-3">
-                          <span className="font-display font-black text-sm text-decor uppercase tracking-wider flex items-center gap-2">
-                            <Icon name="Briefcase" size={18} />
-                            <span>BANK JAGO</span>
-                          </span>
-                          <span className="bg-decor text-blue-sail font-mono text-[9px] font-bold px-2.5 py-0.5 uppercase tracking-wider">
-                            OFFICIAL ACCOUNT
-                          </span>
-                        </div>
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        {(['Bank Transfer', 'QRIS'] as const).map((method) => (
+                          <button
+                            key={method}
+                            type="button"
+                            onClick={() => updateField('paymentMethod', method)}
+                            className={`p-3 border-2 text-center font-display font-bold text-xs uppercase transition-all cursor-pointer ${
+                              form.paymentMethod === method || (!form.paymentMethod && method === 'Bank Transfer')
+                                ? 'border-decor bg-blue-sail/5 shadow-[2px_2px_0_0_#F6BB02] text-blue-sail font-extrabold'
+                                : 'border-blue-sail/30 hover:border-blue-sail/60 text-blue-sail/70'
+                            }`}
+                          >
+                            {method}
+                          </button>
+                        ))}
+                      </div>
 
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-mono text-decor uppercase font-bold tracking-wider block">NOMOR REKENING</span>
-                          <div className="flex items-center justify-between bg-ballroom/10 p-2.5 border border-ballroom/20">
-                            <span className="font-mono font-black text-xl text-ballroom tracking-widest">06265590338</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText('06265590338');
-                                alert('Nomor rekening berhasil disalin!');
-                              }}
-                              className="bg-decor hover:bg-decor/90 text-blue-sail font-mono text-[10px] font-bold px-3 py-1.5 border border-blue-sail cursor-pointer transition-all uppercase"
-                            >
-                              Salin Rekening
-                            </button>
+                      {/* Details: Bank Transfer */}
+                      {(form.paymentMethod === 'Bank Transfer' || !form.paymentMethod) && (
+                        <div className="bg-blue-sail text-ballroom p-5 border-3 border-blue-sail shadow-[4px_4px_0_0_#F6BB02] space-y-3">
+                          <div className="flex items-center justify-between border-b border-ballroom/20 pb-3">
+                            <span className="font-display font-black text-sm text-decor uppercase tracking-wider flex items-center gap-2">
+                              <Icon name="Briefcase" size={18} />
+                              <span>BANK JAGO</span>
+                            </span>
+                            <span className="bg-decor text-blue-sail font-mono text-[9px] font-bold px-2.5 py-0.5 uppercase tracking-wider">
+                              OFFICIAL ACCOUNT
+                            </span>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-mono text-decor uppercase font-bold tracking-wider block">NOMOR REKENING</span>
+                            <div className="flex items-center justify-between bg-ballroom/10 p-2.5 border border-ballroom/20">
+                              <span className="font-mono font-black text-xl text-ballroom tracking-widest">06265590338</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText('06265590338');
+                                  alert('Nomor rekening berhasil disalin!');
+                                }}
+                                className="bg-decor hover:bg-decor/90 text-blue-sail font-mono text-[10px] font-bold px-3 py-1.5 border border-blue-sail cursor-pointer transition-all uppercase"
+                              >
+                                Salin Rekening
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="pt-1">
+                            <span className="text-[10px] font-mono text-decor uppercase font-bold tracking-wider block">ATAS NAMA</span>
+                            <p className="font-display font-extrabold text-sm text-ballroom uppercase">Ahmad Andra Rizky Maulana</p>
                           </div>
                         </div>
+                      )}
 
-                        <div className="pt-1">
-                          <span className="text-[10px] font-mono text-decor uppercase font-bold tracking-wider block">ATAS NAMA</span>
-                          <p className="font-display font-extrabold text-sm text-ballroom uppercase">Ahmad Andra Rizky Maulana</p>
+                      {/* Details: QRIS */}
+                      {form.paymentMethod === 'QRIS' && (
+                        <div className="bg-blue-sail text-ballroom p-5 border-3 border-blue-sail shadow-[4px_4px_0_0_#F6BB02] text-center space-y-3">
+                          <div className="border-b border-ballroom/20 pb-2">
+                            <span className="font-display font-black text-sm text-decor uppercase tracking-wider">
+                              SCAN QRIS PEMBAYARAN
+                            </span>
+                            <p className="text-xs text-ballroom/80 font-sans mt-0.5">Total Nominal: <strong>{selectedPkg?.price}</strong></p>
+                          </div>
+
+                          <div className="bg-white p-3 inline-block border-2 border-blue-sail shadow-[2px_2px_0_0_#000]">
+                            <img src={qrisImg} alt="QRIS TSF 2026" className="w-56 sm:w-64 h-auto mx-auto border border-gray-200" />
+                          </div>
+
+                          <p className="text-[11px] font-mono text-decor font-bold uppercase tracking-wider">
+                            Silakan scan QRIS di atas menggunakan E-Wallet atau M-Banking kamu
+                          </p>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* Proof of Payment */}
@@ -861,7 +906,7 @@ export const PE1: React.FC = () => {
                     Pendaftaran Kamu Berhasil!
                   </h3>
                   <p className="text-sm text-ballroom/85 font-sans leading-relaxed max-w-md mx-auto mb-6">
-                    Satu langkah lagi sebelum menjadi <strong>Future Leader</strong>!
+                    Satu langkah lagi sebelum menjadi <strong>Future Innovators</strong>!
                     Yuk bergabung ke <strong>WhatsApp Community Group TDC Summit Fest 2026</strong> biar nggak ketinggalan informasi terbaru.
                   </p>
 
