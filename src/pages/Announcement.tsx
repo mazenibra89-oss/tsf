@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from '../components/Icon';
 import { useApp } from '../context/AppContext';
@@ -22,6 +22,9 @@ interface SAResultData {
 }
 
 const BIANCA_WA_URL = 'https://wa.me/6281259824958';
+
+// Target Time: 13:00 WIB Today (26 August 2026 13:00:00 WIB)
+const TARGET_TIME = new Date('2026-08-26T13:00:00+07:00').getTime();
 
 // ─── 16 REAL PASSED CAMPUS INFLUENCER NRPS ───
 const PASSED_CI_NRPS = new Set([
@@ -111,6 +114,34 @@ export const Announcement: React.FC = () => {
   const [saLoading, setSaLoading] = useState(false);
   const [saResult, setSaResult] = useState<SAResultData | null>(null);
   const [saErrorMsg, setSaErrorMsg] = useState('');
+
+  // ─── COUNTDOWN TIMER LOGIC (13.00 WIB LOCK) ───
+  const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; isUnlocked: boolean }>({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    isUnlocked: false,
+  });
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const diff = TARGET_TIME - now;
+
+      if (diff <= 0) {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0, isUnlocked: true });
+      } else {
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setTimeLeft({ hours, minutes, seconds, isUnlocked: false });
+      }
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // ─── SEARCH CI (NRP LOOKUP WITH REAL DATA MATCHING) ───
   const handleCiSearch = async (e: React.FormEvent) => {
@@ -234,6 +265,73 @@ export const Announcement: React.FC = () => {
 
   return (
     <div className="asphalt-texture min-h-screen pt-12 pb-24 relative overflow-hidden flex flex-col items-center">
+      
+      {/* 🔒 COUNTDOWN LOCK OVERLAY (ACTIVE UNTIL 13:00 WIB TODAY) */}
+      <AnimatePresence>
+        {!timeLeft.isUnlocked && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4 text-center overflow-hidden"
+          >
+            <div className="max-w-lg w-full bg-blue-sail/95 border-4 border-decor p-6 sm:p-10 shadow-[10px_10px_0_0_#BD1B1F] relative text-ballroom">
+              <div className="absolute top-0 right-0 bg-red-inferno text-ballroom text-[10px] font-mono font-bold px-3 py-1 uppercase tracking-widest border-b-2 border-l-2 border-decor">
+                TSF 2026
+              </div>
+
+              {/* Lock / Clock Icon */}
+              <div className="bg-decor text-blue-sail p-4 rounded-none border-2 border-blue-sail inline-block mb-4 shadow-[4px_4px_0_0_#BD1B1F] animate-bounce">
+                <Icon name="Clock" size={40} />
+              </div>
+
+              {/* Header */}
+              <div className="mb-4 space-y-1">
+                <span className="bg-red-inferno text-ballroom font-mono text-[10px] font-bold px-3 py-1 uppercase tracking-widest border border-blue-sail inline-block">
+                  ANNOUNCEMENT COUNTDOWN
+                </span>
+                <h2 className="font-display font-black text-2xl sm:text-3xl text-ballroom uppercase tracking-tight leading-tight pt-2">
+                  PENGUMUMAN DIBUKA PUKUL 13.00 WIB
+                </h2>
+              </div>
+
+              <p className="text-xs sm:text-sm text-ballroom/85 font-sans leading-relaxed mb-6 max-w-md mx-auto">
+                Hasil seleksi <strong>Campus Influencer</strong> & <strong>Student Ambassador</strong> TDC Summit Fest 2026 akan dibuka secara resmi tepat pukul <strong>13.00 WIB</strong> hari ini.
+              </p>
+
+              {/* Countdown Digit Display */}
+              <div className="bg-blue-sail text-decor p-4 border-2 border-decor shadow-[4px_4px_0_0_#BD1B1F] mb-6">
+                <div className="grid grid-cols-3 gap-3 text-center max-w-xs mx-auto">
+                  <div className="bg-barbera/40 p-3 border border-decor/30">
+                    <span className="block font-display font-black text-3xl text-ballroom">
+                      {String(timeLeft.hours).padStart(2, '0')}
+                    </span>
+                    <span className="text-[9px] font-mono uppercase text-ballroom/70 font-bold">Jam</span>
+                  </div>
+                  <div className="bg-barbera/40 p-3 border border-decor/30">
+                    <span className="block font-display font-black text-3xl text-ballroom">
+                      {String(timeLeft.minutes).padStart(2, '0')}
+                    </span>
+                    <span className="text-[9px] font-mono uppercase text-ballroom/70 font-bold">Menit</span>
+                  </div>
+                  <div className="bg-barbera/40 p-3 border border-decor/30 animate-pulse">
+                    <span className="block font-display font-black text-3xl text-decor">
+                      {String(timeLeft.seconds).padStart(2, '0')}
+                    </span>
+                    <span className="text-[9px] font-mono uppercase text-decor/80 font-bold">Detik</span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-decor font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
+                <Icon name="Sparkles" size={14} />
+                <span>Harap tunggu sampai waktu hitung mundur selesai!</span>
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="absolute top-1/2 left-0 right-0 h-4 bg-decor/5 transform skew-y-[-4deg] pointer-events-none" />
 
       {/* Trigger Confetti on Passed */}
