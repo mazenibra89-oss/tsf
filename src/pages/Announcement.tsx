@@ -10,7 +10,6 @@ interface CIResultData {
   faculty?: string;
   status: 'lolos' | 'tidak_lolos';
   wa_group_url?: string;
-  loa_url?: string;
 }
 
 interface SAResultData {
@@ -23,6 +22,34 @@ interface SAResultData {
 }
 
 const BIANCA_WA_URL = 'https://wa.me/6281259824958';
+
+// ─── 16 REAL PASSED CAMPUS INFLUENCER NRPS ───
+const PASSED_CI_NRPS = new Set([
+  '5005261031',
+  '5012261113',
+  '5005261056',
+  '5051261012',
+  '5031261097',
+  '5031261019',
+  '5026261026',
+  '5021261002',
+  '5008261206',
+  '5004261051',
+  '5028261079',
+  '5049261031',
+  '5026261125',
+  '5030261002',
+  '5051261043',
+  '5033261092'
+]);
+
+// ─── REAL PASSED STUDENT AMBASSADOR DATA ───
+const REAL_SA_PASSED: SAResultData[] = [
+  { id: 'sa-1', full_name: 'JASMINE ANANDA SHANNITA', school: 'SMAN 9 SURABAYA', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
+  { id: 'sa-2', full_name: 'AUREL NUR FITRIANA', school: 'MAN KOTA SURABAYA', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
+  { id: 'sa-3', full_name: 'Valentya Dwi Fitrianti', school: 'SMAN 4 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
+  { id: 'sa-4', full_name: 'DINI CAMILIA RAMADHANI', school: 'SMAN 19 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL }
+];
 
 // Custom Festive Confetti Component
 const Confetti: React.FC = () => {
@@ -59,47 +86,6 @@ const Confetti: React.FC = () => {
   );
 };
 
-// ─── DUMMY DATA FOR CAMPUS INFLUENCER (NRP LOOKUP) ───
-const DUMMY_CI_DATA: Record<string, CIResultData> = {
-  '5025211001': {
-    full_name: 'Muhammad Fadhil',
-    nrp: '5025211001',
-    status: 'lolos',
-    wa_group_url: BIANCA_WA_URL
-  },
-  '5026211002': {
-    full_name: 'Siti Rahma',
-    nrp: '5026211002',
-    status: 'lolos',
-    wa_group_url: BIANCA_WA_URL
-  },
-  '5024211003': {
-    full_name: 'Bintang Pratama',
-    nrp: '5024211003',
-    status: 'lolos',
-    wa_group_url: BIANCA_WA_URL
-  },
-  '5026211004': {
-    full_name: 'Rizky Febrian',
-    nrp: '5026211004',
-    status: 'tidak_lolos'
-  }
-};
-
-// ─── DUMMY DATA FOR STUDENT AMBASSADOR (ACCEPTED LIST & LOOKUP) ───
-const DUMMY_SA_ACCEPTED: SAResultData[] = [
-  { id: '1', full_name: 'Clarissa Amalia', school: 'SMAN 5 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
-  { id: '2', full_name: 'Bintang Pratama', school: 'SMAN 1 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
-  { id: '3', full_name: 'Amanda Putri', school: 'SMA Frateran Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
-  { id: '4', full_name: 'Kevin Alexander', school: 'SMA St. Louis 1 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
-  { id: '5', full_name: 'Nabila Zahra', school: 'SMKN 2 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
-  { id: '6', full_name: 'Farhan Ramadhan', school: 'SMAN 2 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
-  { id: '7', full_name: 'Jessica Tan', school: 'SMA Santa Maria Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
-  { id: '8', full_name: 'Aulia Rahma', school: 'SMAN 6 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
-  { id: '9', full_name: 'Dion Handoko', school: 'SMKN 1 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL },
-  { id: '10', full_name: 'Siti Rahmawati', school: 'SMAN 15 Surabaya', city: 'Surabaya', status: 'lolos', wa_group_url: BIANCA_WA_URL }
-];
-
 export const Announcement: React.FC = () => {
   const { ambassadorApplications } = useApp();
 
@@ -119,7 +105,7 @@ export const Announcement: React.FC = () => {
   const [saResult, setSaResult] = useState<SAResultData | null>(null);
   const [saErrorMsg, setSaErrorMsg] = useState('');
 
-  // ─── SEARCH CI (NRP LOOKUP) ───
+  // ─── SEARCH CI (NRP LOOKUP WITH REAL DATA MATCHING) ───
   const handleCiSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     const nrp = searchNrp.trim();
@@ -129,32 +115,38 @@ export const Announcement: React.FC = () => {
     setCiErrorMsg('');
     setCiResult(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
-    // 1. Check in Dummy Data
-    if (DUMMY_CI_DATA[nrp]) {
-      setCiResult(DUMMY_CI_DATA[nrp]);
-      setCiLoading(false);
-      return;
-    }
+    const isPassed = PASSED_CI_NRPS.has(nrp);
 
-    // 2. Check in AppContext applications
+    // 1. Check if applicant exists in AppContext / Database records
     const matchContext = (ambassadorApplications || []).find(
       app => app.role_choice === 'Campus Influencer' && (app.nrp === nrp || app.email?.includes(nrp) || app.whatsapp?.includes(nrp))
     );
 
-    if (matchContext) {
+    if (isPassed) {
       setCiResult({
-        full_name: matchContext.full_name,
-        nrp: matchContext.nrp || nrp,
-        status: matchContext.status === 'accepted' ? 'lolos' : 'tidak_lolos',
+        full_name: matchContext?.full_name || `Mahasiswa ITS (${nrp})`,
+        nrp: nrp,
+        status: 'lolos',
         wa_group_url: BIANCA_WA_URL
       });
       setCiLoading(false);
       return;
     }
 
-    // Not found
+    // 2. If NOT in passed NRP list, but exists in registered records -> TIDAK LOLOS
+    if (matchContext) {
+      setCiResult({
+        full_name: matchContext.full_name,
+        nrp: matchContext.nrp || nrp,
+        status: 'tidak_lolos'
+      });
+      setCiLoading(false);
+      return;
+    }
+
+    // 3. NRP not found in passed list and not in registration history
     setCiErrorMsg(`NRP ${nrp} tidak terdaftar dalam database hasil seleksi Campus Influencer TSF 2026. Pastikan NRP yang dimasukkan benar.`);
     setCiLoading(false);
   };
@@ -169,14 +161,15 @@ export const Announcement: React.FC = () => {
     setSaErrorMsg('');
     setSaResult(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
-    const matchDummy = DUMMY_SA_ACCEPTED.find(
+    // Match in REAL_SA_PASSED
+    const matchReal = REAL_SA_PASSED.find(
       sa => sa.full_name.toLowerCase().includes(q) || sa.school.toLowerCase().includes(q)
     );
 
-    if (matchDummy) {
-      setSaResult(matchDummy);
+    if (matchReal) {
+      setSaResult(matchReal);
       setSaLoading(false);
       return;
     }
@@ -205,8 +198,26 @@ export const Announcement: React.FC = () => {
     setSaLoading(false);
   };
 
+  // Combine Real SA Passed List + Accepted from Context
+  const combinedSaList: SAResultData[] = [
+    ...REAL_SA_PASSED,
+    ...(ambassadorApplications || [])
+      .filter(app => app.role_choice === 'Student Ambassador' && app.status === 'accepted')
+      .map(app => ({
+        id: app.id,
+        full_name: app.full_name,
+        school: app.school || 'SMA/SMK Surabaya',
+        city: 'Surabaya',
+        status: 'lolos' as const,
+        wa_group_url: BIANCA_WA_URL
+      }))
+  ];
+
+  // Remove duplicate entries by full_name
+  const uniqueSaList = Array.from(new Map(combinedSaList.map(item => [item.full_name.toLowerCase(), item])).values());
+
   // Filter SA Table List
-  const filteredSaList = DUMMY_SA_ACCEPTED.filter(sa => {
+  const filteredSaList = uniqueSaList.filter(sa => {
     if (!searchSaQuery) return true;
     const q = searchSaQuery.toLowerCase();
     return sa.full_name.toLowerCase().includes(q) || sa.school.toLowerCase().includes(q) || sa.city.toLowerCase().includes(q);
@@ -308,7 +319,7 @@ export const Announcement: React.FC = () => {
                         disabled={ciLoading}
                         value={searchNrp}
                         onChange={(e) => setSearchNrp(e.target.value)}
-                        placeholder="Contoh: 5025211001"
+                        placeholder="Contoh: 5005261031"
                         className="w-full pl-12 pr-4 py-4 text-base bg-white border-2 border-blue-sail rounded-none outline-none font-mono text-blue-sail transition-all focus:shadow-[3px_3px_0_0_#BD1B1F]"
                       />
                     </div>
