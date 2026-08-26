@@ -132,10 +132,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
             <div className="flex flex-wrap justify-center lg:justify-start gap-4 pt-2">
               <button
                 id="hero-primary-cta"
-                onClick={() => setCurrentPage('recruitment')}
+                onClick={() => setCurrentPage('announcement')}
                 className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-extrabold text-sm uppercase px-8 py-4 rounded-none tracking-widest border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] hover:shadow-[5px_5px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 flex items-center space-x-2 cursor-pointer"
               >
-                <span>DAFTAR CI & SA SEKARANG</span>
+                <span>CEK PENGUMUMAN AMBASSADOR</span>
                 <Icon name="ArrowRight" size={16} className="stroke-[3px]" />
               </button>
 
@@ -156,46 +156,22 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
           <div className="w-full max-w-md lg:max-w-none lg:w-[420px] shrink-0">
             <div className="bg-ballroom text-blue-sail p-6 rounded-none border-[3px] border-blue-sail shadow-[6px_6px_0_0_#BD1B1F] relative transform rotate-1 hover:rotate-0 transition-transform duration-300">
               <div className="absolute top-0 right-0 bg-red-inferno text-ballroom text-[10px] font-mono font-bold px-3 py-1 uppercase tracking-widest border-b-2 border-l-2 border-blue-sail">
-                TSF LIVE
+                TSF ANNOUNCEMENT
               </div>
-              <p className="font-mono text-xs font-bold text-red-inferno tracking-wider mb-2">● HAPPENING NOW</p>
+              <p className="font-mono text-xs font-bold text-red-inferno tracking-wider mb-2">● RESULTS ANNOUNCED</p>
               <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight border-b-2 border-blue-sail/20 pb-3 mb-4">
-                Open Recruitment Campus Influencer & Student Ambassador
+                Pengumuman Hasil Seleksi Campus Influencer & Student Ambassador
               </h3>
               <p className="text-sm text-blue-sail/80 font-sans leading-relaxed mb-6">
-                Buka peluang emas menjadi perwakilan & kreator resmi TDC Summit Fest 2026! Bangun personal branding, raih e-certificate, networking, dan reward eksklusif.
+                Hasil seleksi berkas calon Campus Influencer (ITS) dan Student Ambassador (SMA/SMK) TDC Summit Fest 2026 telah resmi diumumkan! Silakan periksa status kelulusan Anda.
               </p>
-
-              {/* Countdown panel */}
-              {activePhase.status === 'active' && (
-                <div className="bg-blue-sail text-decor p-4 rounded-none border-l-4 border-red-inferno border-2 border-blue-sail mb-6">
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    <div className="bg-barbera/30 p-2 rounded-none border border-decor/25">
-                      <span className="block font-display font-black text-xl text-ballroom">{timeLeft.days}</span>
-                      <span className="text-[9px] font-mono uppercase text-ballroom/70">Hari</span>
-                    </div>
-                    <div className="bg-barbera/30 p-2 rounded-none border border-decor/25">
-                      <span className="block font-display font-black text-xl text-ballroom">{timeLeft.hours}</span>
-                      <span className="text-[9px] font-mono uppercase text-ballroom/70">Jam</span>
-                    </div>
-                    <div className="bg-barbera/30 p-2 rounded-none border border-decor/25">
-                      <span className="block font-display font-black text-xl text-ballroom">{timeLeft.minutes}</span>
-                      <span className="text-[9px] font-mono uppercase text-ballroom/70">Menit</span>
-                    </div>
-                    <div className="bg-barbera/30 p-2 rounded-none border border-decor/25 animate-pulse">
-                      <span className="block font-display font-black text-xl text-decor">{timeLeft.seconds}</span>
-                      <span className="text-[9px] font-mono uppercase text-decor/80">Detik</span>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <button
                 id="hero-banner-action"
-                onClick={() => setCurrentPage('recruitment')}
+                onClick={() => setCurrentPage('announcement')}
                 className="w-full bg-blue-sail hover:bg-barbera text-ballroom font-display font-extrabold text-xs uppercase py-3 rounded-none border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] tracking-wider transition-all text-center cursor-pointer"
               >
-                Daftar CI & SA Sekarang
+                Cek Kelulusan CI & SA Sekarang
               </button>
             </div>
           </div>
@@ -219,10 +195,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   </span>
                 </div>
                 <h3 className="font-display font-black text-2xl uppercase tracking-tight text-decor mt-1">
-                  Open Recruitment Campus Influencer & Student Ambassador TSF 2026!
+                  Pengumuman Kelulusan Campus Influencer & Student Ambassador TSF 2026!
                 </h3>
                 <p className="text-sm text-ballroom/80 font-sans max-w-xl mt-1.5">
-                  Daftarkan dirimu sekarang sebagai Campus Influencer (Mahasiswa ITS) atau Student Ambassador (Pelajar SMA/SMK Surabaya) TDC Summit Fest 2026! Dapatkan benefit Coaching exclusive, Networking, E-Certificate, & Merchandise.
+                  Selamat kepada para calon Campus Influencer dan Student Ambassador yang telah lolos seleksi berkas! Cek status nama & NRP Anda sekarang.
                 </p>
               </div>
             </div>
@@ -230,10 +206,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
             {/* Banner Right */}
             <button
               id="dynamic-banner-cta"
-              onClick={() => setCurrentPage('recruitment')}
+              onClick={() => setCurrentPage('announcement')}
               className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest shrink-0 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
-              DAFTAR CI & SA SEKARANG
+              CEK KELULUSAN SEKARANG
             </button>
 
           </div>

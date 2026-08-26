@@ -19,7 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
 
   const menuItems = [
     { id: 'home', label: 'Home' },
-    { id: 'recruitment', label: 'Recruitment' },
+    { id: 'announcement', label: 'Announcement' },
     // Staff Recruitment & Staff Results are deactivated and hidden from navbar options (code preserved)
     // { id: 'staff', label: 'Staff Recruitment' },
     // { id: 'interview-result', label: 'STAFF RESULTS' },
