@@ -806,13 +806,13 @@ export const PE1: React.FC = () => {
                           <Icon name="Video" size={16} className="text-slate-800 shrink-0" />
                           <span>Screenshot bukti follow TikTok <a href="https://tiktok.com/@tdcsummitfest_its" target="_blank" rel="noreferrer" className="text-red-inferno font-bold underline">@tdcsummitfest_its</a></span>
                         </li>
-                        <li className="flex items-center gap-2.5">
-                          <Icon name="MessageSquareShare" size={16} className="text-blue-600 shrink-0" />
-                          <span>Screenshot bukti komen di postingan CEO FOR A DAY di IG TSF</span>
+                        <li className="flex items-start gap-2.5">
+                          <Icon name="MessageSquareShare" size={16} className="text-blue-600 shrink-0 mt-0.5" />
+                          <span>Screenshot bukti komen &amp; tag 3 teman pada poster CEO FOR A DAY di Instagram <a href="https://www.instagram.com/p/DclNVH_JpU-/?igsi=ZzFsd2M0cGpvYW9l" target="_blank" rel="noreferrer" className="text-red-inferno font-bold underline break-all">https://www.instagram.com/p/DclNVH_JpU-/?igsi=ZzFsd2M0cGpvYW9l</a></span>
                         </li>
-                        <li className="flex items-center gap-2.5">
-                          <Icon name="Share2" size={16} className="text-emerald-600 shrink-0" />
-                          <span>Screenshot bukti repost feeds CEO FOR A DAY di IG TSF</span>
+                        <li className="flex items-start gap-2.5">
+                          <Icon name="Share2" size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+                          <span>Screenshot bukti repost Instastory poster CEO FOR A DAY di Instagram <a href="https://www.instagram.com/p/DclNVH_JpU-/?igsi=ZzFsd2M0cGpvYW9l" target="_blank" rel="noreferrer" className="text-red-inferno font-bold underline break-all">https://www.instagram.com/p/DclNVH_JpU-/?igsi=ZzFsd2M0cGpvYW9l</a></span>
                         </li>
                       </ul>
                     </div>
