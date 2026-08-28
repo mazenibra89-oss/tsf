@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
 import { motion, AnimatePresence } from 'motion/react';
 import qrisImg from '../qristsf.jpeg';
+import cfadImg from '../cfad.png';
 
 type FormStep = 'info' | 'form-data' | 'form-package' | 'form-ebook' | 'form-social' | 'form-payment' | 'success';
 
@@ -299,37 +300,12 @@ export const PE1: React.FC = () => {
                 </div>
 
                 {/* Poster Graphic Container */}
-                <div className="relative aspect-[3/4] bg-blue-sail border-2 border-blue-sail overflow-hidden flex flex-col justify-between p-6 text-ballroom">
-                  <div className="absolute inset-0 grid-pattern opacity-15" />
-                  
-                  {/* Top Decorative Header */}
-                  <div className="relative z-10 flex justify-between items-center border-b border-ballroom/20 pb-3">
-                    <span className="font-mono text-[10px] font-bold tracking-widest text-decor">TSF 2026</span>
-                    <span className="font-mono text-[9px] text-ballroom/60">PRE-EVENT 1</span>
-                  </div>
-
-                  {/* Poster Main Artwork Body */}
-                  <div className="relative z-10 text-center my-auto space-y-3">
-                    <div className="w-12 h-12 bg-decor text-blue-sail flex items-center justify-center mx-auto border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F]">
-                      <Icon name="Crown" size={24} />
-                    </div>
-                    <p className="font-mono text-[10px] font-bold text-decor uppercase tracking-widest">// WEBINAR EKSKLUSIF</p>
-                    <h3 className="font-display font-black text-2xl uppercase tracking-tight text-ballroom leading-none">
-                      CEO FOR A DAY
-                    </h3>
-                    <p className="font-display font-extrabold text-xs text-decor uppercase tracking-wide">
-                      "Brand Yourself, Lead the Future"
-                    </p>
-                    <div className="w-12 h-1 bg-decor mx-auto" />
-                    <p className="text-[10px] font-sans text-ballroom/80">
-                      5 Sept 2026 | 09.00 WIB | Zoom
-                    </p>
-                  </div>
-
-                  {/* Bottom Footer Note */}
-                  <div className="relative z-10 border-t border-ballroom/20 pt-3 text-center">
-                    <p className="text-[9px] font-mono text-decor font-bold">TECHNOPRENEURSHIP DEVELOPMENT CENTER</p>
-                  </div>
+                <div className="relative bg-blue-sail border-2 border-blue-sail overflow-hidden flex flex-col items-center justify-center text-ballroom">
+                  <img
+                    src={cfadImg}
+                    alt="Official Event Poster CEO FOR A DAY"
+                    className="w-full h-auto object-cover"
+                  />
 
                   {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-blue-sail/85 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 z-20 p-4 text-center">
@@ -1102,37 +1078,23 @@ export const PE1: React.FC = () => {
               </div>
 
               {/* Poster Full View Artwork Container */}
-              <div className="relative aspect-[3/4] bg-blue-sail border-2 border-blue-sail overflow-hidden flex flex-col justify-between p-8 text-ballroom shadow-inner">
-                <div className="absolute inset-0 grid-pattern opacity-15" />
-                
-                <div className="relative z-10 flex justify-between items-center border-b border-ballroom/20 pb-4">
-                  <span className="font-mono text-xs font-bold tracking-widest text-decor">TSF 2026</span>
-                  <span className="font-mono text-xs text-ballroom/60">PRE-EVENT 1</span>
-                </div>
-
-                <div className="relative z-10 text-center my-auto space-y-4">
-                  <div className="w-16 h-16 bg-decor text-blue-sail flex items-center justify-center mx-auto border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F]">
-                    <Icon name="Crown" size={32} />
-                  </div>
-                  <p className="font-mono text-xs font-bold text-decor uppercase tracking-widest">// WEBINAR EKSKLUSIF</p>
-                  <h3 className="font-display font-black text-3xl sm:text-4xl uppercase tracking-tight text-ballroom leading-none">
-                    CEO FOR A DAY
-                  </h3>
-                  <p className="font-display font-extrabold text-sm sm:text-base text-decor uppercase tracking-wide">
-                    "Brand Yourself, Lead the Future"
-                  </p>
-                  <div className="w-16 h-1 bg-decor mx-auto" />
-                  <p className="text-xs font-sans text-ballroom/90">
-                    Sabtu, 5 September 2026 | 09.00 WIB | Zoom Meeting
-                  </p>
-                </div>
-
-                <div className="relative z-10 border-t border-ballroom/20 pt-4 text-center">
-                  <p className="text-xs font-mono text-decor font-bold">TECHNOPRENEURSHIP DEVELOPMENT CENTER</p>
-                </div>
+              <div className="relative bg-blue-sail border-2 border-blue-sail overflow-hidden flex items-center justify-center text-ballroom shadow-inner max-h-[75vh]">
+                <img
+                  src={cfadImg}
+                  alt="Official Event Poster CEO FOR A DAY"
+                  className="w-full max-h-[75vh] object-contain"
+                />
               </div>
 
-              <div className="mt-4 flex justify-end gap-2">
+              <div className="mt-4 flex justify-between items-center gap-2">
+                <a
+                  href={cfadImg}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-extrabold text-xs uppercase px-4 py-2.5 border-2 border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer transition-all flex items-center gap-1.5"
+                >
+                  <Icon name="ExternalLink" size={14} /> BUKA GAMBAR PENUH
+                </a>
                 <button
                   onClick={() => setShowPosterModal(false)}
                   className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-5 py-2.5 border-2 border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer transition-all"
