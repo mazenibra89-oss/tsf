@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
 import { motion, AnimatePresence } from 'motion/react';
 import qrisImg from '../qristsf.jpeg';
-import cfadImg from '../cfad.png';
+import cfadImg from '../cfad_1.jpg';
 
 type FormStep = 'info' | 'form-data' | 'form-package' | 'form-ebook' | 'form-social' | 'form-payment' | 'success';
 
