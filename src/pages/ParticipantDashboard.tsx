@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
-import { motion } from 'motion/react';
 import { AuthModal } from '../components/AuthModal';
 
 export const ParticipantDashboard: React.FC = () => {
@@ -32,7 +31,7 @@ export const ParticipantDashboard: React.FC = () => {
             AKSES PORTAL PESERTA
           </h2>
           <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
-            Anda harus login terlebih dahulu untuk mengakses Participant Dashboard dan mengumpulkan berkas kompetisi.
+            Anda harus login terlebih dahulu untuk mengakses Participant Dashboard dan memantau perjalanan tim kompetisi Anda.
           </p>
           <button
             onClick={() => setIsAuthModalOpen(true)}
@@ -64,7 +63,7 @@ export const ParticipantDashboard: React.FC = () => {
             BELUM TERDAFTAR DI KOMPETISI
           </h2>
           <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
-            Halo <strong>{currentUser.name}</strong>, akun Anda belum memiliki tim yang terdaftar pada TDC Summit Fest 2026 Business Competition.
+            Halo <strong>{currentUser.name}</strong>, akun Anda belum mendaftarkan tim pada TDC Summit Fest 2026 Business Competition.
           </p>
           <button
             onClick={() => setCurrentPage('competition')}
@@ -121,6 +120,9 @@ export const ParticipantDashboard: React.FC = () => {
     }
   };
 
+  const leaderData = myTeam.leader_data || {};
+  const membersList = Array.isArray(myTeam.members_data) ? myTeam.members_data : [];
+
   return (
     <div className="asphalt-texture min-h-screen pb-20 font-sans">
       
@@ -136,13 +138,13 @@ export const ParticipantDashboard: React.FC = () => {
                 DASHBOARD TIM {myTeam.team_name.toUpperCase()}
               </h1>
               <p className="text-xs sm:text-sm font-sans text-ballroom/80 mt-1">
-                Cabang: <strong className="text-decor">{myTeam.competition_type || 'BPC'}</strong> | Kategori: <strong className="text-decor">{myTeam.education_category || 'Mahasiswa'}</strong> | Asal Institusi: <strong>{myTeam.institution}</strong>
+                Cabang: <strong className="text-decor">{myTeam.competition_type || 'BPC'}</strong> | Kategori: <strong className="text-decor">{myTeam.education_category || 'Mahasiswa'}</strong> | Institusi: <strong>{myTeam.institution}</strong>
               </p>
             </div>
 
-            <div className="bg-ballroom/10 border-2 border-ballroom/30 p-3 text-right">
+            <div className="bg-ballroom/10 border-2 border-ballroom/30 p-3.5 text-right">
               <span className="text-[10px] font-display font-bold text-decor uppercase block">KETUA TIM</span>
-              <span className="font-display font-black text-sm uppercase">{myTeam.leader_name}</span>
+              <span className="font-display font-black text-base uppercase text-ballroom">{myTeam.leader_name}</span>
             </div>
           </div>
         </div>
@@ -160,13 +162,21 @@ export const ParticipantDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
             
             {/* Stage 1: Preliminary */}
-            <div className="bg-decor/20 border-3 border-blue-sail p-4 relative space-y-2 shadow-[3px_3px_0_0_#BD1B1F]">
+            <div className={`border-3 p-4 relative space-y-2 shadow-[3px_3px_0_0_#BD1B1F] ${
+              myTeam.status_preliminary === 'passed'
+                ? 'bg-emerald-50 border-emerald-600'
+                : 'bg-decor/20 border-blue-sail'
+            }`}>
               <div className="flex items-center justify-between">
                 <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2.5 py-0.5 uppercase border border-decor">
                   STAGE 01
                 </span>
-                <span className="bg-emerald-600 text-white font-display font-bold text-[10px] px-2 py-0.5 uppercase">
-                  TAHAP AKTIF
+                <span className={`font-display font-bold text-[10px] px-2 py-0.5 uppercase ${
+                  myTeam.status_preliminary === 'passed'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-amber-500 text-white'
+                }`}>
+                  {myTeam.status_preliminary === 'passed' ? 'LOLOS' : 'TAHAP PRELIMINARY'}
                 </span>
               </div>
               <h4 className="font-display font-black text-base uppercase text-blue-sail">
@@ -178,20 +188,30 @@ export const ParticipantDashboard: React.FC = () => {
             </div>
 
             {/* Stage 2: Semi Final */}
-            <div className="bg-gray-100 border-2 border-blue-sail/30 p-4 space-y-2 opacity-60">
+            <div className={`border-2 p-4 space-y-2 ${
+              myTeam.status_preliminary === 'passed'
+                ? 'bg-decor/20 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-gray-100 border-blue-sail/30 opacity-60'
+            }`}>
               <div className="flex items-center justify-between">
                 <span className="bg-gray-300 text-gray-700 font-display font-black text-[10px] px-2.5 py-0.5 uppercase border border-gray-400">
                   STAGE 02
                 </span>
-                <span className="bg-gray-400 text-white font-display font-bold text-[10px] px-2 py-0.5 uppercase flex items-center gap-1">
-                  <Icon name="Lock" size={12} /> TERKUNCI
+                <span className={`font-display font-bold text-[10px] px-2 py-0.5 uppercase flex items-center gap-1 ${
+                  myTeam.status_preliminary === 'passed'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-gray-400 text-white'
+                }`}>
+                  {myTeam.status_preliminary === 'passed' ? 'TERBUNGKUS' : 'TERKUNCI'}
                 </span>
               </div>
-              <h4 className="font-display font-black text-base uppercase text-gray-600">
+              <h4 className="font-display font-black text-base uppercase text-blue-sail">
                 BABAK SEMI FINAL
               </h4>
-              <p className="text-xs font-sans text-gray-500">
-                Terbuka setelah pengumuman hasil seleksi Preliminary.
+              <p className="text-xs font-sans text-blue-sail/80">
+                {myTeam.status_preliminary === 'passed'
+                  ? 'Selamat! Tim Anda berhak mengikuti babak Semi Final.'
+                  : 'Terbuka setelah pengumuman hasil seleksi Preliminary.'}
               </p>
             </div>
 
@@ -290,7 +310,7 @@ export const ParticipantDashboard: React.FC = () => {
           ) : (
             <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-4">
               <div className="flex items-center gap-2">
-                <Icon name="UploadCloud" size={20} className="text-red-inferno" />
+                <Icon name="Upload" size={20} className="text-red-inferno" />
                 <h4 className="font-display font-black text-sm uppercase text-blue-sail">
                   UNGGAH BERKAS PRELIMINARY ({requiredFileType})
                 </h4>
@@ -337,7 +357,7 @@ export const ParticipantDashboard: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <Icon name="Send" size={16} />
+                      <Icon name="Upload" size={16} />
                       <span>SUBMIT BERKAS PRELIMINARY</span>
                     </>
                   )}
@@ -346,6 +366,121 @@ export const ParticipantDashboard: React.FC = () => {
             </div>
           )}
 
+        </div>
+
+        {/* DETAIL TIM & ANGGOTA SECTION */}
+        <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[6px_6px_0_0_#2A4C9E] space-y-6">
+          <div className="border-b-2 border-blue-sail/20 pb-4 flex items-center justify-between">
+            <div>
+              <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider inline-block mb-1">
+                TEAM REGISTRATION DETAIL
+              </span>
+              <h3 className="font-display font-black text-xl uppercase text-blue-sail">
+                DATA ANGGOTA &amp; BERKAS SYARAT TIM
+              </h3>
+            </div>
+            <span className="bg-decor text-blue-sail font-display font-bold text-xs px-3 py-1 uppercase border border-blue-sail">
+              JUMLAH: {1 + membersList.length} PERSONIL
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Ketua Tim Card */}
+            <div className="bg-white border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#BD1B1F]">
+              <div className="flex items-center justify-between border-b pb-2 border-blue-sail/10">
+                <span className="bg-red-inferno text-white font-display font-black text-[10px] px-2.5 py-0.5 uppercase">
+                  KETUA TIM
+                </span>
+                <span className="text-[11px] font-mono text-blue-sail/60">
+                  {myTeam.email}
+                </span>
+              </div>
+
+              <div className="space-y-1.5 text-xs font-sans text-blue-sail">
+                <p><strong className="font-display uppercase text-blue-sail">Nama Lengkap:</strong> {myTeam.leader_name}</p>
+                <p><strong className="font-display uppercase text-blue-sail">Institusi:</strong> {myTeam.institution}</p>
+                {leaderData.studentId && <p><strong className="font-display uppercase text-blue-sail">NRP / NIM:</strong> {leaderData.studentId}</p>}
+                {leaderData.major && <p><strong className="font-display uppercase text-blue-sail">Jurusan:</strong> {leaderData.major}</p>}
+                {leaderData.grade && <p><strong className="font-display uppercase text-blue-sail">Kelas:</strong> Kelas {leaderData.grade}</p>}
+                {leaderData.domicile && <p><strong className="font-display uppercase text-blue-sail">Domisili:</strong> {leaderData.domicile}</p>}
+                <p><strong className="font-display uppercase text-blue-sail">WhatsApp:</strong> {myTeam.contact}</p>
+              </div>
+
+              {myTeam.payment_proof_url && (
+                <a
+                  href={myTeam.payment_proof_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-red-inferno hover:underline pt-1"
+                >
+                  <Icon name="FileText" size={14} />
+                  <span>KTM / Kartu Pelajar Ketua</span>
+                </a>
+              )}
+            </div>
+
+            {/* Anggota Tim Cards */}
+            {membersList.map((m: any, idx: number) => (
+              <div key={idx} className="bg-white border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#2A4C9E]">
+                <div className="flex items-center justify-between border-b pb-2 border-blue-sail/10">
+                  <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2.5 py-0.5 uppercase">
+                    ANGGOTA {idx + 1}
+                  </span>
+                  <span className="text-[11px] font-mono text-blue-sail/60">
+                    {m.email || '-'}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs font-sans text-blue-sail">
+                  <p><strong className="font-display uppercase text-blue-sail">Nama Lengkap:</strong> {m.fullName || m.name || '-'}</p>
+                  <p><strong className="font-display uppercase text-blue-sail">Institusi:</strong> {m.institution || '-'}</p>
+                  {m.studentId && <p><strong className="font-display uppercase text-blue-sail">NRP / NIM:</strong> {m.studentId}</p>}
+                  {m.major && <p><strong className="font-display uppercase text-blue-sail">Jurusan:</strong> {m.major}</p>}
+                  {m.grade && <p><strong className="font-display uppercase text-blue-sail">Kelas:</strong> Kelas {m.grade}</p>}
+                  {m.domicile && <p><strong className="font-display uppercase text-blue-sail">Domisili:</strong> {m.domicile}</p>}
+                  {m.whatsapp && <p><strong className="font-display uppercase text-blue-sail">WhatsApp:</strong> {m.whatsapp}</p>}
+                </div>
+
+                {m.cardFileUrl && (
+                  <a
+                    href={m.cardFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-blue-sail hover:underline pt-1"
+                  >
+                    <Icon name="FileText" size={14} />
+                    <span>KTM / Kartu Pelajar Anggota {idx + 1}</span>
+                  </a>
+                )}
+              </div>
+            ))}
+
+          </div>
+
+          {/* Uploaded Requirement PDFs */}
+          <div className="bg-blue-sail/5 p-4 border-2 border-blue-sail/20 space-y-2">
+            <h4 className="font-display font-black text-xs uppercase text-blue-sail">
+              BERKAS SYARAT UMUM PENDAFTARAN TIM
+            </h4>
+            <div className="flex flex-wrap gap-4 text-xs font-mono">
+              {myTeam.ig_story_file_url && (
+                <a href={myTeam.ig_story_file_url} target="_blank" rel="noreferrer" className="text-red-inferno hover:underline flex items-center gap-1 font-bold">
+                  <Icon name="FileText" size={14} /> Bukti IG Story (PDF)
+                </a>
+              )}
+              {myTeam.twibbon_file_url && (
+                <a href={myTeam.twibbon_file_url} target="_blank" rel="noreferrer" className="text-red-inferno hover:underline flex items-center gap-1 font-bold">
+                  <Icon name="FileText" size={14} /> Bukti Twibbon Feeds (PDF)
+                </a>
+              )}
+              {myTeam.ig_follow_file_url && (
+                <a href={myTeam.ig_follow_file_url} target="_blank" rel="noreferrer" className="text-red-inferno hover:underline flex items-center gap-1 font-bold">
+                  <Icon name="FileText" size={14} /> Bukti Follow IG (PDF)
+                </a>
+              )}
+            </div>
+          </div>
         </div>
 
       </section>

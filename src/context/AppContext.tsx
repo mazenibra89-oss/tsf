@@ -1347,25 +1347,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addCompetitionRegistration = async (reg: Omit<CompetitionRegistration, 'id' | 'submitted_at'>) => {
     try {
-      const res = await fetch('/api/competition-registrations', {
+      const payload = {
+        ...reg,
+        user_id: reg.user_id || currentUser?.id
+      };
+      const res = await fetch(getApiUrl('/api/competition-registrations'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reg)
+        body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error('Failed to submit competition registration');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Gagal mengirim pendaftaran kompetisi');
+      }
       const result = await res.json();
       const newReg: CompetitionRegistration = {
-        ...reg,
+        ...payload,
         id: result.id,
         submitted_at: new Date().toISOString()
       };
       setState(prev => ({
         ...prev,
-        competitionRegistrations: [newReg, ...prev.competitionRegistrations]
+        competitionRegistrations: [newReg, ...(prev.competitionRegistrations || [])]
       }));
-    } catch (err) {
-      console.error(err);
-      alert('Gagal mengirim pendaftaran kompetisi.');
+
+      if (currentUser) {
+        await fetchMyTeam(currentUser);
+      }
+      await fetchState();
+      return result;
+    } catch (err: any) {
+      console.error('Failed to submit competition registration:', err);
+      throw err;
     }
   };
 

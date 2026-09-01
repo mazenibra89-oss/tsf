@@ -19,7 +19,7 @@ interface MemberFields {
 }
 
 export const RegistCompetition: React.FC = () => {
-  const { addCompetitionRegistration, currentUser, setCurrentPage } = useApp();
+  const { addCompetitionRegistration, currentUser, setCurrentPage, myTeam } = useApp();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Scroll helper
@@ -258,51 +258,55 @@ export const RegistCompetition: React.FC = () => {
     if (!validateStep5()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      // Formatted members list for AppContext
-      const memberNames = form.members.slice(0, nonLeaderCount).map(m => `${m.fullName} (${m.institution})`);
-      const leaderObject = {
-        fullName: form.leaderFullName,
-        institution: form.leaderInstitution,
-        domicile: form.leaderDomicile,
-        studentId: form.leaderStudentId,
-        major: form.leaderMajor,
-        grade: form.leaderGrade,
-        year: form.leaderYear,
-        whatsapp: form.leaderWhatsapp,
-        email: form.leaderEmail,
-        cardFileName: form.leaderCardFileName,
-        cardFileUrl: form.leaderCardFileUrl
-      };
-      const membersArray = form.members.slice(0, nonLeaderCount);
+    (async () => {
+      try {
+        const memberNames = form.members.slice(0, nonLeaderCount).map(m => `${m.fullName} (${m.institution})`);
+        const leaderObject = {
+          fullName: form.leaderFullName,
+          institution: form.leaderInstitution,
+          domicile: form.leaderDomicile,
+          studentId: form.leaderStudentId,
+          major: form.leaderMajor,
+          grade: form.leaderGrade,
+          year: form.leaderYear,
+          whatsapp: form.leaderWhatsapp,
+          email: form.leaderEmail,
+          cardFileName: form.leaderCardFileName,
+          cardFileUrl: form.leaderCardFileUrl
+        };
+        const membersArray = form.members.slice(0, nonLeaderCount);
 
-      addCompetitionRegistration({
-        user_id: currentUser.id,
-        competition_type: form.competitionType as any,
-        education_category: form.educationCategory as any,
-        team_name: form.teamName,
-        team_size: form.teamSize,
-        leader_name: form.leaderFullName,
-        leader_data: leaderObject,
-        members: memberNames,
-        members_data: membersArray,
-        institution: form.leaderInstitution,
-        contact: form.leaderWhatsapp,
-        email: form.leaderEmail,
-        category_id: `${form.competitionType} - ${form.educationCategory}`,
-        payment_proof_url: form.leaderCardFileUrl || form.leaderCardFileName || 'Bukti_Identitas_Ketua',
-        file_url: form.igStoryFileUrl || form.igStoryFileName || 'Bukti_Persyaratan',
-        ig_story_file_url: form.igStoryFileUrl || form.igStoryFileName,
-        twibbon_file_url: form.twibbonFileUrl || form.twibbonFileName,
-        ig_follow_file_url: form.igFollowFileUrl || form.igFollowFileName,
-        status_stage: 'preliminary',
-        status_preliminary: 'pending'
-      } as any);
+        await addCompetitionRegistration({
+          user_id: currentUser.id,
+          competition_type: form.competitionType as any,
+          education_category: form.educationCategory as any,
+          team_name: form.teamName,
+          team_size: form.teamSize,
+          leader_name: form.leaderFullName,
+          leader_data: leaderObject,
+          members: memberNames,
+          members_data: membersArray,
+          institution: form.leaderInstitution,
+          contact: form.leaderWhatsapp,
+          email: form.leaderEmail,
+          category_id: `${form.competitionType} - ${form.educationCategory}`,
+          payment_proof_url: form.leaderCardFileUrl || form.leaderCardFileName || 'Bukti_Identitas_Ketua',
+          file_url: form.igStoryFileUrl || form.igStoryFileName || 'Bukti_Persyaratan',
+          ig_story_file_url: form.igStoryFileUrl || form.igStoryFileName,
+          twibbon_file_url: form.twibbonFileUrl || form.twibbonFileName,
+          ig_follow_file_url: form.igFollowFileUrl || form.igFollowFileName,
+          status_stage: 'preliminary',
+          status_preliminary: 'pending'
+        } as any);
 
-      setIsSubmitting(false);
-      setStep('success');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+        setIsSubmitting(false);
+        setStep('success');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err: any) {
+        setIsSubmitting(false);
+        alert(err.message || 'Gagal mengirim pendaftaran kompetisi');
+      }
+    })();
   };
 
   // Subthemes List

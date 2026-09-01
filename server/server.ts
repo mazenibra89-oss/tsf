@@ -1249,7 +1249,26 @@ app.post('/api/competition-registrations', async (req: Request, res: Response): 
   const data = req.body;
   const id = `reg-c-${Date.now()}`;
 
+  const userId = data.user_id;
+  const email = data.email ? String(data.email).toLowerCase().trim() : '';
+
   try {
+    if (userId) {
+      const existingByUser = await db('competition_registrations').where({ user_id: userId }).first();
+      if (existingByUser) {
+        res.status(400).json({ message: `Akun ini sudah terdaftar dalam tim "${existingByUser.team_name}". Setiap akun hanya diperbolehkan mendaftarkan 1 tim.` });
+        return;
+      }
+    }
+
+    if (email) {
+      const existingByEmail = await db('competition_registrations').where({ email }).first();
+      if (existingByEmail) {
+        res.status(400).json({ message: `Email "${email}" sudah terdaftar dalam tim "${existingByEmail.team_name}". 1 Akun hanya dapat mendaftarkan 1 tim.` });
+        return;
+      }
+    }
+
     await db('competition_registrations').insert({
       id,
       user_id: data.user_id || null,
@@ -1265,8 +1284,8 @@ app.post('/api/competition-registrations', async (req: Request, res: Response): 
       contact: data.contact,
       email: data.email,
       category_id: data.category_id,
-      payment_proof_url: data.payment_proof_url,
-      file_url: data.file_url,
+      payment_proof_url: data.payment_proof_url || 'Bukti_Identitas_Ketua',
+      file_url: data.file_url || 'Bukti_Persyaratan',
       ig_story_file_url: data.ig_story_file_url || null,
       twibbon_file_url: data.twibbon_file_url || null,
       ig_follow_file_url: data.ig_follow_file_url || null,
@@ -1275,9 +1294,9 @@ app.post('/api/competition-registrations', async (req: Request, res: Response): 
       submitted_at: new Date()
     });
     res.status(201).json({ id, message: 'Registration submitted successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Failed to submit registration' });
+  } catch (err: any) {
+    console.error('Competition registration submission error:', err);
+    res.status(500).json({ message: err.message || 'Gagal menyimpan pendaftaran kompetisi' });
   }
 });
 
