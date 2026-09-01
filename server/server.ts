@@ -524,7 +524,12 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
         terms: parseJson(c.terms),
         timeline: parseJson(c.timeline)
       })),
-      competitionRegistrations: competitionRegistrations.map(r => ({ ...r, members: parseJson(r.members) })),
+      competitionRegistrations: competitionRegistrations.map(r => ({
+        ...r,
+        members: parseJson(r.members || '[]'),
+        leader_data: parseJson(r.leader_data || null),
+        members_data: parseJson(r.members_data || '[]')
+      })),
       thriftProducts: thriftProducts.map(p => ({ ...p, price: Number(p.price) })),
       thriftVendors,
       vendorApplications,

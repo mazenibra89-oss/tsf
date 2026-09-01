@@ -195,6 +195,45 @@ export const Admin: React.FC = () => {
   const [adminAccounts, setAdminAccounts] = useState<{username: string}[]>([]);
   const [selectedCompDetail, setSelectedCompDetail] = useState<import('../types').CompetitionRegistration | null>(null);
 
+  const getParsedLeader = (reg: any) => {
+    if (!reg || !reg.leader_data) return {};
+    if (typeof reg.leader_data === 'string') {
+      try { return JSON.parse(reg.leader_data); } catch { return {}; }
+    }
+    return reg.leader_data || {};
+  };
+
+  const getParsedMembers = (reg: any) => {
+    if (!reg || !reg.members_data) return [];
+    if (typeof reg.members_data === 'string') {
+      try { return JSON.parse(reg.members_data); } catch { return []; }
+    }
+    return Array.isArray(reg.members_data) ? reg.members_data : [];
+  };
+
+  const openDoc = (fileUrl?: string, docTitle?: string) => {
+    if (!fileUrl) {
+      alert(`Berkas "${docTitle || 'Dokumen'}" belum diunggah.`);
+      return;
+    }
+    if (fileUrl.startsWith('data:') || fileUrl.startsWith('http://') || fileUrl.startsWith('https://') || fileUrl.startsWith('blob:')) {
+      const win = window.open();
+      if (win) {
+        if (fileUrl.startsWith('data:application/pdf')) {
+          win.document.write(`<html><head><title>${docTitle || 'Dokumen'}</title></head><body style="margin:0;"><iframe src="${fileUrl}" width="100%" height="100%" frameborder="0"></iframe></body></html>`);
+        } else if (fileUrl.startsWith('data:image/')) {
+          win.document.write(`<html><head><title>${docTitle || 'Gambar'}</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#111;"><img src="${fileUrl}" style="max-width:100%;max-height:100vh;"/></body></html>`);
+        } else {
+          win.location.href = fileUrl;
+        }
+      } else {
+        window.location.href = fileUrl;
+      }
+    } else {
+      alert(`Nama berkas: ${fileUrl}`);
+    }
+  };
+
   useEffect(() => {
     refreshState();
     fetchAdminUsers().then(res => {
@@ -4114,111 +4153,143 @@ export const Admin: React.FC = () => {
             </div>
 
             {/* Identitas Ketua Tim */}
-            <div className="bg-white border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#BD1B1F]">
-              <span className="bg-red-inferno text-white font-display font-black text-[10px] px-2.5 py-0.5 uppercase inline-block">
-                DATA KETUA TIM
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-sans text-blue-sail">
-                <div><strong className="font-display uppercase text-blue-sail">Nama Lengkap:</strong> {selectedCompDetail.leader_name}</div>
-                <div><strong className="font-display uppercase text-blue-sail">Institusi / Sekolah:</strong> {selectedCompDetail.institution}</div>
-                <div><strong className="font-display uppercase text-blue-sail">WhatsApp:</strong> {selectedCompDetail.contact}</div>
-                <div><strong className="font-display uppercase text-blue-sail">Email:</strong> {selectedCompDetail.email}</div>
-                {selectedCompDetail.leader_data?.studentId && <div><strong className="font-display uppercase text-blue-sail">NRP / NIM:</strong> {selectedCompDetail.leader_data.studentId}</div>}
-                {selectedCompDetail.leader_data?.major && <div><strong className="font-display uppercase text-blue-sail">Jurusan:</strong> {selectedCompDetail.leader_data.major}</div>}
-                {selectedCompDetail.leader_data?.grade && <div><strong className="font-display uppercase text-blue-sail">Kelas:</strong> Kelas {selectedCompDetail.leader_data.grade}</div>}
-                {selectedCompDetail.leader_data?.domicile && <div><strong className="font-display uppercase text-blue-sail">Domisili:</strong> {selectedCompDetail.leader_data.domicile}</div>}
-              </div>
-              {selectedCompDetail.payment_proof_url && (
-                <div className="pt-2 border-t border-blue-sail/10">
-                  <a
-                    href={selectedCompDetail.payment_proof_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-red-inferno hover:underline"
-                  >
-                    <Icon name="FileText" size={14} />
-                    <span>LIHAT KTM / KARTU PELAJAR KETUA</span>
-                  </a>
+            {(() => {
+              const leaderObj = getParsedLeader(selectedCompDetail);
+              return (
+                <div className="bg-white border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#BD1B1F]">
+                  <span className="bg-red-inferno text-white font-display font-black text-[10px] px-2.5 py-0.5 uppercase inline-block">
+                    DATA KETUA TIM
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-sans text-blue-sail">
+                    <div><strong className="font-display uppercase text-blue-sail">Nama Lengkap:</strong> {selectedCompDetail.leader_name}</div>
+                    <div><strong className="font-display uppercase text-blue-sail">Institusi / Sekolah:</strong> {selectedCompDetail.institution}</div>
+                    <div><strong className="font-display uppercase text-blue-sail">WhatsApp:</strong> {selectedCompDetail.contact}</div>
+                    <div><strong className="font-display uppercase text-blue-sail">Email:</strong> {selectedCompDetail.email}</div>
+                    {leaderObj.studentId && <div><strong className="font-display uppercase text-blue-sail">NRP / NIM:</strong> {leaderObj.studentId}</div>}
+                    {leaderObj.major && <div><strong className="font-display uppercase text-blue-sail">Jurusan:</strong> {leaderObj.major}</div>}
+                    {leaderObj.grade && <div><strong className="font-display uppercase text-blue-sail">Kelas:</strong> Kelas {leaderObj.grade}</div>}
+                    {leaderObj.domicile && <div><strong className="font-display uppercase text-blue-sail">Domisili:</strong> {leaderObj.domicile}</div>}
+                  </div>
+                  {selectedCompDetail.payment_proof_url && (
+                    <div className="pt-2 border-t border-blue-sail/10">
+                      <button
+                        type="button"
+                        onClick={() => openDoc(selectedCompDetail.payment_proof_url, `KTM / Kartu Pelajar - ${selectedCompDetail.leader_name}`)}
+                        className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-red-inferno hover:underline cursor-pointer"
+                      >
+                        <Icon name="FileText" size={14} />
+                        <span>LIHAT KTM / KARTU PELAJAR KETUA</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
             {/* Identitas Anggota Tim */}
-            {Array.isArray(selectedCompDetail.members_data) && selectedCompDetail.members_data.length > 0 && (
-              <div className="space-y-4">
-                <h4 className="font-display font-black text-sm uppercase text-blue-sail">DATA ANGGOTA TIM ({selectedCompDetail.members_data.length} ANGGOTA)</h4>
-                <div className="grid grid-cols-1 gap-4">
-                  {selectedCompDetail.members_data.map((m: any, idx: number) => (
-                    <div key={idx} className="bg-white border-2 border-blue-sail p-4 space-y-2 shadow-[3px_3px_0_0_#2A4C9E]">
-                      <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2 py-0.5 uppercase inline-block">
-                        ANGGOTA {idx + 1}
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans text-blue-sail">
-                        <div><strong>Nama:</strong> {m.fullName || m.name || '-'}</div>
-                        <div><strong>Institusi/Sekolah:</strong> {m.institution || '-'}</div>
-                        <div><strong>WhatsApp:</strong> {m.whatsapp || '-'}</div>
-                        <div><strong>Email:</strong> {m.email || '-'}</div>
-                        {m.studentId && <div><strong>NRP/NIM:</strong> {m.studentId}</div>}
-                        {m.major && <div><strong>Jurusan:</strong> {m.major}</div>}
-                        {m.grade && <div><strong>Kelas:</strong> Kelas {m.grade}</div>}
-                        {m.domicile && <div><strong>Domisili:</strong> {m.domicile}</div>}
-                      </div>
-                      {m.cardFileUrl && (
-                        <a href={m.cardFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-mono font-bold text-blue-600 hover:underline pt-1">
-                          <Icon name="FileText" size={14} /> Lihat KTM / Kartu Pelajar Anggota {idx + 1}
-                        </a>
-                      )}
+            {(() => {
+              const membersList = getParsedMembers(selectedCompDetail);
+              return (
+                <div className="space-y-4">
+                  <h4 className="font-display font-black text-sm uppercase text-blue-sail">
+                    DATA ANGGOTA TIM ({membersList.length} ANGGOTA)
+                  </h4>
+                  {membersList.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4">
+                      {membersList.map((m: any, idx: number) => (
+                        <div key={idx} className="bg-white border-2 border-blue-sail p-4 space-y-2 shadow-[3px_3px_0_0_#2A4C9E]">
+                          <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2 py-0.5 uppercase inline-block">
+                            ANGGOTA {idx + 1}
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans text-blue-sail">
+                            <div><strong>Nama:</strong> {m.fullName || m.name || '-'}</div>
+                            <div><strong>Institusi/Sekolah:</strong> {m.institution || '-'}</div>
+                            <div><strong>WhatsApp:</strong> {m.whatsapp || '-'}</div>
+                            <div><strong>Email:</strong> {m.email || '-'}</div>
+                            {m.studentId && <div><strong>NRP/NIM:</strong> {m.studentId}</div>}
+                            {m.major && <div><strong>Jurusan:</strong> {m.major}</div>}
+                            {m.grade && <div><strong>Kelas:</strong> Kelas {m.grade}</div>}
+                            {m.domicile && <div><strong>Domisili:</strong> {m.domicile}</div>}
+                          </div>
+                          {m.cardFileUrl && (
+                            <button
+                              type="button"
+                              onClick={() => openDoc(m.cardFileUrl, `KTM / Kartu Pelajar Anggota ${idx + 1} - ${m.fullName || m.name}`)}
+                              className="inline-flex items-center gap-1 text-xs font-mono font-bold text-blue-600 hover:underline pt-1 cursor-pointer"
+                            >
+                              <Icon name="FileText" size={14} /> Lihat KTM / Kartu Pelajar Anggota {idx + 1}
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="bg-white p-4 border border-blue-sail/20 text-xs font-sans text-gray-500 italic">
+                      Pendaftaran tim ini hanya terdiri dari Ketua Tim.
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
-            {/* Berkas Syarat Umum & Task Preliminary */}
-            <div className="bg-blue-sail/5 border-2 border-blue-sail p-4 space-y-3">
-              <h4 className="font-display font-black text-xs uppercase text-blue-sail">BERKAS PERSYARATAN &amp; TASK PRELIMINARY</h4>
-              <div className="flex flex-wrap gap-4 text-xs font-mono">
-                {selectedCompDetail.ig_story_file_url && (
-                  <a href={selectedCompDetail.ig_story_file_url} target="_blank" rel="noreferrer" className="text-red-inferno font-bold hover:underline flex items-center gap-1">
-                    <Icon name="ExternalLink" size={14} /> Bukti IG Story (PDF)
-                  </a>
-                )}
-                {selectedCompDetail.twibbon_file_url && (
-                  <a href={selectedCompDetail.twibbon_file_url} target="_blank" rel="noreferrer" className="text-red-inferno font-bold hover:underline flex items-center gap-1">
-                    <Icon name="ExternalLink" size={14} /> Bukti Twibbon Feeds (PDF)
-                  </a>
-                )}
-                {selectedCompDetail.ig_follow_file_url && (
-                  <a href={selectedCompDetail.ig_follow_file_url} target="_blank" rel="noreferrer" className="text-red-inferno font-bold hover:underline flex items-center gap-1">
-                    <Icon name="ExternalLink" size={14} /> Bukti Follow IG (PDF)
-                  </a>
-                )}
-              </div>
+              {/* Berkas Syarat Umum & Task Preliminary */}
+              <div className="bg-blue-sail/5 border-2 border-blue-sail p-4 space-y-3">
+                <h4 className="font-display font-black text-xs uppercase text-blue-sail">BERKAS PERSYARATAN &amp; TASK PRELIMINARY</h4>
+                <div className="flex flex-wrap gap-4 text-xs font-mono">
+                  {selectedCompDetail.ig_story_file_url && (
+                    <button
+                      type="button"
+                      onClick={() => openDoc(selectedCompDetail.ig_story_file_url, 'Bukti IG Story')}
+                      className="text-red-inferno font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Icon name="ExternalLink" size={14} /> Bukti IG Story (PDF)
+                    </button>
+                  )}
+                  {selectedCompDetail.twibbon_file_url && (
+                    <button
+                      type="button"
+                      onClick={() => openDoc(selectedCompDetail.twibbon_file_url, 'Bukti Twibbon Feeds')}
+                      className="text-red-inferno font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Icon name="ExternalLink" size={14} /> Bukti Twibbon Feeds (PDF)
+                    </button>
+                  )}
+                  {selectedCompDetail.ig_follow_file_url && (
+                    <button
+                      type="button"
+                      onClick={() => openDoc(selectedCompDetail.ig_follow_file_url, 'Bukti Follow IG')}
+                      className="text-red-inferno font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Icon name="ExternalLink" size={14} /> Bukti Follow IG (PDF)
+                    </button>
+                  )}
+                </div>
 
-              {selectedCompDetail.preliminary_file_url ? (
-                <div className="bg-white p-3 border border-blue-sail/30 flex items-center justify-between gap-3 mt-2">
-                  <div>
-                    <span className="font-display font-bold text-xs text-blue-sail uppercase block">
-                      BERKAS PRELIMINARY ({selectedCompDetail.preliminary_file_type || 'BMC / Executive Summary'})
-                    </span>
-                    <span className="text-[11px] font-sans text-emerald-700 font-bold">
-                      {selectedCompDetail.preliminary_file_name || 'Berkas_Preliminary.pdf'}
-                    </span>
+                {selectedCompDetail.preliminary_file_url ? (
+                  <div className="bg-white p-3 border border-blue-sail/30 flex items-center justify-between gap-3 mt-2">
+                    <div>
+                      <span className="font-display font-bold text-xs text-blue-sail uppercase block">
+                        BERKAS PRELIMINARY ({selectedCompDetail.preliminary_file_type || 'BMC / Executive Summary'})
+                      </span>
+                      <span className="text-[11px] font-sans text-emerald-700 font-bold">
+                        {selectedCompDetail.preliminary_file_name || 'Berkas_Preliminary.pdf'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openDoc(selectedCompDetail.preliminary_file_url, selectedCompDetail.preliminary_file_name || 'Berkas Preliminary')}
+                      className="bg-decor text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] flex items-center gap-1 shrink-0 cursor-pointer"
+                    >
+                      <Icon name="FileCheck" size={14} />
+                      <span>BUKA BERKAS PDF</span>
+                    </button>
                   </div>
-                  <a
-                    href={selectedCompDetail.preliminary_file_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-decor text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] flex items-center gap-1 shrink-0"
-                  >
-                    <Icon name="FileCheck" size={14} />
-                    <span>BUKA BERKAS PDF</span>
-                  </a>
-                </div>
-              ) : (
-                <p className="text-xs font-sans text-gray-500 font-bold">Tim belum mengumpulkan berkas Preliminary (BMC / Executive Summary).</p>
-              )}
+                ) : (
+                  <p className="text-xs font-sans text-gray-500 font-bold">Tim belum mengumpulkan berkas Preliminary (BMC / Executive Summary).</p>
+                )}
             </div>
+
+            {/* Stage Progression Controller inside Modal */}
 
             {/* Stage Progression Controller inside Modal */}
             <div className="bg-decor/20 border-2 border-blue-sail p-4 space-y-3">

@@ -134,11 +134,15 @@ export const RegistCompetition: React.FC = () => {
         }
         return;
       }
-      const fakeUrl = URL.createObjectURL(file);
-      if (errKey && errors[errKey]) {
-        setErrors(prev => ({ ...prev, [errKey]: '' }));
-      }
-      onSuccess(file.name, fakeUrl);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (errKey && errors[errKey]) {
+          setErrors(prev => ({ ...prev, [errKey]: '' }));
+        }
+        onSuccess(file.name, dataUrl);
+      };
+      reader.readAsDataURL(file);
     }
   };
 

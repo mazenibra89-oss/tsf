@@ -91,7 +91,12 @@ export const ParticipantDashboard: React.FC = () => {
       }
       setFile(selectedFile);
       setFileName(selectedFile.name);
-      setFileUrl(URL.createObjectURL(selectedFile));
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setFileUrl(dataUrl);
+      };
+      reader.readAsDataURL(selectedFile);
     }
   };
 
