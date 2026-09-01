@@ -209,6 +209,27 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
   }
 });
 
+// Helper to guarantee users table exists across PostgreSQL and SQLite environments
+async function ensureUsersTable() {
+  try {
+    const hasUsersTable = await db.schema.hasTable('users');
+    if (!hasUsersTable) {
+      await db.schema.createTable('users', (table) => {
+        table.string('id').primary();
+        table.string('name').notNullable();
+        table.string('email').unique().notNullable();
+        table.string('password_hash').nullable();
+        table.string('auth_provider').notNullable().defaultTo('email');
+        table.string('google_id').nullable();
+        table.timestamp('created_at').notNullable().defaultTo(db.fn.now());
+      });
+      console.log('Auto-created missing users table.');
+    }
+  } catch (e) {
+    console.error('ensureUsersTable warning:', e);
+  }
+}
+
 // User Register (Email & Password)
 app.post('/api/user/register', async (req: Request, res: Response): Promise<void> => {
   const { name, email, password } = req.body;
@@ -221,6 +242,7 @@ app.post('/api/user/register', async (req: Request, res: Response): Promise<void
   const cleanName = String(name || '').trim();
 
   try {
+    await ensureUsersTable();
     const existing = await db('users').where({ email: cleanEmail }).first();
     if (existing) {
       res.status(400).json({ message: 'Email ini sudah terdaftar. Silakan gunakan menu Login.' });
@@ -265,6 +287,7 @@ app.post('/api/user/login', async (req: Request, res: Response): Promise<void> =
   const cleanEmail = String(email || '').toLowerCase().trim();
 
   try {
+    await ensureUsersTable();
     const user = await db('users').where({ email: cleanEmail }).first();
     if (!user || !user.password_hash) {
       res.status(401).json({ message: 'Email atau password yang Anda masukkan salah' });
