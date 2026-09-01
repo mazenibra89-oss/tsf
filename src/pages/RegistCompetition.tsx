@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
+import { AuthModal } from '../components/AuthModal';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface MemberFields {
@@ -18,10 +19,15 @@ interface MemberFields {
 }
 
 export const RegistCompetition: React.FC = () => {
-  const { addCompetitionRegistration } = useApp();
+  const { addCompetitionRegistration, currentUser, setCurrentPage } = useApp();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Scroll helper
   const scrollToForm = () => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     const el = document.getElementById('competition-form-section');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
@@ -138,6 +144,10 @@ export const RegistCompetition: React.FC = () => {
 
   // Step Validations
   const validateStep1 = () => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return false;
+    }
     const errs: Record<string, string> = {};
     if (!form.competitionType) {
       errs.competitionType = 'Pilih cabang kompetisi (BPC atau BCC).';
@@ -241,23 +251,53 @@ export const RegistCompetition: React.FC = () => {
   };
 
   const handleSubmit = () => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     if (!validateStep5()) return;
 
     setIsSubmitting(true);
     setTimeout(() => {
       // Formatted members list for AppContext
       const memberNames = form.members.slice(0, nonLeaderCount).map(m => `${m.fullName} (${m.institution})`);
+      const leaderObject = {
+        fullName: form.leaderFullName,
+        institution: form.leaderInstitution,
+        domicile: form.leaderDomicile,
+        studentId: form.leaderStudentId,
+        major: form.leaderMajor,
+        grade: form.leaderGrade,
+        year: form.leaderYear,
+        whatsapp: form.leaderWhatsapp,
+        email: form.leaderEmail,
+        cardFileName: form.leaderCardFileName,
+        cardFileUrl: form.leaderCardFileUrl
+      };
+      const membersArray = form.members.slice(0, nonLeaderCount);
+
       addCompetitionRegistration({
+        user_id: currentUser.id,
+        competition_type: form.competitionType as any,
+        education_category: form.educationCategory as any,
         team_name: form.teamName,
+        team_size: form.teamSize,
         leader_name: form.leaderFullName,
+        leader_data: leaderObject,
         members: memberNames,
+        members_data: membersArray,
         institution: form.leaderInstitution,
         contact: form.leaderWhatsapp,
         email: form.leaderEmail,
         category_id: `${form.competitionType} - ${form.educationCategory}`,
         payment_proof_url: form.leaderCardFileUrl || form.leaderCardFileName || 'Bukti_Identitas_Ketua',
-        file_url: form.igStoryFileUrl || form.igStoryFileName || 'Bukti_Persyaratan'
-      });
+        file_url: form.igStoryFileUrl || form.igStoryFileName || 'Bukti_Persyaratan',
+        ig_story_file_url: form.igStoryFileUrl || form.igStoryFileName,
+        twibbon_file_url: form.twibbonFileUrl || form.twibbonFileName,
+        ig_follow_file_url: form.igFollowFileUrl || form.igFollowFileName,
+        status_stage: 'preliminary',
+        status_preliminary: 'pending'
+      } as any);
 
       setIsSubmitting(false);
       setStep('success');
@@ -1581,7 +1621,15 @@ export const RegistCompetition: React.FC = () => {
                   Sampai jumpa di TSF 2026, Future Innovator!
                 </p>
 
-                <div className="pt-4">
+                <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    onClick={() => setCurrentPage('dashboard')}
+                    className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2"
+                  >
+                    <Icon name="Trophy" size={16} />
+                    <span>BUKA DASHBOARD TIM (SUBMIT PRELIMINARY)</span>
+                  </button>
+
                   <button
                     onClick={() => {
                       setStep(1);
@@ -1630,6 +1678,12 @@ export const RegistCompetition: React.FC = () => {
 
         </div>
       </section>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        message="Silakan Login atau Daftar Akun Terlebih Dahulu untuk Mendaftar Kompetisi"
+      />
 
     </div>
   );

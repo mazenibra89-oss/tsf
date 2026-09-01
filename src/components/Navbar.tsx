@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Icon } from './Icon';
+import { AuthModal } from './AuthModal';
 import tsfProfileLogo from '../tsfprofile.png';
 
 interface NavbarProps {
@@ -9,8 +10,9 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) => {
-  const { phases } = useApp();
+  const { phases, currentUser, logoutUser } = useApp();
   const [isOpen, setIsOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   // Dynamic CTA button toggle
   const showCta = true;
@@ -68,7 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
                     title="Coming Soon"
                   >
                     <span>{item.label}</span>
-                    <span className="ml-1.5 inline-block bg-red-inferno text-ballroom text-[8px] font-mono font-extrabold px-1 py-0.5 rounded-none uppercase tracking-tighter skew-x-[-5deg] leading-none">
+                    <span className="ml-1.5 inline-block bg-red-inferno text-ballroom text-[8px] font-display font-extrabold px-1 py-0.5 rounded-none uppercase tracking-tighter skew-x-[-5deg] leading-none">
                       Soon
                     </span>
                   </div>
@@ -92,12 +94,49 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
             })}
           </div>
 
-          {/* Right actions: CTA Button */}
+          {/* Right actions: User Profile & CTA Button */}
           <div className="hidden lg:flex items-center space-x-3">
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleNavClick('dashboard')}
+                  className={`px-3.5 py-2 text-xs font-display font-black uppercase tracking-wider border-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                    currentPage === 'dashboard'
+                      ? 'bg-decor text-blue-sail border-decor shadow-[2px_2px_0_0_#BD1B1F]'
+                      : 'bg-blue-sail/40 text-decor border-decor hover:bg-decor hover:text-blue-sail'
+                  }`}
+                >
+                  <Icon name="Trophy" size={14} />
+                  <span>DASHBOARD TIM</span>
+                </button>
+
+                <div className="bg-ballroom/10 border border-ballroom/20 px-3 py-1.5 flex items-center gap-2">
+                  <span className="font-display font-bold text-xs text-decor uppercase max-w-[100px] truncate">
+                    {currentUser.name}
+                  </span>
+                  <button
+                    onClick={logoutUser}
+                    title="Logout Akun"
+                    className="text-ballroom/70 hover:text-red-inferno transition-colors cursor-pointer"
+                  >
+                    <Icon name="LogOut" size={14} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAuthOpen(true)}
+                className="bg-white hover:bg-gray-100 text-blue-sail font-display font-bold text-xs uppercase px-4 py-2 border-2 border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer flex items-center gap-1.5"
+              >
+                <Icon name="LogIn" size={14} />
+                <span>LOGIN / DAFTAR</span>
+              </button>
+            )}
+
             <button
               id="nav-cta"
               onClick={() => handleNavClick(ctaPage)}
-              className="bg-decor hover:bg-decor/95 active:bg-decor text-blue-sail font-display font-extrabold text-xs uppercase px-5 py-2.5 rounded-none tracking-widest border-2 border-blue-sail shadow-[2px_2px_0px_0px_#8B011A] hover:shadow-[3px_3px_0px_0px_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center space-x-1"
+              className="bg-decor hover:bg-decor/95 active:bg-decor text-blue-sail font-display font-extrabold text-xs uppercase px-4 py-2 border-2 border-blue-sail shadow-[2px_2px_0px_0px_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center space-x-1 cursor-pointer"
             >
               <span>{ctaText}</span>
               <Icon name="ArrowRight" size={14} className="stroke-[3px]" />
@@ -165,6 +204,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
           </div>
         </div>
       )}
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+      />
     </nav>
   );
 };

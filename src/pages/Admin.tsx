@@ -181,11 +181,18 @@ export const Admin: React.FC = () => {
     updatePE1RegistrationStatus,
     formQuestions,
     updateFormQuestions,
-    resetToDefault
+    resetToDefault,
+    fetchAdminUsers,
+    updateCompetitionRegistrationStatus
   } = useApp();
+
+  const [adminUsersList, setAdminUsersList] = useState<import('../types').User[]>([]);
 
   useEffect(() => {
     refreshState();
+    fetchAdminUsers().then(res => {
+      if (res) setAdminUsersList(res);
+    });
   }, []);
 
   // Login states
@@ -911,6 +918,21 @@ export const Admin: React.FC = () => {
           >
             <Icon name="Trophy" size={16} />
             <span>Pendaftar Lomba ({competitionRegistrations.length})</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('user-accounts' as any);
+              fetchAdminUsers().then(res => { if (res) setAdminUsersList(res); });
+            }}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              (activeTab as string) === 'user-accounts'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="Users" size={16} />
+            <span>Akun Pendaftar ({adminUsersList.length})</span>
           </button>
 
           <button
@@ -1683,7 +1705,7 @@ export const Admin: React.FC = () => {
                   <div className="p-12 text-center">
                     <Icon name="Trophy" size={40} className="text-blue-sail/30 mx-auto mb-2" />
                     <p className="text-sm font-semibold">Belum Ada Tim Kompetisi Terdaftar</p>
-                    <p className="text-xs text-blue-sail/50 mt-1">Isi Formulir pendaftaran kompetisi di menu utama untuk merekam data simulasi.</p>
+                    <p className="text-xs text-blue-sail/50 mt-1">Isi Formulir pendaftaran kompetisi di menu utama untuk merekam data pendaftaran.</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -1691,58 +1713,117 @@ export const Admin: React.FC = () => {
                       <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
                         <tr>
                           <th className="p-4">Identitas Tim</th>
-                          <th className="p-4">Instansi</th>
+                          <th className="p-4">Cabang &amp; Jenjang</th>
                           <th className="p-4">Anggota Tim</th>
-                          <th className="p-4">Kategori Lomba</th>
-                          <th className="p-4">Bukti Bayar</th>
-                          <th className="p-4">Berkas Karya</th>
+                          <th className="p-4">Berkas Syarat</th>
+                          <th className="p-4">Preliminary Submission</th>
+                          <th className="p-4">Aksi Status Preliminary</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y-2 divide-blue-sail/15">
                         {competitionRegistrations.map(reg => {
-                          const comp = competitions.find(c => c.id === reg.category_id);
+                          const compType = reg.competition_type || (reg.category_id?.includes('BCC') ? 'BCC' : 'BPC');
+                          const eduCat = reg.education_category || (reg.category_id?.includes('SMA') ? 'SMA/Sederajat' : 'Mahasiswa');
+                          const isBPC = compType === 'BPC';
+
                           return (
                             <tr key={reg.id} className="hover:bg-gray-50/50">
                               <td className="p-4 space-y-1">
-                                <p className="font-bold text-blue-sail uppercase">{reg.team_name}</p>
-                                <p className="font-medium text-blue-sail/70">Ketua: {reg.leader_name}</p>
-                                <p className="font-mono text-[10px] text-blue-sail/50">WA: {reg.contact}</p>
-                                <p className="font-mono text-[10px] text-blue-sail/50">{reg.email}</p>
+                                <p className="font-bold text-blue-sail uppercase text-sm">{reg.team_name}</p>
+                                <p className="font-medium text-blue-sail/80">Ketua: {reg.leader_name}</p>
+                                <p className="font-mono text-[10px] text-blue-sail/60">WA: {reg.contact}</p>
+                                <p className="font-mono text-[10px] text-blue-sail/60">{reg.email}</p>
                               </td>
-                              <td className="p-4 font-semibold">
-                                {reg.institution}
-                              </td>
-                              <td className="p-4 max-w-[180px]">
-                                <p className="leading-relaxed text-blue-sail/85">{reg.members.join(', ') || 'Hanya Ketua'}</p>
-                              </td>
-                              <td className="p-4">
-                                <span className="bg-blue-sail/5 border border-blue-sail/20 text-blue-sail font-mono text-[10px] font-bold px-2.5 py-1 rounded-none uppercase tracking-wider inline-block">
-                                  {comp ? comp.title : 'Kategori Lomba'}
+                              <td className="p-4 space-y-1">
+                                <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2.5 py-1 uppercase border border-decor inline-block">
+                                  {compType}
                                 </span>
+                                <p className="text-[11px] font-sans font-bold text-blue-sail/70">{eduCat}</p>
+                                <p className="text-[10px] font-sans text-blue-sail/50">Institusi: {reg.institution}</p>
                               </td>
-                              <td className="p-4">
-                                <button
-                                  onClick={() => alert(`Membuka simulasi berkas Bukti Pembayaran: ${reg.payment_proof_url}`)}
-                                  className="text-red-inferno hover:text-barbera font-mono font-bold flex items-center space-x-1 cursor-pointer"
-                                >
-                                  <Icon name="Camera" size={14} />
-                                  <span>Lihat Bukti</span>
-                                </button>
+                              <td className="p-4 max-w-[200px]">
+                                <p className="text-[11px] font-sans leading-relaxed text-blue-sail/85">
+                                  {Array.isArray(reg.members) ? reg.members.join(', ') : 'Hanya Ketua'}
+                                </p>
                               </td>
-                              <td className="p-4">
-                                {reg.file_url ? (
+                              <td className="p-4 space-y-1.5">
+                                {reg.payment_proof_url && (
                                   <a
-                                    href={reg.file_url}
+                                    href={reg.payment_proof_url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-blue-sail hover:text-red-inferno font-mono font-bold flex items-center space-x-1"
+                                    className="text-red-inferno hover:text-barbera font-display font-bold text-[10px] flex items-center gap-1 uppercase"
                                   >
-                                    <Icon name="ExternalLink" size={14} />
-                                    <span>Google Drive</span>
+                                    <Icon name="FileText" size={12} />
+                                    <span>KTM / Kartu Pelajar</span>
                                   </a>
-                                ) : (
-                                  <span className="text-blue-sail/40 font-mono">None</span>
                                 )}
+                                {reg.ig_story_file_url && (
+                                  <a
+                                    href={reg.ig_story_file_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-blue-600 hover:underline font-display font-bold text-[10px] flex items-center gap-1 uppercase"
+                                  >
+                                    <Icon name="ExternalLink" size={12} />
+                                    <span>Story PDF</span>
+                                  </a>
+                                )}
+                                {reg.twibbon_file_url && (
+                                  <a
+                                    href={reg.twibbon_file_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-blue-600 hover:underline font-display font-bold text-[10px] flex items-center gap-1 uppercase"
+                                  >
+                                    <Icon name="ExternalLink" size={12} />
+                                    <span>Twibbon PDF</span>
+                                  </a>
+                                )}
+                              </td>
+                              <td className="p-4 space-y-1">
+                                {reg.preliminary_file_url ? (
+                                  <div>
+                                    <a
+                                      href={reg.preliminary_file_url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="bg-decor text-blue-sail hover:bg-decor/90 font-display font-black text-[10px] px-2.5 py-1 uppercase border border-blue-sail inline-flex items-center gap-1"
+                                    >
+                                      <Icon name="FileCheck" size={12} />
+                                      <span>LIHAT {isBPC ? 'BMC' : 'EXEC SUMMARY'}</span>
+                                    </a>
+                                    <p className="text-[10px] font-sans text-emerald-700 font-bold mt-1">✓ Sudah Mengumpulkan</p>
+                                  </div>
+                                ) : (
+                                  <span className="bg-gray-100 text-gray-500 font-display text-[10px] px-2 py-0.5 border border-gray-300 uppercase inline-block">
+                                    Belum Submit
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-4 space-y-1.5">
+                                <div className="flex flex-col gap-1">
+                                  <button
+                                    onClick={() => updateCompetitionRegistrationStatus(reg.id, 'preliminary', 'passed')}
+                                    className={`px-2.5 py-1 text-[10px] font-display font-bold uppercase border cursor-pointer ${
+                                      reg.status_preliminary === 'passed'
+                                        ? 'bg-emerald-600 text-white border-emerald-700 font-black'
+                                        : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
+                                    }`}
+                                  >
+                                    ✓ LOLOS PRELIMINARY
+                                  </button>
+                                  <button
+                                    onClick={() => updateCompetitionRegistrationStatus(reg.id, 'preliminary', 'rejected')}
+                                    className={`px-2.5 py-1 text-[10px] font-display font-bold uppercase border cursor-pointer ${
+                                      reg.status_preliminary === 'rejected'
+                                        ? 'bg-red-inferno text-white border-red-700 font-black'
+                                        : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
+                                    }`}
+                                  >
+                                    ✕ TIDAK LOLOS
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -1753,6 +1834,85 @@ export const Admin: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* TAB CONTENT: LIST AKUN USER PENDAFTAR */}
+            {(activeTab as string) === 'user-accounts' && (
+              <div className="space-y-6">
+                <div className="bg-ballroom border-4 border-blue-sail p-6 shadow-[6px_6px_0_0_#2A4C9E] flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display font-black text-2xl uppercase text-blue-sail">
+                      DAFTAR AKUN USER PENDAFTAR ({adminUsersList.length})
+                    </h3>
+                    <p className="text-xs text-blue-sail/70 font-sans mt-0.5">
+                      Daftar seluruh akun user yang telah terregistrasi via Email maupun Gmail di sistem TSF 2026.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => fetchAdminUsers().then(res => { if (res) setAdminUsersList(res); })}
+                    className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Icon name="RefreshCw" size={14} />
+                    <span>REFRESH AKUN</span>
+                  </button>
+                </div>
+
+                <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
+                  {adminUsersList.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <Icon name="Users" size={40} className="text-blue-sail/30 mx-auto mb-2" />
+                      <p className="text-sm font-semibold">Belum Ada Akun User Terdaftar</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs font-sans border-collapse">
+                        <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                          <tr>
+                            <th className="p-4">ID User</th>
+                            <th className="p-4">Nama Lengkap</th>
+                            <th className="p-4">Alamat Email</th>
+                            <th className="p-4">Metode Login</th>
+                            <th className="p-4">Tanggal Registrasi</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y-2 divide-blue-sail/15">
+                          {adminUsersList.map((user) => (
+                            <tr key={user.id} className="hover:bg-gray-50/50">
+                              <td className="p-4 font-mono font-bold text-blue-sail/60">
+                                {user.id}
+                              </td>
+                              <td className="p-4 font-bold text-blue-sail uppercase">
+                                {user.name}
+                              </td>
+                              <td className="p-4 font-sans text-blue-sail font-semibold">
+                                {user.email}
+                              </td>
+                              <td className="p-4">
+                                <span className={`px-2.5 py-1 text-[10px] font-display font-black uppercase border ${
+                                  user.auth_provider === 'google'
+                                    ? 'bg-blue-50 text-blue-600 border-blue-300'
+                                    : 'bg-amber-50 text-amber-700 border-amber-300'
+                                }`}>
+                                  {user.auth_provider === 'google' ? 'Gmail / Google' : 'Email Manual'}
+                                </span>
+                              </td>
+                              <td className="p-4 font-sans text-blue-sail/70 font-medium">
+                                {new Date(user.created_at).toLocaleDateString('id-ID', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* SEWA BOOTH VENDOR DATABASE */}
             <div className="space-y-6">

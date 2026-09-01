@@ -111,6 +111,46 @@ async function initDatabase() {
       console.log('Created pe1_registrations table.');
     }
 
+    // Auto-create users table if missing
+    const hasUsersTable = await db.schema.hasTable('users');
+    if (!hasUsersTable) {
+      await db.schema.createTable('users', (table) => {
+        table.string('id').primary();
+        table.string('name').notNullable();
+        table.string('email').unique().notNullable();
+        table.string('password_hash').nullable();
+        table.string('auth_provider').notNullable().defaultTo('email');
+        table.string('google_id').nullable();
+        table.timestamp('created_at').notNullable().defaultTo(db.fn.now());
+      });
+      console.log('Created users table.');
+    }
+
+    // Auto update competition_registrations table if missing new columns
+    if (await db.schema.hasTable('competition_registrations')) {
+      const hasUserId = await db.schema.hasColumn('competition_registrations', 'user_id');
+      if (!hasUserId) {
+        await db.schema.alterTable('competition_registrations', (table) => {
+          table.string('user_id').nullable();
+          table.string('competition_type').nullable();
+          table.string('education_category').nullable();
+          table.string('team_size').nullable();
+          table.text('leader_data').nullable();
+          table.text('members_data').nullable();
+          table.text('ig_story_file_url').nullable();
+          table.text('twibbon_file_url').nullable();
+          table.text('ig_follow_file_url').nullable();
+          table.string('status_stage').notNullable().defaultTo('preliminary');
+          table.string('status_preliminary').notNullable().defaultTo('pending');
+          table.text('preliminary_file_url').nullable();
+          table.string('preliminary_file_name').nullable();
+          table.string('preliminary_file_type').nullable();
+          table.timestamp('preliminary_submitted_at').nullable();
+        });
+        console.log('Updated competition_registrations table schema.');
+      }
+    }
+
     // Auto update p-1 phase to ambassador_recruitment and active status
     if (await db.schema.hasTable('event_phases')) {
       await db('event_phases')
@@ -166,6 +206,143 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// User Register (Email & Password)
+app.post('/api/user/register', async (req: Request, res: Response): Promise<void> => {
+  const { name, email, password } = req.body;
+  if (!name || !email || !password) {
+    res.status(400).json({ message: 'Nama, Email, dan Password wajib diisi' });
+    return;
+  }
+
+  try {
+    const existing = await db('users').where({ email: email.toLowerCase() }).first();
+    if (existing) {
+      res.status(400).json({ message: 'Email sudah terdaftar. Silakan login.' });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+    const id = `usr-${Date.now()}`;
+
+    const newUser = {
+      id,
+      name,
+      email: email.toLowerCase(),
+      password_hash,
+      auth_provider: 'email',
+      created_at: new Date()
+    };
+
+    await db('users').insert(newUser);
+
+    const token = jwt.sign({ id, email: newUser.email, name }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({
+      token,
+      user: { id, name, email: newUser.email, auth_provider: 'email', created_at: newUser.created_at }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal membuat akun' });
+  }
+});
+
+// User Login (Email & Password)
+app.post('/api/user/login', async (req: Request, res: Response): Promise<void> => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.status(400).json({ message: 'Email dan Password wajib diisi' });
+    return;
+  }
+
+  try {
+    const user = await db('users').where({ email: email.toLowerCase() }).first();
+    if (!user || !user.password_hash) {
+      res.status(401).json({ message: 'Email atau password salah' });
+      return;
+    }
+
+    const isValid = await bcrypt.compare(password, user.password_hash);
+    if (!isValid) {
+      res.status(401).json({ message: 'Email atau password salah' });
+      return;
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email, auth_provider: user.auth_provider, created_at: user.created_at }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal melakukan login' });
+  }
+});
+
+// User Google Login / Register (1-Click / OAuth Simulation)
+app.post('/api/user/google', async (req: Request, res: Response): Promise<void> => {
+  const { name, email, google_id } = req.body;
+  if (!email) {
+    res.status(400).json({ message: 'Email Google wajib diisi' });
+    return;
+  }
+
+  try {
+    let user = await db('users').where({ email: email.toLowerCase() }).first();
+    if (!user) {
+      const id = `usr-g-${Date.now()}`;
+      const newUser = {
+        id,
+        name: name || email.split('@')[0],
+        email: email.toLowerCase(),
+        auth_provider: 'google',
+        google_id: google_id || `g-${Date.now()}`,
+        created_at: new Date()
+      };
+      await db('users').insert(newUser);
+      user = newUser;
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email, auth_provider: user.auth_provider, created_at: user.created_at }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal login via Gmail' });
+  }
+});
+
+// Get User Profile from Token
+app.get('/api/user/me', async (req: Request, res: Response): Promise<void> => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    res.status(401).json({ message: 'Token tidak ditemukan' });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string };
+    const user = await db('users').where({ id: decoded.id }).first();
+    if (!user) {
+      res.status(404).json({ message: 'User tidak ditemukan' });
+      return;
+    }
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      auth_provider: user.auth_provider,
+      created_at: user.created_at
+    });
+  } catch (err) {
+    res.status(403).json({ message: 'Token tidak valid' });
   }
 });
 
@@ -1035,7 +1212,7 @@ app.delete('/api/competitions/:id', authenticateToken, async (req: Request, res:
   }
 });
 
-// Submit registration (Public)
+// Submit registration (with user_id support & stage tracking)
 app.post('/api/competition-registrations', async (req: Request, res: Response): Promise<void> => {
   const data = req.body;
   const id = `reg-c-${Date.now()}`;
@@ -1043,21 +1220,124 @@ app.post('/api/competition-registrations', async (req: Request, res: Response): 
   try {
     await db('competition_registrations').insert({
       id,
+      user_id: data.user_id || null,
+      competition_type: data.competition_type || (data.category_id?.includes('BCC') ? 'BCC' : 'BPC'),
+      education_category: data.education_category || (data.category_id?.includes('SMA') ? 'SMA/Sederajat' : 'Mahasiswa'),
       team_name: data.team_name,
+      team_size: data.team_size || '3',
       leader_name: data.leader_name,
+      leader_data: typeof data.leader_data === 'object' ? JSON.stringify(data.leader_data) : data.leader_data || null,
       members: JSON.stringify(data.members || []),
+      members_data: typeof data.members_data === 'object' ? JSON.stringify(data.members_data) : data.members_data || null,
       institution: data.institution,
       contact: data.contact,
       email: data.email,
       category_id: data.category_id,
       payment_proof_url: data.payment_proof_url,
       file_url: data.file_url,
+      ig_story_file_url: data.ig_story_file_url || null,
+      twibbon_file_url: data.twibbon_file_url || null,
+      ig_follow_file_url: data.ig_follow_file_url || null,
+      status_stage: 'preliminary',
+      status_preliminary: 'pending',
       submitted_at: new Date()
     });
     res.status(201).json({ id, message: 'Registration submitted successfully' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to submit registration' });
+  }
+});
+
+// Get My Team (Participant Dashboard Endpoint)
+app.get('/api/competitions/my-team', async (req: Request, res: Response): Promise<void> => {
+  const userId = req.query.user_id as string;
+  const email = req.query.email as string;
+
+  if (!userId && !email) {
+    res.status(400).json({ message: 'User ID atau Email diperlukan' });
+    return;
+  }
+
+  try {
+    let query = db('competition_registrations');
+    if (userId) {
+      query = query.where({ user_id: userId });
+    } else if (email) {
+      query = query.where({ email });
+    }
+
+    const team = await query.orderBy('submitted_at', 'desc').first();
+    if (!team) {
+      res.status(404).json({ message: 'Belum mendaftarkan tim kompetisi' });
+      return;
+    }
+
+    const parseJson = (val: any) => typeof val === 'string' ? JSON.parse(val) : val;
+
+    res.json({
+      ...team,
+      members: parseJson(team.members || '[]'),
+      leader_data: parseJson(team.leader_data || null),
+      members_data: parseJson(team.members_data || '[]')
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal mengambil data tim' });
+  }
+});
+
+// Submit Preliminary File (BMC for BPC / Executive Summary for BCC)
+app.post('/api/competitions/submit-preliminary', async (req: Request, res: Response): Promise<void> => {
+  const { team_id, preliminary_file_url, preliminary_file_name, preliminary_file_type } = req.body;
+
+  if (!team_id || !preliminary_file_url) {
+    res.status(400).json({ message: 'ID Tim dan Berkas Preliminary wajib diisi' });
+    return;
+  }
+
+  try {
+    await db('competition_registrations').where({ id: team_id }).update({
+      preliminary_file_url,
+      preliminary_file_name: preliminary_file_name || 'Berkas_Preliminary.pdf',
+      preliminary_file_type: preliminary_file_type || 'BMC',
+      status_preliminary: 'submitted',
+      preliminary_submitted_at: new Date()
+    });
+
+    res.json({ message: 'Berkas Preliminary berhasil dikumpulkan' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal mengumpulkan berkas preliminary' });
+  }
+});
+
+// Admin: Get All Registered User Accounts
+app.get('/api/admin/users', authenticateToken, async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const users = await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc');
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal mengambil daftar pengguna' });
+  }
+});
+
+// Admin: Update Competition Registration Stage / Status
+app.patch('/api/admin/competitions/:id/status', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { status_stage, status_preliminary } = req.body;
+
+  try {
+    const updateData: any = {};
+    if (status_stage) updateData.status_stage = status_stage;
+    if (status_preliminary) updateData.status_preliminary = status_preliminary;
+
+    await db('competition_registrations').where({ id }).update(updateData);
+    res.json({ message: 'Status kompetisi berhasil diperbarui' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal memperbarui status kompetisi' });
   }
 });
 

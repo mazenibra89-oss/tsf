@@ -56,6 +56,22 @@ interface AppContextType extends AppState {
   deleteThriftProduct: (id: string) => void;
   addVendorApplication: (app: Omit<VendorApplication, 'id' | 'submitted_at'>) => void;
 
+  // User Auth & Participant Portal
+  currentUser: import('../types').User | null;
+  authToken: string | null;
+  myTeam: import('../types').CompetitionRegistration | null;
+  adminUsers: import('../types').User[];
+  currentPage: string;
+  setCurrentPage: (page: string) => void;
+  registerUser: (name: string, email: string, password: string) => Promise<void>;
+  loginUser: (email: string, password: string) => Promise<void>;
+  googleLoginUser: (name: string, email: string) => Promise<void>;
+  logoutUser: () => void;
+  fetchMyTeam: () => Promise<void>;
+  fetchAdminUsers: () => Promise<import('../types').User[]>;
+  submitPreliminaryFile: (team_id: string, preliminary_file_url: string, preliminary_file_name: string, preliminary_file_type: 'BMC' | 'Executive Summary') => Promise<void>;
+  updateCompetitionRegistrationStatus: (id: string, status_stage?: 'preliminary' | 'semi_final' | 'final', status_preliminary?: 'pending' | 'submitted' | 'passed' | 'rejected') => Promise<void>;
+
   // Form Questions Control
   updateFormQuestions: (config: FormQuestionsConfig) => void;
 
@@ -779,6 +795,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState<string>('home');
+  const [currentUser, setCurrentUser] = useState<import('../types').User | null>(() => {
+    const saved = localStorage.getItem('tsf_user_data');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('tsf_user_token'));
+  const [myTeam, setMyTeam] = useState<import('../types').CompetitionRegistration | null>(null);
+  const [adminUsers, setAdminUsers] = useState<import('../types').User[]>([]);
 
   // Helper for authenticated requests
   const authFetch = async (url: string, options: RequestInit = {}) => {
@@ -789,6 +813,129 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
     return fetch(getApiUrl(url), { ...options, headers });
+  };
+
+  // User Auth Methods
+  const registerUser = async (name: string, email: string, password: string) => {
+    const res = await fetch(getApiUrl('/api/user/register'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal mendaftar akun');
+
+    setAuthToken(data.token);
+    setCurrentUser(data.user);
+    localStorage.setItem('tsf_user_token', data.token);
+    localStorage.setItem('tsf_user_data', JSON.stringify(data.user));
+    await fetchMyTeam(data.user);
+  };
+
+  const loginUser = async (email: string, password: string) => {
+    const res = await fetch(getApiUrl('/api/user/login'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal login');
+
+    setAuthToken(data.token);
+    setCurrentUser(data.user);
+    localStorage.setItem('tsf_user_token', data.token);
+    localStorage.setItem('tsf_user_data', JSON.stringify(data.user));
+    await fetchMyTeam(data.user);
+  };
+
+  const googleLoginUser = async (name: string, email: string) => {
+    const res = await fetch(getApiUrl('/api/user/google'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, google_id: `g-${Date.now()}` })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal login via Google');
+
+    setAuthToken(data.token);
+    setCurrentUser(data.user);
+    localStorage.setItem('tsf_user_token', data.token);
+    localStorage.setItem('tsf_user_data', JSON.stringify(data.user));
+    await fetchMyTeam(data.user);
+  };
+
+  const logoutUser = () => {
+    setCurrentUser(null);
+    setAuthToken(null);
+    setMyTeam(null);
+    localStorage.removeItem('tsf_user_token');
+    localStorage.removeItem('tsf_user_data');
+  };
+
+  const fetchMyTeam = async (userObj?: import('../types').User | null) => {
+    const activeUser = userObj || currentUser;
+    if (!activeUser) return;
+
+    try {
+      const res = await fetch(getApiUrl(`/api/competitions/my-team?user_id=${activeUser.id}&email=${encodeURIComponent(activeUser.email)}`));
+      if (res.ok) {
+        const teamData = await res.json();
+        setMyTeam(teamData);
+      } else {
+        setMyTeam(null);
+      }
+    } catch (err) {
+      console.error('Failed to fetch my competition team:', err);
+    }
+  };
+
+  const fetchAdminUsers = async (): Promise<import('../types').User[]> => {
+    try {
+      const res = await authFetch('/api/admin/users');
+      if (res.ok) {
+        const usersList = await res.json();
+        setAdminUsers(usersList);
+        return usersList;
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin users:', err);
+    }
+    return [];
+  };
+
+  const submitPreliminaryFile = async (
+    team_id: string,
+    preliminary_file_url: string,
+    preliminary_file_name: string,
+    preliminary_file_type: 'BMC' | 'Executive Summary'
+  ) => {
+    const res = await fetch(getApiUrl('/api/competitions/submit-preliminary'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        team_id,
+        preliminary_file_url,
+        preliminary_file_name,
+        preliminary_file_type
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal mengunggah berkas preliminary');
+    await fetchMyTeam();
+    await fetchState();
+  };
+
+  const updateCompetitionRegistrationStatus = async (
+    id: string,
+    status_stage?: 'preliminary' | 'semi_final' | 'final',
+    status_preliminary?: 'pending' | 'submitted' | 'passed' | 'rejected'
+  ) => {
+    const res = await authFetch(`/api/admin/competitions/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status_stage, status_preliminary })
+    });
+    if (!res.ok) throw new Error('Gagal memperbarui status');
+    await fetchState();
   };
 
   const fetchState = async () => {
@@ -1344,7 +1491,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteThriftProduct,
       addVendorApplication,
       updateFormQuestions,
-      resetToDefault
+      resetToDefault,
+      currentUser,
+      authToken,
+      myTeam,
+      adminUsers,
+      currentPage,
+      setCurrentPage,
+      registerUser,
+      loginUser,
+      googleLoginUser,
+      logoutUser,
+      fetchMyTeam,
+      fetchAdminUsers,
+      submitPreliminaryFile,
+      updateCompetitionRegistrationStatus
     }}>
       {children}
     </AppContext.Provider>

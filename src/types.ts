@@ -116,17 +116,46 @@ export interface Competition {
   status: 'upcoming' | 'active' | 'closed';
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  auth_provider: 'email' | 'google';
+  google_id?: string;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
 export interface CompetitionRegistration {
   id: string;
+  user_id?: string;
+  competition_type?: 'BPC' | 'BCC';
+  education_category?: 'SMA/Sederajat' | 'Mahasiswa';
   team_name: string;
+  team_size?: string;
   leader_name: string;
-  members: string[]; // member names
+  leader_data?: any;
+  members: string[]; // member names array (for legacy compatibility)
+  members_data?: any[]; // detailed member array
   institution: string;
   contact: string; // WhatsApp
   email: string;
-  category_id: string; // references Competition.id
-  payment_proof_url: string; // or base64 dataUrl
+  category_id: string; // references Competition.id or "BPC - SMA/Sederajat"
+  payment_proof_url: string; // or KTM / Student card
   file_url?: string; // registration files
+  ig_story_file_url?: string;
+  twibbon_file_url?: string;
+  ig_follow_file_url?: string;
+  status_stage?: 'preliminary' | 'semi_final' | 'final';
+  status_preliminary?: 'pending' | 'submitted' | 'passed' | 'rejected';
+  preliminary_file_url?: string;
+  preliminary_file_name?: string;
+  preliminary_file_type?: 'BMC' | 'Executive Summary';
+  preliminary_submitted_at?: string;
   submitted_at: string;
 }
 
