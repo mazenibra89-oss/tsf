@@ -193,6 +193,7 @@ export const Admin: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [adminAccounts, setAdminAccounts] = useState<{username: string}[]>([]);
+  const [selectedCompDetail, setSelectedCompDetail] = useState<import('../types').CompetitionRegistration | null>(null);
 
   useEffect(() => {
     refreshState();
@@ -1719,10 +1720,10 @@ export const Admin: React.FC = () => {
                         <tr>
                           <th className="p-4">Identitas Tim</th>
                           <th className="p-4">Cabang &amp; Jenjang</th>
-                          <th className="p-4">Anggota Tim</th>
+                          <th className="p-4">Jawaban &amp; Detail</th>
                           <th className="p-4">Berkas Syarat</th>
-                          <th className="p-4">Preliminary Submission</th>
-                          <th className="p-4">Aksi Status Preliminary</th>
+                          <th className="p-4">Task Preliminary</th>
+                          <th className="p-4">Status &amp; Kontrol Kelolosan</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y-2 divide-blue-sail/15">
@@ -1746,10 +1747,18 @@ export const Admin: React.FC = () => {
                                 <p className="text-[11px] font-sans font-bold text-blue-sail/70">{eduCat}</p>
                                 <p className="text-[10px] font-sans text-blue-sail/50">Institusi: {reg.institution}</p>
                               </td>
-                              <td className="p-4 max-w-[200px]">
+                              <td className="p-4 space-y-2">
                                 <p className="text-[11px] font-sans leading-relaxed text-blue-sail/85">
-                                  {Array.isArray(reg.members) ? reg.members.join(', ') : 'Hanya Ketua'}
+                                  Anggota: {Array.isArray(reg.members) ? reg.members.join(', ') : 'Hanya Ketua'}
                                 </p>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedCompDetail(reg)}
+                                  className="bg-blue-sail hover:bg-barbera text-decor font-display font-black text-[10px] px-3 py-1.5 uppercase border border-blue-sail shadow-[2px_2px_0_0_#F6BB02] flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Icon name="FileText" size={12} />
+                                  <span>LIHAT DETAIL JAWABAN</span>
+                                </button>
                               </td>
                               <td className="p-4 space-y-1.5">
                                 {reg.payment_proof_url && (
@@ -1806,28 +1815,122 @@ export const Admin: React.FC = () => {
                                   </span>
                                 )}
                               </td>
-                              <td className="p-4 space-y-1.5">
-                                <div className="flex flex-col gap-1">
-                                  <button
-                                    onClick={() => updateCompetitionRegistrationStatus(reg.id, 'preliminary', 'passed')}
-                                    className={`px-2.5 py-1 text-[10px] font-display font-bold uppercase border cursor-pointer ${
-                                      reg.status_preliminary === 'passed'
-                                        ? 'bg-emerald-600 text-white border-emerald-700 font-black'
-                                        : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
-                                    }`}
-                                  >
-                                    ✓ LOLOS PRELIMINARY
-                                  </button>
-                                  <button
-                                    onClick={() => updateCompetitionRegistrationStatus(reg.id, 'preliminary', 'rejected')}
-                                    className={`px-2.5 py-1 text-[10px] font-display font-bold uppercase border cursor-pointer ${
-                                      reg.status_preliminary === 'rejected'
-                                        ? 'bg-red-inferno text-white border-red-700 font-black'
-                                        : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
-                                    }`}
-                                  >
-                                    ✕ TIDAK LOLOS
-                                  </button>
+                              <td className="p-4 space-y-2">
+                                <div className="flex flex-col gap-2 min-w-[170px]">
+                                  {/* Preliminary Stage Controller */}
+                                  <div className="space-y-1">
+                                    <span className="text-[9px] font-display font-extrabold text-blue-sail/60 uppercase block">1. Preliminary Stage:</span>
+                                    <div className="flex flex-col gap-1">
+                                      <button
+                                        onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'pending', status_stage: 'preliminary' })}
+                                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                          (!reg.status_preliminary || reg.status_preliminary === 'pending')
+                                            ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
+                                            : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                                        }`}
+                                      >
+                                        ↺ Kondisi Awal (Pending)
+                                      </button>
+                                      <button
+                                        onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'passed', status_stage: 'semifinal' })}
+                                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                          reg.status_preliminary === 'passed'
+                                            ? 'bg-emerald-600 text-white border-emerald-700 font-black'
+                                            : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
+                                        }`}
+                                      >
+                                        ✓ Lolos Preliminary
+                                      </button>
+                                      <button
+                                        onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'rejected', status_stage: 'preliminary' })}
+                                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                          reg.status_preliminary === 'rejected'
+                                            ? 'bg-red-inferno text-white border-red-700 font-black'
+                                            : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
+                                        }`}
+                                      >
+                                        ✕ Tidak Lolos Preliminary
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Semi Final Stage Controller (If Lolos Preliminary) */}
+                                  {reg.status_preliminary === 'passed' && (
+                                    <div className="space-y-1 pt-1.5 border-t-2 border-dashed border-blue-sail/20">
+                                      <span className="text-[9px] font-display font-extrabold text-blue-sail/60 uppercase block">2. Semi Final Stage:</span>
+                                      <div className="flex flex-col gap-1">
+                                        <button
+                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'pending', status_stage: 'semifinal' })}
+                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                            (!reg.status_semifinal || reg.status_semifinal === 'pending')
+                                              ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
+                                              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                                          }`}
+                                        >
+                                          ↺ Kondisi Awal Semi Final
+                                        </button>
+                                        <button
+                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'passed', status_stage: 'final' })}
+                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                            reg.status_semifinal === 'passed'
+                                              ? 'bg-emerald-600 text-white border-emerald-700 font-black'
+                                              : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
+                                          }`}
+                                        >
+                                          ✓ Lolos Semi Final
+                                        </button>
+                                        <button
+                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'rejected', status_stage: 'semifinal' })}
+                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                            reg.status_semifinal === 'rejected'
+                                              ? 'bg-red-inferno text-white border-red-700 font-black'
+                                              : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
+                                          }`}
+                                        >
+                                          ✕ Tidak Lolos Semi Final
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Final Stage Controller (If Lolos Semi Final) */}
+                                  {reg.status_semifinal === 'passed' && (
+                                    <div className="space-y-1 pt-1.5 border-t-2 border-dashed border-blue-sail/20">
+                                      <span className="text-[9px] font-display font-extrabold text-blue-sail/60 uppercase block">3. Grand Final Stage:</span>
+                                      <div className="flex flex-col gap-1">
+                                        <button
+                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'pending', status_stage: 'final' })}
+                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                            (!reg.status_final || reg.status_final === 'pending')
+                                              ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
+                                              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                                          }`}
+                                        >
+                                          ↺ Kondisi Awal Final
+                                        </button>
+                                        <button
+                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'passed', status_stage: 'final' })}
+                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                            reg.status_final === 'passed'
+                                              ? 'bg-purple-700 text-white border-purple-800 font-black'
+                                              : 'bg-white text-purple-700 border-purple-400 hover:bg-purple-50'
+                                          }`}
+                                        >
+                                          🏆 Lolos Final (Juara)
+                                        </button>
+                                        <button
+                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'rejected', status_stage: 'final' })}
+                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                            reg.status_final === 'rejected'
+                                              ? 'bg-red-inferno text-white border-red-700 font-black'
+                                              : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
+                                          }`}
+                                        >
+                                          ✕ Tidak Lolos Final
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -3979,6 +4082,305 @@ export const Admin: React.FC = () => {
                 className="bg-ballroom hover:bg-decor/20 text-blue-sail font-mono text-xs font-bold px-4 py-2 border-2 border-blue-sail cursor-pointer"
               >
                 Tutup Modal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* COMPETITION REGISTRATION DETAIL JAWABAN MODAL */}
+      {selectedCompDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-blue-sail/80 backdrop-blur-xs">
+          <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto space-y-6 shadow-[10px_10px_0_0_#BD1B1F]">
+            <div className="flex items-center justify-between border-b-2 border-blue-sail/20 pb-4">
+              <div>
+                <span className="bg-decor text-blue-sail font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider border border-blue-sail inline-block mb-1">
+                  DETAIL JAWABAN PENDAFTAR TIM
+                </span>
+                <h3 className="font-display font-black text-2xl uppercase text-blue-sail">
+                  {selectedCompDetail.team_name}
+                </h3>
+                <p className="text-xs font-sans text-blue-sail/70">
+                  Cabang: <strong>{selectedCompDetail.competition_type || 'BPC'}</strong> | Kategori: <strong>{selectedCompDetail.education_category || 'Mahasiswa'}</strong> | Tanggal: {new Date(selectedCompDetail.submitted_at).toLocaleString('id-ID')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCompDetail(null)}
+                className="bg-red-inferno text-white p-2 border border-blue-sail hover:bg-red-700 cursor-pointer"
+              >
+                <Icon name="X" size={18} />
+              </button>
+            </div>
+
+            {/* Identitas Ketua Tim */}
+            <div className="bg-white border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#BD1B1F]">
+              <span className="bg-red-inferno text-white font-display font-black text-[10px] px-2.5 py-0.5 uppercase inline-block">
+                DATA KETUA TIM
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-sans text-blue-sail">
+                <div><strong className="font-display uppercase text-blue-sail">Nama Lengkap:</strong> {selectedCompDetail.leader_name}</div>
+                <div><strong className="font-display uppercase text-blue-sail">Institusi / Sekolah:</strong> {selectedCompDetail.institution}</div>
+                <div><strong className="font-display uppercase text-blue-sail">WhatsApp:</strong> {selectedCompDetail.contact}</div>
+                <div><strong className="font-display uppercase text-blue-sail">Email:</strong> {selectedCompDetail.email}</div>
+                {selectedCompDetail.leader_data?.studentId && <div><strong className="font-display uppercase text-blue-sail">NRP / NIM:</strong> {selectedCompDetail.leader_data.studentId}</div>}
+                {selectedCompDetail.leader_data?.major && <div><strong className="font-display uppercase text-blue-sail">Jurusan:</strong> {selectedCompDetail.leader_data.major}</div>}
+                {selectedCompDetail.leader_data?.grade && <div><strong className="font-display uppercase text-blue-sail">Kelas:</strong> Kelas {selectedCompDetail.leader_data.grade}</div>}
+                {selectedCompDetail.leader_data?.domicile && <div><strong className="font-display uppercase text-blue-sail">Domisili:</strong> {selectedCompDetail.leader_data.domicile}</div>}
+              </div>
+              {selectedCompDetail.payment_proof_url && (
+                <div className="pt-2 border-t border-blue-sail/10">
+                  <a
+                    href={selectedCompDetail.payment_proof_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-red-inferno hover:underline"
+                  >
+                    <Icon name="FileText" size={14} />
+                    <span>LIHAT KTM / KARTU PELAJAR KETUA</span>
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Identitas Anggota Tim */}
+            {Array.isArray(selectedCompDetail.members_data) && selectedCompDetail.members_data.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="font-display font-black text-sm uppercase text-blue-sail">DATA ANGGOTA TIM ({selectedCompDetail.members_data.length} ANGGOTA)</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  {selectedCompDetail.members_data.map((m: any, idx: number) => (
+                    <div key={idx} className="bg-white border-2 border-blue-sail p-4 space-y-2 shadow-[3px_3px_0_0_#2A4C9E]">
+                      <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2 py-0.5 uppercase inline-block">
+                        ANGGOTA {idx + 1}
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans text-blue-sail">
+                        <div><strong>Nama:</strong> {m.fullName || m.name || '-'}</div>
+                        <div><strong>Institusi/Sekolah:</strong> {m.institution || '-'}</div>
+                        <div><strong>WhatsApp:</strong> {m.whatsapp || '-'}</div>
+                        <div><strong>Email:</strong> {m.email || '-'}</div>
+                        {m.studentId && <div><strong>NRP/NIM:</strong> {m.studentId}</div>}
+                        {m.major && <div><strong>Jurusan:</strong> {m.major}</div>}
+                        {m.grade && <div><strong>Kelas:</strong> Kelas {m.grade}</div>}
+                        {m.domicile && <div><strong>Domisili:</strong> {m.domicile}</div>}
+                      </div>
+                      {m.cardFileUrl && (
+                        <a href={m.cardFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-mono font-bold text-blue-600 hover:underline pt-1">
+                          <Icon name="FileText" size={14} /> Lihat KTM / Kartu Pelajar Anggota {idx + 1}
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Berkas Syarat Umum & Task Preliminary */}
+            <div className="bg-blue-sail/5 border-2 border-blue-sail p-4 space-y-3">
+              <h4 className="font-display font-black text-xs uppercase text-blue-sail">BERKAS PERSYARATAN &amp; TASK PRELIMINARY</h4>
+              <div className="flex flex-wrap gap-4 text-xs font-mono">
+                {selectedCompDetail.ig_story_file_url && (
+                  <a href={selectedCompDetail.ig_story_file_url} target="_blank" rel="noreferrer" className="text-red-inferno font-bold hover:underline flex items-center gap-1">
+                    <Icon name="ExternalLink" size={14} /> Bukti IG Story (PDF)
+                  </a>
+                )}
+                {selectedCompDetail.twibbon_file_url && (
+                  <a href={selectedCompDetail.twibbon_file_url} target="_blank" rel="noreferrer" className="text-red-inferno font-bold hover:underline flex items-center gap-1">
+                    <Icon name="ExternalLink" size={14} /> Bukti Twibbon Feeds (PDF)
+                  </a>
+                )}
+                {selectedCompDetail.ig_follow_file_url && (
+                  <a href={selectedCompDetail.ig_follow_file_url} target="_blank" rel="noreferrer" className="text-red-inferno font-bold hover:underline flex items-center gap-1">
+                    <Icon name="ExternalLink" size={14} /> Bukti Follow IG (PDF)
+                  </a>
+                )}
+              </div>
+
+              {selectedCompDetail.preliminary_file_url ? (
+                <div className="bg-white p-3 border border-blue-sail/30 flex items-center justify-between gap-3 mt-2">
+                  <div>
+                    <span className="font-display font-bold text-xs text-blue-sail uppercase block">
+                      BERKAS PRELIMINARY ({selectedCompDetail.preliminary_file_type || 'BMC / Executive Summary'})
+                    </span>
+                    <span className="text-[11px] font-sans text-emerald-700 font-bold">
+                      {selectedCompDetail.preliminary_file_name || 'Berkas_Preliminary.pdf'}
+                    </span>
+                  </div>
+                  <a
+                    href={selectedCompDetail.preliminary_file_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-decor text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] flex items-center gap-1 shrink-0"
+                  >
+                    <Icon name="FileCheck" size={14} />
+                    <span>BUKA BERKAS PDF</span>
+                  </a>
+                </div>
+              ) : (
+                <p className="text-xs font-sans text-gray-500 font-bold">Tim belum mengumpulkan berkas Preliminary (BMC / Executive Summary).</p>
+              )}
+            </div>
+
+            {/* Stage Progression Controller inside Modal */}
+            <div className="bg-decor/20 border-2 border-blue-sail p-4 space-y-3">
+              <h4 className="font-display font-black text-xs uppercase text-blue-sail">KONTROL STATUS KELOLOSAN TAHAP LOMBA</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-sans">
+                
+                {/* Preliminary */}
+                <div className="bg-white p-3 border border-blue-sail space-y-1.5">
+                  <span className="font-display font-bold text-[10px] text-blue-sail uppercase block">1. Preliminary Stage</span>
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={async () => {
+                        await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_preliminary: 'pending', status_stage: 'preliminary' });
+                        setSelectedCompDetail(prev => prev ? { ...prev, status_preliminary: 'pending', status_stage: 'preliminary' } : null);
+                      }}
+                      className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                        (!selectedCompDetail.status_preliminary || selectedCompDetail.status_preliminary === 'pending')
+                          ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
+                          : 'bg-white text-gray-600 border-gray-300'
+                      }`}
+                    >
+                      ↺ Kondisi Awal
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_preliminary: 'passed', status_stage: 'semifinal' });
+                        setSelectedCompDetail(prev => prev ? { ...prev, status_preliminary: 'passed', status_stage: 'semifinal' } : null);
+                      }}
+                      className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                        selectedCompDetail.status_preliminary === 'passed'
+                          ? 'bg-emerald-600 text-white border-emerald-700 font-black'
+                          : 'bg-white text-emerald-700 border-emerald-400'
+                      }`}
+                    >
+                      ✓ Lolos Preliminary
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_preliminary: 'rejected', status_stage: 'preliminary' });
+                        setSelectedCompDetail(prev => prev ? { ...prev, status_preliminary: 'rejected', status_stage: 'preliminary' } : null);
+                      }}
+                      className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                        selectedCompDetail.status_preliminary === 'rejected'
+                          ? 'bg-red-inferno text-white border-red-700 font-black'
+                          : 'bg-white text-red-600 border-red-300'
+                      }`}
+                    >
+                      ✕ Tidak Lolos
+                    </button>
+                  </div>
+                </div>
+
+                {/* Semi Final */}
+                <div className={`bg-white p-3 border space-y-1.5 ${selectedCompDetail.status_preliminary === 'passed' ? 'border-blue-sail' : 'border-gray-200 opacity-50'}`}>
+                  <span className="font-display font-bold text-[10px] text-blue-sail uppercase block">2. Semi Final Stage</span>
+                  {selectedCompDetail.status_preliminary === 'passed' ? (
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={async () => {
+                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_semifinal: 'pending', status_stage: 'semifinal' });
+                          setSelectedCompDetail(prev => prev ? { ...prev, status_semifinal: 'pending', status_stage: 'semifinal' } : null);
+                        }}
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                          (!selectedCompDetail.status_semifinal || selectedCompDetail.status_semifinal === 'pending')
+                            ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
+                            : 'bg-white text-gray-600 border-gray-300'
+                        }`}
+                      >
+                        ↺ Kondisi Awal Semi Final
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_semifinal: 'passed', status_stage: 'final' });
+                          setSelectedCompDetail(prev => prev ? { ...prev, status_semifinal: 'passed', status_stage: 'final' } : null);
+                        }}
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                          selectedCompDetail.status_semifinal === 'passed'
+                            ? 'bg-emerald-600 text-white border-emerald-700 font-black'
+                            : 'bg-white text-emerald-700 border-emerald-400'
+                        }`}
+                      >
+                        ✓ Lolos Semi Final
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_semifinal: 'rejected', status_stage: 'semifinal' });
+                          setSelectedCompDetail(prev => prev ? { ...prev, status_semifinal: 'rejected', status_stage: 'semifinal' } : null);
+                        }}
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                          selectedCompDetail.status_semifinal === 'rejected'
+                            ? 'bg-red-inferno text-white border-red-700 font-black'
+                            : 'bg-white text-red-600 border-red-300'
+                        }`}
+                      >
+                        ✕ Tidak Lolos Semi Final
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] font-sans text-gray-400 italic block">Terkunci hingga Lolos Preliminary</span>
+                  )}
+                </div>
+
+                {/* Final */}
+                <div className={`bg-white p-3 border space-y-1.5 ${selectedCompDetail.status_semifinal === 'passed' ? 'border-blue-sail' : 'border-gray-200 opacity-50'}`}>
+                  <span className="font-display font-bold text-[10px] text-blue-sail uppercase block">3. Grand Final Stage</span>
+                  {selectedCompDetail.status_semifinal === 'passed' ? (
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={async () => {
+                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_final: 'pending', status_stage: 'final' });
+                          setSelectedCompDetail(prev => prev ? { ...prev, status_final: 'pending', status_stage: 'final' } : null);
+                        }}
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                          (!selectedCompDetail.status_final || selectedCompDetail.status_final === 'pending')
+                            ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
+                            : 'bg-white text-gray-600 border-gray-300'
+                        }`}
+                      >
+                        ↺ Kondisi Awal Final
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_final: 'passed', status_stage: 'final' });
+                          setSelectedCompDetail(prev => prev ? { ...prev, status_final: 'passed', status_stage: 'final' } : null);
+                        }}
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                          selectedCompDetail.status_final === 'passed'
+                            ? 'bg-purple-700 text-white border-purple-800 font-black'
+                            : 'bg-white text-purple-700 border-purple-400'
+                        }`}
+                      >
+                        🏆 Lolos Final (Juara)
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_final: 'rejected', status_stage: 'final' });
+                          setSelectedCompDetail(prev => prev ? { ...prev, status_final: 'rejected', status_stage: 'final' } : null);
+                        }}
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                          selectedCompDetail.status_final === 'rejected'
+                            ? 'bg-red-inferno text-white border-red-700 font-black'
+                            : 'bg-white text-red-600 border-red-300'
+                        }`}
+                      >
+                        ✕ Tidak Lolos Final
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] font-sans text-gray-400 italic block">Terkunci hingga Lolos Semi Final</span>
+                  )}
+                </div>
+
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedCompDetail(null)}
+                className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-6 py-2.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] cursor-pointer"
+              >
+                Tutup Detail Pendaftar
               </button>
             </div>
           </div>

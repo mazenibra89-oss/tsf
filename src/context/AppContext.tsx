@@ -70,7 +70,7 @@ interface AppContextType extends AppState {
   fetchMyTeam: () => Promise<void>;
   fetchAdminUsers: () => Promise<import('../types').User[]>;
   submitPreliminaryFile: (team_id: string, preliminary_file_url: string, preliminary_file_name: string, preliminary_file_type: 'BMC' | 'Executive Summary') => Promise<void>;
-  updateCompetitionRegistrationStatus: (id: string, status_stage?: 'preliminary' | 'semi_final' | 'final', status_preliminary?: 'pending' | 'submitted' | 'passed' | 'rejected') => Promise<void>;
+  updateCompetitionRegistrationStatus: (id: string, payload: { status_stage?: string; status_preliminary?: string; status_semifinal?: string; status_final?: string; }) => Promise<void>;
 
   // Form Questions Control
   updateFormQuestions: (config: FormQuestionsConfig) => void;
@@ -961,12 +961,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateCompetitionRegistrationStatus = async (
     id: string,
-    status_stage?: 'preliminary' | 'semi_final' | 'final',
-    status_preliminary?: 'pending' | 'submitted' | 'passed' | 'rejected'
+    payload: {
+      status_stage?: string;
+      status_preliminary?: string;
+      status_semifinal?: string;
+      status_final?: string;
+    }
   ) => {
     const res = await authFetch(`/api/admin/competitions/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status_stage, status_preliminary })
+      body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error('Gagal memperbarui status');
     await fetchState();

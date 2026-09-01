@@ -150,8 +150,10 @@ export interface CompetitionRegistration {
   ig_story_file_url?: string;
   twibbon_file_url?: string;
   ig_follow_file_url?: string;
-  status_stage?: 'preliminary' | 'semi_final' | 'final';
+  status_stage?: 'preliminary' | 'semifinal' | 'final';
   status_preliminary?: 'pending' | 'submitted' | 'passed' | 'rejected';
+  status_semifinal?: 'pending' | 'passed' | 'rejected';
+  status_final?: 'pending' | 'passed' | 'rejected';
   preliminary_file_url?: string;
   preliminary_file_name?: string;
   preliminary_file_type?: 'BMC' | 'Executive Summary';
