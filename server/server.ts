@@ -253,6 +253,44 @@ async function ensureCompetitionColumns() {
   }
 }
 
+// Helper to guarantee valid categories exist in competitions table to satisfy Foreign Key constraints
+async function ensureCompetitionCategories() {
+  try {
+    const hasTable = await db.schema.hasTable('competitions');
+    if (!hasTable) return;
+
+    const defaultCategories = [
+      { id: 'c-1', title: 'Business Plan Competition (BPC)', category: 'Business', status: 'active' },
+      { id: 'c-2', title: 'Business Case Competition (BCC)', category: 'Business', status: 'active' },
+      { id: 'BPC', title: 'Business Plan Competition (BPC)', category: 'Business', status: 'active' },
+      { id: 'BCC', title: 'Business Case Competition (BCC)', category: 'Business', status: 'active' },
+      { id: 'BPC - Mahasiswa', title: 'BPC - Mahasiswa', category: 'Business', status: 'active' },
+      { id: 'BPC - SMA/Sederajat', title: 'BPC - SMA/Sederajat', category: 'Business', status: 'active' },
+      { id: 'BCC - Mahasiswa', title: 'BCC - Mahasiswa', category: 'Business', status: 'active' }
+    ];
+
+    for (const comp of defaultCategories) {
+      const exists = await db('competitions').where({ id: comp.id }).first();
+      if (!exists) {
+        await db('competitions').insert({
+          id: comp.id,
+          title: comp.title,
+          description: 'TDC Summit Fest 2026 Business Competition',
+          category: comp.category,
+          terms: JSON.stringify(['Syarat dan Ketentuan Kompetisi TSF 2026']),
+          prize: 'Total Hadiah Rp 50.000.000',
+          timeline: JSON.stringify([{ step: 'Preliminary', date: '5 Sep - 10 Okt 2026' }]),
+          guidebook_url: '#',
+          status: comp.status
+        });
+        console.log(`Auto-seeded competition category ${comp.id}.`);
+      }
+    }
+  } catch (e) {
+    console.error('ensureCompetitionCategories warning:', e);
+  }
+}
+
 // User Register (Email & Password)
 app.post('/api/user/register', async (req: Request, res: Response): Promise<void> => {
   const { name, email, password } = req.body;
@@ -1277,6 +1315,18 @@ app.post('/api/competition-registrations', async (req: Request, res: Response): 
 
   try {
     await ensureCompetitionColumns();
+    await ensureCompetitionCategories();
+
+    let categoryId = data.category_id || `${data.competition_type || 'BPC'} - ${data.education_category || 'Mahasiswa'}`;
+    const compRow = await db('competitions').where({ id: categoryId }).first();
+    if (!compRow) {
+      const fallbackComp = await db('competitions').where({ id: data.competition_type }).first()
+        || await db('competitions').first();
+      if (fallbackComp) {
+        categoryId = fallbackComp.id;
+      }
+    }
+
     if (userId) {
       const existingByUser = await db('competition_registrations').where({ user_id: userId }).first();
       if (existingByUser) {
@@ -1307,7 +1357,7 @@ app.post('/api/competition-registrations', async (req: Request, res: Response): 
       institution: data.institution,
       contact: data.contact,
       email: data.email,
-      category_id: data.category_id,
+      category_id: categoryId,
       payment_proof_url: data.payment_proof_url || 'Bukti_Identitas_Ketua',
       file_url: data.file_url || 'Bukti_Persyaratan',
       ig_story_file_url: data.ig_story_file_url || null,
