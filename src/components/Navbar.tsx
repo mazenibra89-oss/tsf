@@ -12,20 +12,18 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
   const { phases } = useApp();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Dynamic CTA button toggle for Ambassador / Influencer Recruitment
+  // Dynamic CTA button toggle
   const showCta = true;
-  let ctaText = 'Daftar Ambassador';
-  let ctaPage = 'recruitment';
+  let ctaText = 'Daftar Competition';
+  let ctaPage = 'competition';
 
   const menuItems = [
     { id: 'home', label: 'Home' },
-    { id: 'announcement', label: 'Announcement' },
-    // Staff Recruitment & Staff Results are deactivated and hidden from navbar options (code preserved)
-    // { id: 'staff', label: 'Staff Recruitment' },
-    // { id: 'interview-result', label: 'STAFF RESULTS' },
+    // Announcement is deactivated
+    // { id: 'announcement', label: 'Announcement' },
     { id: 'pe1', label: 'PE1' },
     { id: 'pe2', label: 'PE2', isComingSoon: true },
-    { id: 'competition', label: 'Regist Competition', isComingSoon: true },
+    { id: 'competition', label: 'Competition' },
     { id: 'thrift', label: 'Thrift', isComingSoon: true },
   ];
 
