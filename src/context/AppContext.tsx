@@ -65,7 +65,7 @@ interface AppContextType extends AppState {
   setCurrentPage: (page: string) => void;
   registerUser: (name: string, email: string, password: string) => Promise<void>;
   loginUser: (email: string, password: string) => Promise<void>;
-  googleLoginUser: (name: string, email: string) => Promise<void>;
+  googleLoginUser: (name: string, email: string, google_id?: string) => Promise<void>;
   logoutUser: () => void;
   fetchMyTeam: () => Promise<void>;
   fetchAdminUsers: () => Promise<import('../types').User[]>;
@@ -883,11 +883,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await fetchMyTeam(userObj);
   };
 
-  const googleLoginUser = async (name: string, email: string) => {
+  const googleLoginUser = async (name: string, email: string, google_id?: string) => {
+    const gid = google_id || `g-${Date.now()}`;
     const data = await safeJsonPost('/api/user/google', {
       name,
       email: email.toLowerCase(),
-      google_id: `g-${Date.now()}`
+      google_id: gid
     });
 
     const userObj = data?.user || {
@@ -895,7 +896,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       name: name || email.split('@')[0],
       email: email.toLowerCase(),
       auth_provider: 'google',
-      google_id: `g-${Date.now()}`,
+      google_id: gid,
       created_at: new Date().toISOString()
     };
     const token = data?.token || `token-g-${Date.now()}`;

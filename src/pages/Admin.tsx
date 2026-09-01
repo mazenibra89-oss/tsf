@@ -917,7 +917,7 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Trophy" size={16} />
-            <span>Pendaftar Lomba ({competitionRegistrations.length})</span>
+            <span>Pendaftar Competition ({competitionRegistrations.length})</span>
           </button>
 
           <button
@@ -1011,7 +1011,7 @@ export const Admin: React.FC = () => {
                   <Icon name="Trophy" size={24} className="text-blue-sail" />
                 </div>
                 <div>
-                  <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Tim Terdaftar Lomba</span>
+                  <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Pendaftar Competition</span>
                   <span className="block font-display font-black text-2xl text-blue-sail">{competitionRegistrations.length} Tim</span>
                 </div>
               </div>
@@ -1685,8 +1685,8 @@ export const Admin: React.FC = () => {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
-                  <h2 className="font-display font-black text-xl uppercase">REGISTRASI PESERTA KOMPETISI TSF</h2>
-                  <p className="text-xs text-blue-sail/60">Tinjau pembayaran registrasi tim kontestan, bukti transfer, dan download laporan.</p>
+                  <h2 className="font-display font-black text-xl uppercase">PENDAFTAR COMPETITION BPC / BCC</h2>
+                  <p className="text-xs text-blue-sail/60">Daftar seluruh tim yang mendaftar Business Plan Competition (BPC) dan Business Case Competition (BCC) TSF 2026.</p>
                 </div>
 
                 <button

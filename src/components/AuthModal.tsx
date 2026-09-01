@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Icon } from './Icon';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,7 +16,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onSuccess,
   message
 }) => {
-  const { registerUser, loginUser, googleLoginUser } = useApp();
+  const { registerUser, loginUser } = useApp();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
@@ -24,8 +24,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showGmailPicker, setShowGmailPicker] = useState(false);
-  const [gmailInput, setGmailInput] = useState('');
 
   if (!isOpen) return null;
 
@@ -59,40 +57,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleExecuteGoogleSignIn = async (targetEmail: string, targetName?: string) => {
-    setError('');
-    let finalEmail = targetEmail.trim().toLowerCase();
-    if (!finalEmail) {
-      setError('Alamat email Gmail wajib diisi');
-      return;
-    }
-    if (!finalEmail.includes('@')) {
-      finalEmail = `${finalEmail}@gmail.com`;
-    }
-
-    const finalName = targetName || name.trim() || finalEmail.split('@')[0];
-
-    setLoading(true);
-    try {
-      await googleLoginUser(finalName, finalEmail);
-      setLoading(false);
-      setShowGmailPicker(false);
-      if (onSuccess) onSuccess();
-      onClose();
-    } catch (err: any) {
-      setLoading(false);
-      setError(err.message || 'Gagal login menggunakan akun Google');
-    }
-  };
-
-  const handleGoogleSignInClick = () => {
-    if (email.trim()) {
-      handleExecuteGoogleSignIn(email, name);
-    } else {
-      setShowGmailPicker(true);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-blue-sail/80 backdrop-blur-xs">
       <motion.div
@@ -112,7 +76,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Modal Header */}
         <div className="space-y-2 mb-6">
           <span className="bg-decor text-blue-sail font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider border border-blue-sail inline-block">
-            TSF 2026 ACCOUNT AUTH
+            TSF 2026 ACCOUNT
           </span>
           <h2 className="font-display font-black text-2xl text-blue-sail uppercase tracking-tight">
             {mode === 'login' ? 'MASUK KE AKUN TSF' : 'DAFTAR AKUN BARU'}
@@ -152,90 +116,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           >
             DAFTAR AKUN
           </button>
-        </div>
-
-        {/* Google 1-Click Auth Button */}
-        <div className="space-y-4 mb-6">
-          <button
-            type="button"
-            onClick={handleGoogleSignInClick}
-            disabled={loading}
-            className="w-full bg-white hover:bg-gray-50 text-blue-sail font-display font-black text-xs uppercase py-3.5 px-4 border-2 border-blue-sail shadow-[3px_3px_0_0_#4285F4] flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 transition-transform active:translate-x-0.5 active:translate-y-0.5"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.21 0 10.05 0 12s.47 3.79 1.29 5.42l3.99-3.15z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-              />
-            </svg>
-            <span>{mode === 'login' ? 'MASUK DENGAN GMAIL' : 'DAFTAR DENGAN GMAIL'}</span>
-          </button>
-
-          {/* Interactive Gmail Picker Drawer */}
-          {showGmailPicker && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-blue-50 border-2 border-blue-400 p-4 space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-display font-black text-blue-800 uppercase flex items-center gap-1.5">
-                  <Icon name="Mail" size={14} /> KONFIRMASI AKUN GMAIL
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowGmailPicker(false)}
-                  className="text-blue-600 hover:text-blue-900 font-bold text-xs"
-                >
-                  Batal
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-display font-bold text-blue-900 uppercase mb-1">
-                  Masukkan Alamat Email Gmail Anda:
-                </label>
-                <input
-                  type="email"
-                  value={gmailInput}
-                  onChange={e => setGmailInput(e.target.value)}
-                  placeholder="contoh: nama.peserta@gmail.com"
-                  className="w-full bg-white border border-blue-400 px-3 py-2 text-xs font-sans text-blue-900 outline-none focus:border-blue-700"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => handleExecuteGoogleSignIn(gmailInput || 'peserta.innovator@gmail.com')}
-                  disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-display font-black text-xs uppercase py-2.5 px-3 border border-blue-800 shadow-[2px_2px_0_0_#000] cursor-pointer"
-                >
-                  {loading ? 'MEMPROSES...' : 'LANJUTKAN LOGIN GMAIL'}
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          <div className="relative text-center">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-blue-sail/20" /></div>
-            <span className="relative bg-ballroom px-3 text-[10px] font-display font-bold text-blue-sail/60 uppercase">
-              ATAU DENGAN EMAIL &amp; PASSWORD
-            </span>
-          </div>
         </div>
 
         {/* Error Alert */}
