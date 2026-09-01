@@ -817,45 +817,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Helper for safe JSON fetching with fallback
   const safeJsonPost = async (endpoint: string, bodyObj: any) => {
-    try {
-      const res = await fetch(getApiUrl(endpoint), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyObj)
-      });
-      const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        const text = await res.text();
-        console.warn(`Endpoint ${endpoint} returned non-JSON (${res.status}):`, text.slice(0, 80));
-        return null;
-      }
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Gagal memproses permintaan');
-      }
-      return data;
-    } catch (err: any) {
-      console.warn(`Fetch error for ${endpoint}:`, err.message);
-      if (err.message && !err.message.includes('JSON')) {
-        throw err;
-      }
-      return null;
+    const res = await fetch(getApiUrl(endpoint), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bodyObj)
+    });
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await res.text();
+      console.warn(`Endpoint ${endpoint} returned non-JSON (${res.status}):`, text.slice(0, 80));
+      throw new Error(`Koneksi server bermasalah (HTTP ${res.status}). Silakan coba lagi.`);
     }
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Gagal memproses permintaan');
+    }
+    return data;
   };
 
   // User Auth Methods
   const registerUser = async (name: string, email: string, password: string) => {
     const data = await safeJsonPost('/api/user/register', { name, email, password });
     
-    // Use server response or fallback to local user session if backend is restarting
-    const userObj = data?.user || {
-      id: `usr-${Date.now()}`,
-      name,
-      email: email.toLowerCase(),
-      auth_provider: 'email',
-      created_at: new Date().toISOString()
-    };
-    const token = data?.token || `token-${Date.now()}`;
+    if (!data || !data.user) {
+      throw new Error('Gagal menyimpan akun ke server database.');
+    }
+
+    const userObj = data.user;
+    const token = data.token;
 
     setAuthToken(token);
     setCurrentUser(userObj);

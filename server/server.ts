@@ -228,21 +228,22 @@ app.post('/api/user/register', async (req: Request, res: Response): Promise<void
     const password_hash = await bcrypt.hash(password, salt);
     const id = `usr-${Date.now()}`;
 
+    const created_at = new Date().toISOString();
     const newUser = {
       id,
-      name,
-      email: email.toLowerCase(),
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password_hash,
       auth_provider: 'email',
-      created_at: new Date()
+      created_at
     };
 
     await db('users').insert(newUser);
 
-    const token = jwt.sign({ id, email: newUser.email, name }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id, email: newUser.email, name: newUser.name }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({
       token,
-      user: { id, name, email: newUser.email, auth_provider: 'email', created_at: newUser.created_at }
+      user: { id, name: newUser.name, email: newUser.email, auth_provider: 'email', created_at }
     });
   } catch (err) {
     console.error(err);
