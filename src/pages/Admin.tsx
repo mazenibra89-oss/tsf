@@ -1840,84 +1840,7 @@ export const Admin: React.FC = () => {
               </div>
             </div>
 
-            {/* TAB CONTENT: LIST AKUN USER PENDAFTAR */}
-            {(activeTab as string) === 'user-accounts' && (
-              <div className="space-y-6">
-                <div className="bg-ballroom border-4 border-blue-sail p-6 shadow-[6px_6px_0_0_#2A4C9E] flex items-center justify-between">
-                  <div>
-                    <h3 className="font-display font-black text-2xl uppercase text-blue-sail">
-                      DAFTAR AKUN USER PENDAFTAR ({adminUsersList.length})
-                    </h3>
-                    <p className="text-xs text-blue-sail/70 font-sans mt-0.5">
-                      Daftar seluruh akun user yang telah terregistrasi via Email maupun Gmail di sistem TSF 2026.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => fetchAdminUsers().then(res => { if (res) setAdminUsersList(res); })}
-                    className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Icon name="RefreshCw" size={14} />
-                    <span>REFRESH AKUN</span>
-                  </button>
-                </div>
 
-                <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
-                  {adminUsersList.length === 0 ? (
-                    <div className="p-12 text-center">
-                      <Icon name="Users" size={40} className="text-blue-sail/30 mx-auto mb-2" />
-                      <p className="text-sm font-semibold">Belum Ada Akun User Terdaftar</p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs font-sans border-collapse">
-                        <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
-                          <tr>
-                            <th className="p-4">ID User</th>
-                            <th className="p-4">Nama Lengkap</th>
-                            <th className="p-4">Alamat Email</th>
-                            <th className="p-4">Metode Login</th>
-                            <th className="p-4">Tanggal Registrasi</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y-2 divide-blue-sail/15">
-                          {adminUsersList.map((user) => (
-                            <tr key={user.id} className="hover:bg-gray-50/50">
-                              <td className="p-4 font-mono font-bold text-blue-sail/60">
-                                {user.id}
-                              </td>
-                              <td className="p-4 font-bold text-blue-sail uppercase">
-                                {user.name}
-                              </td>
-                              <td className="p-4 font-sans text-blue-sail font-semibold">
-                                {user.email}
-                              </td>
-                              <td className="p-4">
-                                <span className={`px-2.5 py-1 text-[10px] font-display font-black uppercase border ${
-                                  user.auth_provider === 'google'
-                                    ? 'bg-blue-50 text-blue-600 border-blue-300'
-                                    : 'bg-amber-50 text-amber-700 border-amber-300'
-                                }`}>
-                                  {user.auth_provider === 'google' ? 'Gmail / Google' : 'Email Manual'}
-                                </span>
-                              </td>
-                              <td className="p-4 font-sans text-blue-sail/70 font-medium">
-                                {new Date(user.created_at).toLocaleDateString('id-ID', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* SEWA BOOTH VENDOR DATABASE */}
             <div className="space-y-6">
@@ -1994,6 +1917,99 @@ export const Admin: React.FC = () => {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* 3.5 SECTION TAB: AKUN USER PENDAFTAR */}
+        {(activeTab as string) === 'user-accounts' && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="bg-ballroom border-4 border-blue-sail p-6 shadow-[6px_6px_0_0_#2A4C9E] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-display font-black text-2xl uppercase text-blue-sail">
+                  DAFTAR AKUN USER PENDAFTAR ({adminUsersList.length})
+                </h3>
+                <p className="text-xs text-blue-sail/70 font-sans mt-0.5">
+                  Daftar seluruh akun user yang telah terregistrasi via Email di sistem TSF 2026.
+                </p>
+              </div>
+              <button
+                onClick={() => fetchAdminUsers().then(res => { if (res) setAdminUsersList(res); })}
+                className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-4 py-2.5 border-2 border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer flex items-center gap-1.5 shrink-0"
+              >
+                <Icon name="RefreshCw" size={14} />
+                <span>REFRESH AKUN</span>
+              </button>
+            </div>
+
+            <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
+              {adminUsersList.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Icon name="Users" size={40} className="text-blue-sail/30 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-blue-sail">Belum Ada Akun User Terdaftar</p>
+                  <p className="text-xs text-blue-sail/50 mt-1">Akun yang didaftarkan pengunjung akan otomatis muncul di tabel ini.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-sans border-collapse">
+                    <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                      <tr>
+                        <th className="p-4">ID User</th>
+                        <th className="p-4">Nama Lengkap</th>
+                        <th className="p-4">Alamat Email</th>
+                        <th className="p-4">Metode Login</th>
+                        <th className="p-4">Tanggal Registrasi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y-2 divide-blue-sail/15">
+                      {adminUsersList.map((user) => {
+                        const formatDateSafe = (dateVal: any) => {
+                          if (!dateVal) return '-';
+                          let d = new Date(dateVal);
+                          if (isNaN(d.getTime())) {
+                            const num = Number(dateVal);
+                            if (!isNaN(num)) d = new Date(num);
+                          }
+                          if (isNaN(d.getTime())) return String(dateVal);
+                          return d.toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          });
+                        };
+
+                        return (
+                          <tr key={user.id} className="hover:bg-gray-50/50">
+                            <td className="p-4 font-mono font-bold text-blue-sail/60">
+                              {user.id}
+                            </td>
+                            <td className="p-4 font-bold text-blue-sail uppercase">
+                              {user.name}
+                            </td>
+                            <td className="p-4 font-sans text-blue-sail font-semibold">
+                              {user.email}
+                            </td>
+                            <td className="p-4">
+                              <span className={`px-2.5 py-1 text-[10px] font-display font-black uppercase border ${
+                                user.auth_provider === 'google'
+                                  ? 'bg-blue-50 text-blue-600 border-blue-300'
+                                  : 'bg-amber-50 text-amber-700 border-amber-300'
+                              }`}>
+                                {user.auth_provider === 'google' ? 'Gmail / Google' : 'Email Manual'}
+                              </span>
+                            </td>
+                            <td className="p-4 font-sans text-blue-sail/70 font-medium font-mono">
+                              {formatDateSafe(user.created_at)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
