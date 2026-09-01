@@ -5,12 +5,16 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface MemberFields {
   fullName: string;
-  institution: string;
-  studentId: string;
-  major: string;
-  year: string;
+  institution: string; // Asal Sekolah / Asal Institusi
+  domicile: string; // Domisili (Khusus SMA)
+  studentId: string; // NRP/NIM (Khusus Mahasiswa)
+  major: string; // Jurusan (Khusus Mahasiswa)
+  grade: string; // Kelas 10/11/12 (Khusus SMA)
+  year: string; // Angkatan (Khusus Mahasiswa)
   whatsapp: string;
   email: string;
+  cardFileName: string; // Upload KTM / Kartu Pelajar (Max 3MB)
+  cardFileUrl: string;
 }
 
 export const RegistCompetition: React.FC = () => {
@@ -39,26 +43,30 @@ export const RegistCompetition: React.FC = () => {
 
     // Section 2: Data Ketua Tim
     leaderFullName: '',
-    leaderInstitution: '',
-    leaderStudentId: '',
-    leaderMajor: '',
-    leaderYear: '',
+    leaderInstitution: '', // Asal Sekolah (SMA) / Asal Institusi (Mahasiswa)
+    leaderDomicile: '', // Domisili (SMA)
+    leaderStudentId: '', // NRP/NIM (Mahasiswa)
+    leaderMajor: '', // Jurusan (Mahasiswa)
+    leaderGrade: '10' as '10' | '11' | '12', // Kelas (SMA)
+    leaderYear: '', // Angkatan (Mahasiswa)
     leaderWhatsapp: '',
     leaderEmail: '',
+    leaderCardFileName: '', // KTM / Kartu Pelajar (Max 3MB)
+    leaderCardFileUrl: '',
 
     // Section 3: Data Anggota Tim (Anggota 1 to 4 max)
     members: [
-      { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
-      { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
-      { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
-      { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
+      { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
+      { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
+      { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
+      { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
     ] as MemberFields[],
 
     // Section 4: Upload Persyaratan Umum
-    studentStatusFileName: '',
-    studentStatusFileUrl: '',
-    twibbonPosterFileName: '',
-    twibbonPosterFileUrl: '',
+    igStoryFileName: '',
+    igStoryFileUrl: '',
+    twibbonFileName: '',
+    twibbonFileUrl: '',
     igFollowFileName: '',
     igFollowFileUrl: '',
 
@@ -71,13 +79,14 @@ export const RegistCompetition: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isSMA = form.educationCategory === 'SMA/Sederajat';
+
   // Non-leader members count = parseInt(teamSize) - 1
   const nonLeaderCount = Math.max(0, parseInt(form.teamSize, 10) - 1);
 
   const updateField = (field: string, val: any) => {
     setForm(prev => {
       const updated = { ...prev, [field]: val };
-      // Auto-detect Mahasiswa if BCC is chosen
       if (field === 'competitionType' && val === 'BCC') {
         updated.educationCategory = 'Mahasiswa';
       }
@@ -100,14 +109,29 @@ export const RegistCompetition: React.FC = () => {
     }
   };
 
-  // Helper for File Inputs
+  // Helper for File Inputs with Size Validation
   const handleFileSelect = (
     e: React.ChangeEvent<HTMLInputElement>,
-    onSuccess: (fileName: string, fileUrl: string) => void
+    maxSizeMb: number,
+    onSuccess: (fileName: string, fileUrl: string) => void,
+    errKey?: string
   ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const maxSizeBytes = maxSizeMb * 1024 * 1024;
+      if (file.size > maxSizeBytes) {
+        const msg = `Ukuran berkas melebihi batas maksimal ${maxSizeMb}MB (${(file.size / (1024 * 1024)).toFixed(1)}MB)`;
+        if (errKey) {
+          setErrors(prev => ({ ...prev, [errKey]: msg }));
+        } else {
+          alert(msg);
+        }
+        return;
+      }
       const fakeUrl = URL.createObjectURL(file);
+      if (errKey && errors[errKey]) {
+        setErrors(prev => ({ ...prev, [errKey]: '' }));
+      }
       onSuccess(file.name, fakeUrl);
     }
   };
@@ -129,16 +153,28 @@ export const RegistCompetition: React.FC = () => {
     const errs: Record<string, string> = {};
     if (!form.teamName.trim()) errs.teamName = 'Nama Tim wajib diisi';
     if (!form.leaderFullName.trim()) errs.leaderFullName = 'Nama Lengkap Ketua wajib diisi';
-    if (!form.leaderInstitution.trim()) errs.leaderInstitution = 'Asal Institusi wajib diisi';
-    if (!form.leaderStudentId.trim()) errs.leaderStudentId = 'NRP/NIM wajib diisi';
-    if (!form.leaderMajor.trim()) errs.leaderMajor = 'Jurusan wajib diisi';
-    if (!form.leaderYear.trim()) errs.leaderYear = 'Angkatan wajib diisi';
+    if (!form.leaderInstitution.trim()) errs.leaderInstitution = isSMA ? 'Asal Sekolah wajib diisi' : 'Asal Institusi wajib diisi';
+    
+    if (isSMA) {
+      if (!form.leaderDomicile.trim()) errs.leaderDomicile = 'Domisili wajib diisi';
+      if (!form.leaderGrade) errs.leaderGrade = 'Kelas wajib dipilih';
+    } else {
+      if (!form.leaderStudentId.trim()) errs.leaderStudentId = 'NRP/NIM wajib diisi';
+      if (!form.leaderMajor.trim()) errs.leaderMajor = 'Jurusan wajib diisi';
+      if (!form.leaderYear.trim()) errs.leaderYear = 'Angkatan wajib diisi';
+    }
+
     if (!form.leaderWhatsapp.trim()) errs.leaderWhatsapp = 'Nomor WhatsApp wajib diisi';
     if (!form.leaderEmail.trim()) {
       errs.leaderEmail = 'Email wajib diisi';
     } else if (!/\S+@\S+\.\S+/.test(form.leaderEmail)) {
       errs.leaderEmail = 'Format email tidak valid';
     }
+
+    if (!form.leaderCardFileName) {
+      errs.leaderCardFileName = isSMA ? 'Wajib mengunggah Kartu Pelajar Ketua Tim (Maks 3MB)' : 'Wajib mengunggah KTM Ketua Tim (Maks 3MB)';
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -148,15 +184,26 @@ export const RegistCompetition: React.FC = () => {
     for (let i = 0; i < nonLeaderCount; i++) {
       const m = form.members[i];
       if (!m.fullName.trim()) errs[`member_${i}_fullName`] = `Nama Lengkap Anggota ${i + 1} wajib diisi`;
-      if (!m.institution.trim()) errs[`member_${i}_institution`] = `Asal Institusi Anggota ${i + 1} wajib diisi`;
-      if (!m.studentId.trim()) errs[`member_${i}_studentId`] = `NRP/NIM Anggota ${i + 1} wajib diisi`;
-      if (!m.major.trim()) errs[`member_${i}_major`] = `Jurusan Anggota ${i + 1} wajib diisi`;
-      if (!m.year.trim()) errs[`member_${i}_year`] = `Angkatan Anggota ${i + 1} wajib diisi`;
+      if (!m.institution.trim()) errs[`member_${i}_institution`] = isSMA ? `Asal Sekolah Anggota ${i + 1} wajib diisi` : `Asal Institusi Anggota ${i + 1} wajib diisi`;
+      
+      if (isSMA) {
+        if (!m.domicile.trim()) errs[`member_${i}_domicile`] = `Domisili Anggota ${i + 1} wajib diisi`;
+        if (!m.grade) errs[`member_${i}_grade`] = `Kelas Anggota ${i + 1} wajib dipilih`;
+      } else {
+        if (!m.studentId.trim()) errs[`member_${i}_studentId`] = `NRP/NIM Anggota ${i + 1} wajib diisi`;
+        if (!m.major.trim()) errs[`member_${i}_major`] = `Jurusan Anggota ${i + 1} wajib diisi`;
+        if (!m.year.trim()) errs[`member_${i}_year`] = `Angkatan Anggota ${i + 1} wajib diisi`;
+      }
+
       if (!m.whatsapp.trim()) errs[`member_${i}_whatsapp`] = `Nomor WhatsApp Anggota ${i + 1} wajib diisi`;
       if (!m.email.trim()) {
         errs[`member_${i}_email`] = `Email Anggota ${i + 1} wajib diisi`;
       } else if (!/\S+@\S+\.\S+/.test(m.email)) {
         errs[`member_${i}_email`] = `Format email Anggota ${i + 1} tidak valid`;
+      }
+
+      if (!m.cardFileName) {
+        errs[`member_${i}_cardFileName`] = isSMA ? `Wajib upload Kartu Pelajar Anggota ${i + 1} (Maks 3MB)` : `Wajib upload KTM Anggota ${i + 1} (Maks 3MB)`;
       }
     }
     setErrors(errs);
@@ -165,14 +212,14 @@ export const RegistCompetition: React.FC = () => {
 
   const validateStep4 = () => {
     const errs: Record<string, string> = {};
-    if (!form.studentStatusFileName) {
-      errs.studentStatusFileName = 'Wajib mengunggah Bukti Status Mahasiswa / Pelajar';
+    if (!form.igStoryFileName) {
+      errs.igStoryFileName = 'Wajib upload Bukti Upload Poster TSF 2026 di Instagram Story (Maks 5MB PDF)';
     }
-    if (!form.twibbonPosterFileName) {
-      errs.twibbonPosterFileName = 'Wajib mengunggah Bukti Upload Twibbon & Poster TDC Summit Fest 2026';
+    if (!form.twibbonFileName) {
+      errs.twibbonFileName = 'Wajib upload Bukti Upload Twibbon TSF 2026 di Feeds Instagram (Maks 5MB PDF)';
     }
     if (!form.igFollowFileName) {
-      errs.igFollowFileName = 'Wajib mengunggah Bukti Follow @tdcsummitfest_its';
+      errs.igFollowFileName = 'Wajib upload Bukti Follow Instagram @tdcsummitfest_its dan @tdcits (Maks 5MB PDF)';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -187,7 +234,7 @@ export const RegistCompetition: React.FC = () => {
       errs.agreeGuidebook = 'Anda harus menyetujui bahwa Anda telah membaca guidebook';
     }
     if (!form.agreeRangkaian) {
-      errs.agreeRangkaian = 'Anda harus menyatakan bersedia mengikuti seluruh rangkaian acara';
+      errs.agreeRangkaian = 'Anda harus menyatakan bersedia mengikuti seluruh rangkaian TDC Summit Fest 2026';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -208,8 +255,8 @@ export const RegistCompetition: React.FC = () => {
         contact: form.leaderWhatsapp,
         email: form.leaderEmail,
         category_id: `${form.competitionType} - ${form.educationCategory}`,
-        payment_proof_url: form.studentStatusFileUrl || form.studentStatusFileName || 'Bukti_Status_Mahasiswa',
-        file_url: form.twibbonPosterFileUrl || form.twibbonPosterFileName || 'Bukti_Persyaratan'
+        payment_proof_url: form.leaderCardFileUrl || form.leaderCardFileName || 'Bukti_Identitas_Ketua',
+        file_url: form.igStoryFileUrl || form.igStoryFileName || 'Bukti_Persyaratan'
       });
 
       setIsSubmitting(false);
@@ -767,7 +814,7 @@ export const RegistCompetition: React.FC = () => {
                 <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-4">
                   <h4 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2 border-b border-blue-sail/20 pb-2">
                     <Icon name="Crown" size={18} className="text-decor" />
-                    <span>SECTION 2 — DATA KETUA TIM</span>
+                    <span>SECTION 2 — DATA KETUA TIM ({form.educationCategory})</span>
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -785,61 +832,112 @@ export const RegistCompetition: React.FC = () => {
                       {errors.leaderFullName && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderFullName}</p>}
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Asal Institusi *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.leaderInstitution}
-                        onChange={e => updateField('leaderInstitution', e.target.value)}
-                        placeholder="SMA / Universitas"
-                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                      />
-                      {errors.leaderInstitution && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderInstitution}</p>}
-                    </div>
+                    {/* SMA vs Mahasiswa specific fields */}
+                    {isSMA ? (
+                      <>
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Asal Sekolah *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.leaderInstitution}
+                            onChange={e => updateField('leaderInstitution', e.target.value)}
+                            placeholder="SMA / SMK / MA Sederajat"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors.leaderInstitution && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderInstitution}</p>}
+                        </div>
 
-                    <div>
-                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        NRP / NIM / NISN *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.leaderStudentId}
-                        onChange={e => updateField('leaderStudentId', e.target.value)}
-                        placeholder="NRP / NIM / Kartu Pelajar"
-                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                      />
-                      {errors.leaderStudentId && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderStudentId}</p>}
-                    </div>
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Domisili *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.leaderDomicile}
+                            onChange={e => updateField('leaderDomicile', e.target.value)}
+                            placeholder="Kota / Daerah asal"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors.leaderDomicile && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderDomicile}</p>}
+                        </div>
 
-                    <div>
-                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Jurusan *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.leaderMajor}
-                        onChange={e => updateField('leaderMajor', e.target.value)}
-                        placeholder="Jurusan / Program Studi"
-                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                      />
-                      {errors.leaderMajor && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderMajor}</p>}
-                    </div>
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Kelas *
+                          </label>
+                          <select
+                            value={form.leaderGrade}
+                            onChange={e => updateField('leaderGrade', e.target.value)}
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none font-bold"
+                          >
+                            <option value="10">Kelas 10</option>
+                            <option value="11">Kelas 11</option>
+                            <option value="12">Kelas 12</option>
+                          </select>
+                          {errors.leaderGrade && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderGrade}</p>}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Asal Institusi *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.leaderInstitution}
+                            onChange={e => updateField('leaderInstitution', e.target.value)}
+                            placeholder="Universitas / Perguruan Tinggi"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors.leaderInstitution && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderInstitution}</p>}
+                        </div>
 
-                    <div>
-                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Angkatan *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.leaderYear}
-                        onChange={e => updateField('leaderYear', e.target.value)}
-                        placeholder="Contoh: 2023 / Kelas 11"
-                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                      />
-                      {errors.leaderYear && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderYear}</p>}
-                    </div>
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            NRP / NIM *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.leaderStudentId}
+                            onChange={e => updateField('leaderStudentId', e.target.value)}
+                            placeholder="NRP / NIM mahasiswa"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors.leaderStudentId && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderStudentId}</p>}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Jurusan *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.leaderMajor}
+                            onChange={e => updateField('leaderMajor', e.target.value)}
+                            placeholder="Program Studi / Jurusan"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors.leaderMajor && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderMajor}</p>}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Angkatan *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.leaderYear}
+                            onChange={e => updateField('leaderYear', e.target.value)}
+                            placeholder="Contoh: 2023"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors.leaderYear && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderYear}</p>}
+                        </div>
+                      </>
+                    )}
 
                     <div>
                       <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
@@ -868,6 +966,37 @@ export const RegistCompetition: React.FC = () => {
                       />
                       {errors.leaderEmail && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderEmail}</p>}
                     </div>
+
+                    {/* Upload KTM / Kartu Pelajar (Max 3MB) */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                        {isSMA ? 'Upload Kartu Pelajar Ketua Tim * (Maksimal 3MB)' : 'Upload KTM (Kartu Tanda Mahasiswa) Ketua Tim * (Maksimal 3MB)'}
+                      </label>
+                      <div className="border-2 border-dashed border-blue-sail/40 p-4 bg-white text-center cursor-pointer hover:border-decor transition-colors">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={e => handleFileSelect(e, 3, (fName, fUrl) => {
+                            updateField('leaderCardFileName', fName);
+                            updateField('leaderCardFileUrl', fUrl);
+                          }, 'leaderCardFileName')}
+                          className="hidden"
+                          id="leader-card-file"
+                        />
+                        <label htmlFor="leader-card-file" className="cursor-pointer flex flex-col items-center gap-1.5">
+                          <Icon name="UploadCloud" size={24} className="text-red-inferno" />
+                          <span className="text-xs font-display font-bold text-blue-sail uppercase flex items-center gap-1.5">
+                            {form.leaderCardFileName ? (
+                              <><Icon name="CheckCircle" size={14} className="text-emerald-600" /> TERPILIH: {form.leaderCardFileName}</>
+                            ) : (
+                              isSMA ? 'Klik untuk Unggah Kartu Pelajar (pdf/jpg/png, Maks 3MB)' : 'Klik untuk Unggah KTM (pdf/jpg/png, Maks 3MB)'
+                            )}
+                          </span>
+                        </label>
+                      </div>
+                      {errors.leaderCardFileName && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderCardFileName}</p>}
+                    </div>
+
                   </div>
                 </div>
 
@@ -907,7 +1036,7 @@ export const RegistCompetition: React.FC = () => {
                     SECTION 3 — DATA ANGGOTA TIM ({nonLeaderCount} ANGGOTA)
                   </h3>
                   <p className="text-xs text-blue-sail/70 font-sans mt-1">
-                    Isi data lengkap untuk {nonLeaderCount} anggota tim selain Ketua sesuai jumlah anggota yang dipilih.
+                    Isi data lengkap untuk {nonLeaderCount} anggota tim selain Ketua sesuai jenjang <strong>{form.educationCategory}</strong>.
                   </p>
                 </div>
 
@@ -916,7 +1045,7 @@ export const RegistCompetition: React.FC = () => {
                     <div key={idx} className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-4">
                       <h4 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2 border-b border-blue-sail/20 pb-2">
                         <Icon name="User" size={16} className="text-red-inferno" />
-                        <span>ANGGOTA TIM {idx + 1}</span>
+                        <span>ANGGOTA TIM {idx + 1} ({form.educationCategory})</span>
                       </h4>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -936,69 +1065,126 @@ export const RegistCompetition: React.FC = () => {
                           )}
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                            Asal Institusi *
-                          </label>
-                          <input
-                            type="text"
-                            value={form.members[idx]?.institution || ''}
-                            onChange={e => updateMember(idx, 'institution', e.target.value)}
-                            placeholder="SMA / Universitas"
-                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                          />
-                          {errors[`member_${idx}_institution`] && (
-                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_institution`]}</p>
-                          )}
-                        </div>
+                        {/* SMA vs Mahasiswa specific fields */}
+                        {isSMA ? (
+                          <>
+                            <div>
+                              <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                                Asal Sekolah *
+                              </label>
+                              <input
+                                type="text"
+                                value={form.members[idx]?.institution || ''}
+                                onChange={e => updateMember(idx, 'institution', e.target.value)}
+                                placeholder="SMA / SMK / MA Sederajat"
+                                className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                              />
+                              {errors[`member_${idx}_institution`] && (
+                                <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_institution`]}</p>
+                              )}
+                            </div>
 
-                        <div>
-                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                            NRP / NIM / NISN *
-                          </label>
-                          <input
-                            type="text"
-                            value={form.members[idx]?.studentId || ''}
-                            onChange={e => updateMember(idx, 'studentId', e.target.value)}
-                            placeholder="NRP / NIM / Kartu Pelajar"
-                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                          />
-                          {errors[`member_${idx}_studentId`] && (
-                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_studentId`]}</p>
-                          )}
-                        </div>
+                            <div>
+                              <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                                Domisili *
+                              </label>
+                              <input
+                                type="text"
+                                value={form.members[idx]?.domicile || ''}
+                                onChange={e => updateMember(idx, 'domicile', e.target.value)}
+                                placeholder="Kota / Daerah asal"
+                                className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                              />
+                              {errors[`member_${idx}_domicile`] && (
+                                <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_domicile`]}</p>
+                              )}
+                            </div>
 
-                        <div>
-                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                            Jurusan *
-                          </label>
-                          <input
-                            type="text"
-                            value={form.members[idx]?.major || ''}
-                            onChange={e => updateMember(idx, 'major', e.target.value)}
-                            placeholder="Jurusan / Program Studi"
-                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                          />
-                          {errors[`member_${idx}_major`] && (
-                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_major`]}</p>
-                          )}
-                        </div>
+                            <div>
+                              <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                                Kelas *
+                              </label>
+                              <select
+                                value={form.members[idx]?.grade || '10'}
+                                onChange={e => updateMember(idx, 'grade', e.target.value)}
+                                className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none font-bold"
+                              >
+                                <option value="10">Kelas 10</option>
+                                <option value="11">Kelas 11</option>
+                                <option value="12">Kelas 12</option>
+                              </select>
+                              {errors[`member_${idx}_grade`] && (
+                                <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_grade`]}</p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                                Asal Institusi *
+                              </label>
+                              <input
+                                type="text"
+                                value={form.members[idx]?.institution || ''}
+                                onChange={e => updateMember(idx, 'institution', e.target.value)}
+                                placeholder="Universitas / Perguruan Tinggi"
+                                className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                              />
+                              {errors[`member_${idx}_institution`] && (
+                                <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_institution`]}</p>
+                              )}
+                            </div>
 
-                        <div>
-                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                            Angkatan *
-                          </label>
-                          <input
-                            type="text"
-                            value={form.members[idx]?.year || ''}
-                            onChange={e => updateMember(idx, 'year', e.target.value)}
-                            placeholder="Contoh: 2023 / Kelas 11"
-                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                          />
-                          {errors[`member_${idx}_year`] && (
-                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_year`]}</p>
-                          )}
-                        </div>
+                            <div>
+                              <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                                NRP / NIM *
+                              </label>
+                              <input
+                                type="text"
+                                value={form.members[idx]?.studentId || ''}
+                                onChange={e => updateMember(idx, 'studentId', e.target.value)}
+                                placeholder="NRP / NIM"
+                                className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                              />
+                              {errors[`member_${idx}_studentId`] && (
+                                <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_studentId`]}</p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                                Jurusan *
+                              </label>
+                              <input
+                                type="text"
+                                value={form.members[idx]?.major || ''}
+                                onChange={e => updateMember(idx, 'major', e.target.value)}
+                                placeholder="Program Studi / Jurusan"
+                                className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                              />
+                              {errors[`member_${idx}_major`] && (
+                                <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_major`]}</p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                                Angkatan *
+                              </label>
+                              <input
+                                type="text"
+                                value={form.members[idx]?.year || ''}
+                                onChange={e => updateMember(idx, 'year', e.target.value)}
+                                placeholder="Contoh: 2023"
+                                className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                              />
+                              {errors[`member_${idx}_year`] && (
+                                <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_year`]}</p>
+                              )}
+                            </div>
+                          </>
+                        )}
 
                         <div>
                           <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
@@ -1031,6 +1217,39 @@ export const RegistCompetition: React.FC = () => {
                             <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_email`]}</p>
                           )}
                         </div>
+
+                        {/* Upload KTM / Kartu Pelajar for Member (Max 3MB) */}
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            {isSMA ? `Upload Kartu Pelajar Anggota ${idx + 1} * (Maksimal 3MB)` : `Upload KTM (Kartu Tanda Mahasiswa) Anggota ${idx + 1} * (Maksimal 3MB)`}
+                          </label>
+                          <div className="border-2 border-dashed border-blue-sail/40 p-3 bg-white text-center cursor-pointer hover:border-decor transition-colors">
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={e => handleFileSelect(e, 3, (fName, fUrl) => {
+                                updateMember(idx, 'cardFileName', fName);
+                                updateMember(idx, 'cardFileUrl', fUrl);
+                              }, `member_${idx}_cardFileName`)}
+                              className="hidden"
+                              id={`member-card-file-${idx}`}
+                            />
+                            <label htmlFor={`member-card-file-${idx}`} className="cursor-pointer flex items-center justify-center gap-2">
+                              <Icon name="UploadCloud" size={18} className="text-blue-sail" />
+                              <span className="text-xs font-display font-bold text-blue-sail uppercase truncate">
+                                {form.members[idx]?.cardFileName ? (
+                                  `✓ TERPILIH: ${form.members[idx].cardFileName}`
+                                ) : (
+                                  isSMA ? 'Unggah Kartu Pelajar (pdf/jpg/png, Maks 3MB)' : 'Unggah KTM (pdf/jpg/png, Maks 3MB)'
+                                )}
+                              </span>
+                            </label>
+                          </div>
+                          {errors[`member_${idx}_cardFileName`] && (
+                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_cardFileName`]}</p>
+                          )}
+                        </div>
+
                       </div>
                     </div>
                   ))}
@@ -1072,94 +1291,123 @@ export const RegistCompetition: React.FC = () => {
                     SECTION 4 — UPLOAD PERSYARATAN UMUM
                   </h3>
                   <p className="text-xs text-blue-sail/70 font-sans mt-1">
-                    Unggah seluruh dokumen bukti persyaratan umum pendaftaran.
+                    Unggah berkas bukti persyaratan media sosial resmi TSF 2026.
                   </p>
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-6">
                   
-                  {/* Document 1: Bukti Status Mahasiswa / Pelajar */}
+                  {/* Task 1: IG Story Poster (Max 5MB PDF) */}
                   <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-3">
-                    <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">DOKUMEN 01</span>
+                    <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">SYARAT 01</span>
                     <h4 className="font-display font-black text-sm uppercase text-blue-sail">
-                      Bukti Status Mahasiswa / Kartu Pelajar *
+                      Bukti Upload Poster TSF 2026 di Instagram Story *
                     </h4>
                     <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
-                      Unggah Kartu Tanda Mahasiswa (KTM) / Kartu Pelajar / Surat Keterangan Aktif untuk seluruh anggota tim.
+                      Bukti upload poster TSF 2026 di story akun pribadi utama Instagram masing-masing anggota dengan tag instagram <strong>@tdcsummitfest_its</strong> dan <strong>@tdcits</strong>.
                     </p>
+                    
+                    <div className="bg-decor/30 text-blue-sail p-3 border border-blue-sail/30 flex items-center justify-between text-xs font-display font-bold">
+                      <span>Poster dapat diakses di:</span>
+                      <span className="bg-blue-sail text-decor px-2.5 py-1 text-[10px] uppercase border border-blue-sail">
+                        LINK MENYUSUL
+                      </span>
+                    </div>
 
-                    <div className="bg-white border border-blue-sail/20 p-3">
+                    <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2">
+                      <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
+                        <Icon name="AlertCircle" size={14} />
+                        <span>Akun tidak boleh private dan SS digabung menjadi 1 file PDF (Maksimal 5MB).</span>
+                      </p>
+                      
                       <input
                         type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={e => handleFileSelect(e, (fName, fUrl) => {
-                          updateField('studentStatusFileName', fName);
-                          updateField('studentStatusFileUrl', fUrl);
-                        })}
+                        accept=".pdf"
+                        onChange={e => handleFileSelect(e, 5, (fName, fUrl) => {
+                          updateField('igStoryFileName', fName);
+                          updateField('igStoryFileUrl', fUrl);
+                        }, 'igStoryFileName')}
                         className="hidden"
-                        id="student-status-file"
+                        id="ig-story-pdf"
                       />
-                      <label htmlFor="student-status-file" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
-                        <Icon name="UploadCloud" size={16} />
-                        <span>{form.studentStatusFileName ? `✓ ${form.studentStatusFileName}` : 'Upload Bukti Status (pdf/jpg/png)'}</span>
+                      <label htmlFor="ig-story-pdf" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2.5 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
+                        <Icon name="FileText" size={16} />
+                        <span>{form.igStoryFileName ? `✓ ${form.igStoryFileName}` : 'Upload PDF Story (Maks 5MB)'}</span>
                       </label>
                     </div>
-                    {errors.studentStatusFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.studentStatusFileName}</p>}
+                    {errors.igStoryFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.igStoryFileName}</p>}
                   </div>
 
-                  {/* Document 2: Bukti Upload Twibbon dan Poster TSF 2026 */}
+                  {/* Task 2: Twibbon IG Feeds (Max 5MB PDF) */}
                   <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-3">
-                    <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">DOKUMEN 02</span>
+                    <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">SYARAT 02</span>
                     <h4 className="font-display font-black text-sm uppercase text-blue-sail">
-                      Bukti Upload Twibbon dan Poster TDC Summit Fest 2026 *
+                      Bukti Upload Twibbon TSF 2026 di Feeds Instagram *
                     </h4>
                     <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
-                      Screenshot bukti unggah twibbon dan poster TSF 2026 di media sosial utama anggota tim.
+                      Bukti upload feeds twibbon TSF 2026 melalui feeds akun pribadi utama Instagram masing-masing anggota dengan tag instagram <strong>@tdcsummitfest_its</strong> dan <strong>@tdcits</strong>.
                     </p>
 
-                    <div className="bg-white border border-blue-sail/20 p-3">
+                    <div className="bg-decor/30 text-blue-sail p-3 border border-blue-sail/30 flex items-center justify-between text-xs font-display font-bold">
+                      <span>Twibbon dan caption dapat diakses di:</span>
+                      <span className="bg-blue-sail text-decor px-2.5 py-1 text-[10px] uppercase border border-blue-sail">
+                        LINK BELUM
+                      </span>
+                    </div>
+
+                    <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2">
+                      <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
+                        <Icon name="AlertCircle" size={14} />
+                        <span>Akun tidak boleh private dan SS digabung menjadi 1 file PDF (Maksimal 5MB).</span>
+                      </p>
+
                       <input
                         type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={e => handleFileSelect(e, (fName, fUrl) => {
-                          updateField('twibbonPosterFileName', fName);
-                          updateField('twibbonPosterFileUrl', fUrl);
-                        })}
+                        accept=".pdf"
+                        onChange={e => handleFileSelect(e, 5, (fName, fUrl) => {
+                          updateField('twibbonFileName', fName);
+                          updateField('twibbonFileUrl', fUrl);
+                        }, 'twibbonFileName')}
                         className="hidden"
-                        id="twibbon-poster-file"
+                        id="twibbon-pdf"
                       />
-                      <label htmlFor="twibbon-poster-file" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
-                        <Icon name="UploadCloud" size={16} />
-                        <span>{form.twibbonPosterFileName ? `✓ ${form.twibbonPosterFileName}` : 'Upload Bukti Twibbon & Poster'}</span>
+                      <label htmlFor="twibbon-pdf" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2.5 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
+                        <Icon name="FileText" size={16} />
+                        <span>{form.twibbonFileName ? `✓ ${form.twibbonFileName}` : 'Upload PDF Twibbon (Maks 5MB)'}</span>
                       </label>
                     </div>
-                    {errors.twibbonPosterFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.twibbonPosterFileName}</p>}
+                    {errors.twibbonFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.twibbonFileName}</p>}
                   </div>
 
-                  {/* Document 3: Bukti Follow @tdcsummitfest_its */}
+                  {/* Task 3: Follow IG (Max 5MB PDF) */}
                   <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-3">
-                    <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">DOKUMEN 03</span>
+                    <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">SYARAT 03</span>
                     <h4 className="font-display font-black text-sm uppercase text-blue-sail">
-                      Bukti Follow @tdcsummitfest_its *
+                      Bukti follow akun Instagram @tdcsummitfest_its dan @tdcits *
                     </h4>
                     <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
-                      Screenshot bukti follow akun Instagram resmi <strong>@tdcsummitfest_its</strong> untuk seluruh anggota tim.
+                      Screenshot bukti follow akun Instagram resmi <strong>@tdcsummitfest_its</strong> dan <strong>@tdcits</strong> untuk seluruh anggota tim.
                     </p>
 
-                    <div className="bg-white border border-blue-sail/20 p-3">
+                    <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2">
+                      <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
+                        <Icon name="AlertCircle" size={14} />
+                        <span>SS digabung menjadi 1 file PDF (Maksimal 5MB).</span>
+                      </p>
+
                       <input
                         type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={e => handleFileSelect(e, (fName, fUrl) => {
+                        accept=".pdf"
+                        onChange={e => handleFileSelect(e, 5, (fName, fUrl) => {
                           updateField('igFollowFileName', fName);
                           updateField('igFollowFileUrl', fUrl);
-                        })}
+                        }, 'igFollowFileName')}
                         className="hidden"
-                        id="ig-follow-file"
+                        id="ig-follow-pdf"
                       />
-                      <label htmlFor="ig-follow-file" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
-                        <Icon name="UploadCloud" size={16} />
-                        <span>{form.igFollowFileName ? `✓ ${form.igFollowFileName}` : 'Upload Bukti Follow IG'}</span>
+                      <label htmlFor="ig-follow-pdf" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2.5 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
+                        <Icon name="FileText" size={16} />
+                        <span>{form.igFollowFileName ? `✓ ${form.igFollowFileName}` : 'Upload PDF Follow IG (Maks 5MB)'}</span>
                       </label>
                     </div>
                     {errors.igFollowFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.igFollowFileName}</p>}
@@ -1344,21 +1592,25 @@ export const RegistCompetition: React.FC = () => {
                         teamSize: '3',
                         leaderFullName: '',
                         leaderInstitution: '',
+                        leaderDomicile: '',
                         leaderStudentId: '',
                         leaderMajor: '',
+                        leaderGrade: '10',
                         leaderYear: '',
                         leaderWhatsapp: '',
                         leaderEmail: '',
+                        leaderCardFileName: '',
+                        leaderCardFileUrl: '',
                         members: [
-                          { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
-                          { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
-                          { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
-                          { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
+                          { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
+                          { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
+                          { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
+                          { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
                         ],
-                        studentStatusFileName: '',
-                        studentStatusFileUrl: '',
-                        twibbonPosterFileName: '',
-                        twibbonPosterFileUrl: '',
+                        igStoryFileName: '',
+                        igStoryFileUrl: '',
+                        twibbonFileName: '',
+                        twibbonFileUrl: '',
                         igFollowFileName: '',
                         igFollowFileUrl: '',
                         agreeDataTrue: false,
