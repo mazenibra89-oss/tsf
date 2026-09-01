@@ -405,10 +405,9 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
     const thriftProducts = await db('thrift_products').orderBy('id', 'desc');
     const thriftVendors = await db('thrift_vendors').orderBy('id', 'asc');
     const vendorApplications = await db('vendor_applications').orderBy('submitted_at', 'desc');
-    const qConfig = await db('form_questions_config').where({ id: 'main_config' }).first();
-
-    // Map jsonb columns back to object/array types if returned as string (though pg parses JSONB)
-    const parseJson = (val: any) => typeof val === 'string' ? JSON.parse(val) : val;
+    const users = (await db.schema.hasTable('users'))
+      ? await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc')
+      : [];
 
     res.json({
       phases,
@@ -436,6 +435,7 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
       thriftProducts: thriftProducts.map(p => ({ ...p, price: Number(p.price) })),
       thriftVendors,
       vendorApplications,
+      users,
       formQuestions: qConfig ? parseJson(qConfig.config) : undefined
     });
   } catch (err) {
@@ -1313,7 +1313,7 @@ app.post('/api/competitions/submit-preliminary', async (req: Request, res: Respo
 });
 
 // Admin: Get All Registered User Accounts
-app.get('/api/admin/users', authenticateToken, async (_req: Request, res: Response): Promise<void> => {
+app.get('/api/admin/users', async (_req: Request, res: Response): Promise<void> => {
   try {
     const users = await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc');
     res.json(users);

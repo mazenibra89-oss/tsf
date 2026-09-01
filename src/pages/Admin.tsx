@@ -182,25 +182,30 @@ export const Admin: React.FC = () => {
     formQuestions,
     updateFormQuestions,
     resetToDefault,
+    adminUsers,
     fetchAdminUsers,
     updateCompetitionRegistrationStatus
   } = useApp();
 
   const [adminUsersList, setAdminUsersList] = useState<import('../types').User[]>([]);
-
-  useEffect(() => {
-    refreshState();
-    fetchAdminUsers().then(res => {
-      if (res) setAdminUsersList(res);
-    });
-  }, []);
-
-  // Login states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [adminAccounts, setAdminAccounts] = useState<{username: string}[]>([]);
+
+  useEffect(() => {
+    refreshState();
+    fetchAdminUsers().then(res => {
+      if (res && res.length > 0) setAdminUsersList(res);
+    });
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (adminUsers && adminUsers.length > 0) {
+      setAdminUsersList(adminUsers);
+    }
+  }, [adminUsers]);
 
   useEffect(() => {
     const token = localStorage.getItem('tsf_admin_token');

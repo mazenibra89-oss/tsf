@@ -862,6 +862,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('tsf_user_token', token);
     localStorage.setItem('tsf_user_data', JSON.stringify(userObj));
     await fetchMyTeam(userObj);
+    await fetchAdminUsers();
   };
 
   const loginUser = async (email: string, password: string) => {
@@ -988,6 +989,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res.ok) {
         const data = await res.json();
         setState(data);
+        if (Array.isArray(data.users)) {
+          setAdminUsers(data.users);
+        }
       }
     } catch (err) {
       console.error('Failed to load state from backend:', err);
