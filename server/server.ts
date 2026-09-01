@@ -127,29 +127,7 @@ async function initDatabase() {
     }
 
     // Auto update competition_registrations table if missing new columns
-    if (await db.schema.hasTable('competition_registrations')) {
-      const hasUserId = await db.schema.hasColumn('competition_registrations', 'user_id');
-      if (!hasUserId) {
-        await db.schema.alterTable('competition_registrations', (table) => {
-          table.string('user_id').nullable();
-          table.string('competition_type').nullable();
-          table.string('education_category').nullable();
-          table.string('team_size').nullable();
-          table.text('leader_data').nullable();
-          table.text('members_data').nullable();
-          table.text('ig_story_file_url').nullable();
-          table.text('twibbon_file_url').nullable();
-          table.text('ig_follow_file_url').nullable();
-          table.string('status_stage').notNullable().defaultTo('preliminary');
-          table.string('status_preliminary').notNullable().defaultTo('pending');
-          table.text('preliminary_file_url').nullable();
-          table.string('preliminary_file_name').nullable();
-          table.string('preliminary_file_type').nullable();
-          table.timestamp('preliminary_submitted_at').nullable();
-        });
-        console.log('Updated competition_registrations table schema.');
-      }
-    }
+    await ensureCompetitionColumns();
 
     // Auto update p-1 phase to ambassador_recruitment and active status
     if (await db.schema.hasTable('event_phases')) {
@@ -227,6 +205,51 @@ async function ensureUsersTable() {
     }
   } catch (e) {
     console.error('ensureUsersTable warning:', e);
+  }
+}
+
+// Helper to guarantee all columns (including user_id) exist in competition_registrations
+async function ensureCompetitionColumns() {
+  try {
+    const hasTable = await db.schema.hasTable('competition_registrations');
+    if (!hasTable) return;
+
+    const columns: { name: string; type: 'string' | 'text' | 'timestamp'; defaultVal?: string }[] = [
+      { name: 'user_id', type: 'string' },
+      { name: 'competition_type', type: 'string' },
+      { name: 'education_category', type: 'string' },
+      { name: 'team_size', type: 'string' },
+      { name: 'leader_data', type: 'text' },
+      { name: 'members_data', type: 'text' },
+      { name: 'ig_story_file_url', type: 'text' },
+      { name: 'twibbon_file_url', type: 'text' },
+      { name: 'ig_follow_file_url', type: 'text' },
+      { name: 'status_stage', type: 'string', defaultVal: 'preliminary' },
+      { name: 'status_preliminary', type: 'string', defaultVal: 'pending' },
+      { name: 'preliminary_file_url', type: 'text' },
+      { name: 'preliminary_file_name', type: 'string' },
+      { name: 'preliminary_file_type', type: 'string' },
+      { name: 'preliminary_submitted_at', type: 'timestamp' }
+    ];
+
+    for (const col of columns) {
+      const hasCol = await db.schema.hasColumn('competition_registrations', col.name);
+      if (!hasCol) {
+        await db.schema.alterTable('competition_registrations', (table) => {
+          if (col.type === 'string') {
+            const c = table.string(col.name).nullable();
+            if (col.defaultVal) c.defaultTo(col.defaultVal);
+          } else if (col.type === 'text') {
+            table.text(col.name).nullable();
+          } else if (col.type === 'timestamp') {
+            table.timestamp(col.name).nullable();
+          }
+        });
+        console.log(`Added missing column ${col.name} to competition_registrations.`);
+      }
+    }
+  } catch (e) {
+    console.error('ensureCompetitionColumns warning:', e);
   }
 }
 
@@ -1253,6 +1276,7 @@ app.post('/api/competition-registrations', async (req: Request, res: Response): 
   const email = data.email ? String(data.email).toLowerCase().trim() : '';
 
   try {
+    await ensureCompetitionColumns();
     if (userId) {
       const existingByUser = await db('competition_registrations').where({ user_id: userId }).first();
       if (existingByUser) {
@@ -1311,6 +1335,7 @@ app.get('/api/competitions/my-team', async (req: Request, res: Response): Promis
   }
 
   try {
+    await ensureCompetitionColumns();
     let query = db('competition_registrations');
     if (userId) {
       query = query.where({ user_id: userId });

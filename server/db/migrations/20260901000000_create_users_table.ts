@@ -16,25 +16,38 @@ export async function up(knex: Knex): Promise<void> {
 
   const hasCompTable = await knex.schema.hasTable('competition_registrations');
   if (hasCompTable) {
-    const hasUserIdInComp = await knex.schema.hasColumn('competition_registrations', 'user_id');
-    if (!hasUserIdInComp) {
-      await knex.schema.alterTable('competition_registrations', (table) => {
-        table.string('user_id').nullable();
-        table.string('competition_type').nullable();
-        table.string('education_category').nullable();
-        table.string('team_size').nullable();
-        table.text('leader_data').nullable();
-        table.text('members_data').nullable();
-        table.text('ig_story_file_url').nullable();
-        table.text('twibbon_file_url').nullable();
-        table.text('ig_follow_file_url').nullable();
-        table.string('status_stage').notNullable().defaultTo('preliminary');
-        table.string('status_preliminary').notNullable().defaultTo('pending');
-        table.text('preliminary_file_url').nullable();
-        table.string('preliminary_file_name').nullable();
-        table.string('preliminary_file_type').nullable();
-        table.timestamp('preliminary_submitted_at').nullable();
-      });
+    const columns: { name: string; type: 'string' | 'text' | 'timestamp'; defaultVal?: string }[] = [
+      { name: 'user_id', type: 'string' },
+      { name: 'competition_type', type: 'string' },
+      { name: 'education_category', type: 'string' },
+      { name: 'team_size', type: 'string' },
+      { name: 'leader_data', type: 'text' },
+      { name: 'members_data', type: 'text' },
+      { name: 'ig_story_file_url', type: 'text' },
+      { name: 'twibbon_file_url', type: 'text' },
+      { name: 'ig_follow_file_url', type: 'text' },
+      { name: 'status_stage', type: 'string', defaultVal: 'preliminary' },
+      { name: 'status_preliminary', type: 'string', defaultVal: 'pending' },
+      { name: 'preliminary_file_url', type: 'text' },
+      { name: 'preliminary_file_name', type: 'string' },
+      { name: 'preliminary_file_type', type: 'string' },
+      { name: 'preliminary_submitted_at', type: 'timestamp' }
+    ];
+
+    for (const col of columns) {
+      const hasCol = await knex.schema.hasColumn('competition_registrations', col.name);
+      if (!hasCol) {
+        await knex.schema.alterTable('competition_registrations', (table) => {
+          if (col.type === 'string') {
+            const c = table.string(col.name).nullable();
+            if (col.defaultVal) c.defaultTo(col.defaultVal);
+          } else if (col.type === 'text') {
+            table.text(col.name).nullable();
+          } else if (col.type === 'timestamp') {
+            table.timestamp(col.name).nullable();
+          }
+        });
+      }
     }
   }
 }
