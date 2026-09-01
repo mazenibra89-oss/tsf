@@ -390,24 +390,27 @@ app.get('/api/auth/admins', authenticateToken, async (req: Request, res: Respons
 // -------------------------------------------------------------
 app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
   try {
-    const phases = await db('event_phases').orderBy('id', 'asc');
-    const divisions = await db('divisions').orderBy('id', 'asc');
-    const staffApplications = await db('staff_applications').orderBy('submitted_at', 'desc');
+    const phases = (await db.schema.hasTable('event_phases')) ? await db('event_phases').orderBy('id', 'asc') : [];
+    const divisions = (await db.schema.hasTable('divisions')) ? await db('divisions').orderBy('id', 'asc') : [];
+    const staffApplications = (await db.schema.hasTable('staff_applications')) ? await db('staff_applications').orderBy('submitted_at', 'desc') : [];
     const ambassadorApplications = (await db.schema.hasTable('ambassador_applications'))
       ? await db('ambassador_applications').orderBy('submitted_at', 'desc')
       : [];
     const pe1Registrations = (await db.schema.hasTable('pe1_registrations'))
       ? await db('pe1_registrations').orderBy('submitted_at', 'desc')
       : [];
-    const subEvents = await db('sub_events').orderBy('id', 'asc');
-    const competitions = await db('competitions').orderBy('id', 'asc');
-    const competitionRegistrations = await db('competition_registrations').orderBy('submitted_at', 'desc');
-    const thriftProducts = await db('thrift_products').orderBy('id', 'desc');
-    const thriftVendors = await db('thrift_vendors').orderBy('id', 'asc');
-    const vendorApplications = await db('vendor_applications').orderBy('submitted_at', 'desc');
+    const subEvents = (await db.schema.hasTable('sub_events')) ? await db('sub_events').orderBy('id', 'asc') : [];
+    const competitions = (await db.schema.hasTable('competitions')) ? await db('competitions').orderBy('id', 'asc') : [];
+    const competitionRegistrations = (await db.schema.hasTable('competition_registrations')) ? await db('competition_registrations').orderBy('submitted_at', 'desc') : [];
+    const thriftProducts = (await db.schema.hasTable('thrift_products')) ? await db('thrift_products').orderBy('id', 'desc') : [];
+    const thriftVendors = (await db.schema.hasTable('thrift_vendors')) ? await db('thrift_vendors').orderBy('id', 'asc') : [];
+    const vendorApplications = (await db.schema.hasTable('vendor_applications')) ? await db('vendor_applications').orderBy('submitted_at', 'desc') : [];
+    const qConfig = (await db.schema.hasTable('form_questions_config')) ? await db('form_questions_config').where({ id: 'main_config' }).first() : undefined;
     const users = (await db.schema.hasTable('users'))
       ? await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc')
       : [];
+
+    const parseJson = (val: any) => typeof val === 'string' ? JSON.parse(val) : val;
 
     res.json({
       phases,
@@ -439,7 +442,7 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
       formQuestions: qConfig ? parseJson(qConfig.config) : undefined
     });
   } catch (err) {
-    console.error(err);
+    console.error('State retrieval error:', err);
     res.status(500).json({ message: 'Failed to retrieve application state' });
   }
 });
