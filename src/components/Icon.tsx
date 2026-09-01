@@ -74,7 +74,12 @@ import {
   Sprout,
   Inbox,
   Loader2,
-  Share2
+  Share2,
+  Eye,
+  EyeOff,
+  LogIn,
+  LogOut,
+  UserPlus
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -152,7 +157,12 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   Sprout,
   Inbox,
   Loader2,
-  Share2
+  Share2,
+  Eye,
+  EyeOff,
+  LogIn,
+  LogOut,
+  UserPlus
 };
 
 interface IconProps {
@@ -162,6 +172,6 @@ interface IconProps {
 }
 
 export const Icon: React.FC<IconProps> = ({ name, className = '', size }) => {
-  const IconComponent = iconMap[name] || Info; // fallback to Info
+  const IconComponent = iconMap[name] || Info;
   return <IconComponent className={className} size={size} />;
 };

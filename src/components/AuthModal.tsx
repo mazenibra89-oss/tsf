@@ -22,6 +22,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -160,13 +161,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
               Kata Sandi (Password) *
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Masukkan password"
-              className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-3.5 py-2 text-sm font-sans text-blue-sail outline-none"
-            />
+            <div className="relative flex items-center">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Masukkan password"
+                className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor pl-3.5 pr-10 py-2 text-sm font-sans text-blue-sail outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2.5 text-blue-sail/60 hover:text-blue-sail p-1 cursor-pointer"
+                title={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+              >
+                <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={18} />
+              </button>
+            </div>
           </div>
 
           <button

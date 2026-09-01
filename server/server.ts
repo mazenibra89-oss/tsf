@@ -217,10 +217,13 @@ app.post('/api/user/register', async (req: Request, res: Response): Promise<void
     return;
   }
 
+  const cleanEmail = String(email || '').toLowerCase().trim();
+  const cleanName = String(name || '').trim();
+
   try {
-    const existing = await db('users').where({ email: email.toLowerCase() }).first();
+    const existing = await db('users').where({ email: cleanEmail }).first();
     if (existing) {
-      res.status(400).json({ message: 'Email sudah terdaftar. Silakan login.' });
+      res.status(400).json({ message: 'Email ini sudah terdaftar. Silakan gunakan menu Login.' });
       return;
     }
 
@@ -231,8 +234,8 @@ app.post('/api/user/register', async (req: Request, res: Response): Promise<void
     const created_at = new Date().toISOString();
     const newUser = {
       id,
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
+      name: cleanName,
+      email: cleanEmail,
       password_hash,
       auth_provider: 'email',
       created_at
@@ -245,9 +248,9 @@ app.post('/api/user/register', async (req: Request, res: Response): Promise<void
       token,
       user: { id, name: newUser.name, email: newUser.email, auth_provider: 'email', created_at }
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Gagal membuat akun' });
+  } catch (err: any) {
+    console.error('Registration server error:', err);
+    res.status(500).json({ message: err.message || 'Gagal membuat akun' });
   }
 });
 
@@ -259,16 +262,18 @@ app.post('/api/user/login', async (req: Request, res: Response): Promise<void> =
     return;
   }
 
+  const cleanEmail = String(email || '').toLowerCase().trim();
+
   try {
-    const user = await db('users').where({ email: email.toLowerCase() }).first();
+    const user = await db('users').where({ email: cleanEmail }).first();
     if (!user || !user.password_hash) {
-      res.status(401).json({ message: 'Email atau password salah' });
+      res.status(401).json({ message: 'Email atau password yang Anda masukkan salah' });
       return;
     }
 
     const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) {
-      res.status(401).json({ message: 'Email atau password salah' });
+      res.status(401).json({ message: 'Email atau password yang Anda masukkan salah' });
       return;
     }
 
@@ -277,9 +282,9 @@ app.post('/api/user/login', async (req: Request, res: Response): Promise<void> =
       token,
       user: { id: user.id, name: user.name, email: user.email, auth_provider: user.auth_provider, created_at: user.created_at }
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Gagal melakukan login' });
+  } catch (err: any) {
+    console.error('Login server error:', err);
+    res.status(500).json({ message: err.message || 'Gagal melakukan login' });
   }
 });
 
