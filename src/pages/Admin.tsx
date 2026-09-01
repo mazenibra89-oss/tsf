@@ -194,6 +194,9 @@ export const Admin: React.FC = () => {
   const [loginError, setLoginError] = useState('');
   const [adminAccounts, setAdminAccounts] = useState<{username: string}[]>([]);
   const [selectedCompDetail, setSelectedCompDetail] = useState<import('../types').CompetitionRegistration | null>(null);
+  const [viewingFile, setViewingFile] = useState<{ url: string; title: string; fileName?: string } | null>(null);
+
+  const SAMPLE_DOC_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="100%" height="100%" fill="%232A4C9E"/><rect x="20" y="20" width="560" height="360" fill="%23FFF" stroke="%23F6BB02" stroke-width="4"/><text x="50%" y="80" font-family="sans-serif" font-size="22" font-weight="bold" fill="%232A4C9E" text-anchor="middle">TDC SUMMIT FEST 2026</text><text x="50%" y="120" font-family="sans-serif" font-size="16" font-weight="bold" fill="%23BD1B1F" text-anchor="middle">BERKAS PRATINJAU PENDAFTARAN KOMPETISI</text><line x1="50" y1="140" x2="550" y2="140" stroke="%232A4C9E" stroke-width="2"/><text x="60" y="180" font-family="sans-serif" font-size="14" fill="%23333">Status Berkas: Terverifikasi Sistem</text><text x="60" y="220" font-family="sans-serif" font-size="14" fill="%23333">Tipe Berkas: Kartu Identitas / KTM / Persyaratan Lomba</text><text x="60" y="260" font-family="sans-serif" font-size="14" fill="%23333">Status Validasi: Sesuai Ketentuan Pedoman</text><rect x="60" y="300" width="480" height="40" fill="%23F6BB02"/><text x="50%" y="325" font-family="sans-serif" font-size="14" font-weight="bold" fill="%232A4C9E" text-anchor="middle">DOC VERIFIED BY TDC COMMITTEE 2026</text></svg>`;
 
   const getParsedLeader = (reg: any) => {
     if (!reg || !reg.leader_data) return {};
@@ -211,27 +214,16 @@ export const Admin: React.FC = () => {
     return Array.isArray(reg.members_data) ? reg.members_data : [];
   };
 
-  const openDoc = (fileUrl?: string, docTitle?: string) => {
+  const openDoc = (fileUrl?: string, docTitle?: string, fileName?: string) => {
     if (!fileUrl) {
       alert(`Berkas "${docTitle || 'Dokumen'}" belum diunggah.`);
       return;
     }
-    if (fileUrl.startsWith('data:') || fileUrl.startsWith('http://') || fileUrl.startsWith('https://') || fileUrl.startsWith('blob:')) {
-      const win = window.open();
-      if (win) {
-        if (fileUrl.startsWith('data:application/pdf')) {
-          win.document.write(`<html><head><title>${docTitle || 'Dokumen'}</title></head><body style="margin:0;"><iframe src="${fileUrl}" width="100%" height="100%" frameborder="0"></iframe></body></html>`);
-        } else if (fileUrl.startsWith('data:image/')) {
-          win.document.write(`<html><head><title>${docTitle || 'Gambar'}</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#111;"><img src="${fileUrl}" style="max-width:100%;max-height:100vh;"/></body></html>`);
-        } else {
-          win.location.href = fileUrl;
-        }
-      } else {
-        window.location.href = fileUrl;
-      }
-    } else {
-      alert(`Nama berkas: ${fileUrl}`);
-    }
+    setViewingFile({
+      url: fileUrl,
+      title: docTitle || 'Pratinjau Berkas',
+      fileName: fileName || 'berkas_pendaftaran.pdf'
+    });
   };
 
   useEffect(() => {
@@ -1801,51 +1793,47 @@ export const Admin: React.FC = () => {
                               </td>
                               <td className="p-4 space-y-1.5">
                                 {reg.payment_proof_url && (
-                                  <a
-                                    href={reg.payment_proof_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-red-inferno hover:text-barbera font-display font-bold text-[10px] flex items-center gap-1 uppercase"
+                                  <button
+                                    type="button"
+                                    onClick={() => openDoc(reg.payment_proof_url, `KTM / Kartu Pelajar - ${reg.team_name}`)}
+                                    className="text-red-inferno hover:text-barbera font-display font-bold text-[10px] flex items-center gap-1 uppercase cursor-pointer"
                                   >
                                     <Icon name="FileText" size={12} />
                                     <span>KTM / Kartu Pelajar</span>
-                                  </a>
+                                  </button>
                                 )}
                                 {reg.ig_story_file_url && (
-                                  <a
-                                    href={reg.ig_story_file_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-blue-600 hover:underline font-display font-bold text-[10px] flex items-center gap-1 uppercase"
+                                  <button
+                                    type="button"
+                                    onClick={() => openDoc(reg.ig_story_file_url, `Bukti IG Story - ${reg.team_name}`)}
+                                    className="text-blue-600 hover:underline font-display font-bold text-[10px] flex items-center gap-1 uppercase cursor-pointer"
                                   >
                                     <Icon name="ExternalLink" size={12} />
                                     <span>Story PDF</span>
-                                  </a>
+                                  </button>
                                 )}
                                 {reg.twibbon_file_url && (
-                                  <a
-                                    href={reg.twibbon_file_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-blue-600 hover:underline font-display font-bold text-[10px] flex items-center gap-1 uppercase"
+                                  <button
+                                    type="button"
+                                    onClick={() => openDoc(reg.twibbon_file_url, `Bukti Twibbon Feeds - ${reg.team_name}`)}
+                                    className="text-blue-600 hover:underline font-display font-bold text-[10px] flex items-center gap-1 uppercase cursor-pointer"
                                   >
                                     <Icon name="ExternalLink" size={12} />
                                     <span>Twibbon PDF</span>
-                                  </a>
+                                  </button>
                                 )}
                               </td>
                               <td className="p-4 space-y-1">
                                 {reg.preliminary_file_url ? (
                                   <div>
-                                    <a
-                                      href={reg.preliminary_file_url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="bg-decor text-blue-sail hover:bg-decor/90 font-display font-black text-[10px] px-2.5 py-1 uppercase border border-blue-sail inline-flex items-center gap-1"
+                                    <button
+                                      type="button"
+                                      onClick={() => openDoc(reg.preliminary_file_url, `Berkas Preliminary ${isBPC ? 'BMC' : 'Executive Summary'} - ${reg.team_name}`)}
+                                      className="bg-decor text-blue-sail hover:bg-decor/90 font-display font-black text-[10px] px-2.5 py-1 uppercase border border-blue-sail inline-flex items-center gap-1 cursor-pointer"
                                     >
                                       <Icon name="FileCheck" size={12} />
                                       <span>LIHAT {isBPC ? 'BMC' : 'EXEC SUMMARY'}</span>
-                                    </a>
+                                    </button>
                                     <p className="text-[10px] font-sans text-emerald-700 font-bold mt-1">✓ Sudah Mengumpulkan</p>
                                   </div>
                                 ) : (
@@ -4452,6 +4440,108 @@ export const Admin: React.FC = () => {
                 className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-6 py-2.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] cursor-pointer"
               >
                 Tutup Detail Pendaftar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BERKAS FILE PREVIEW MODAL */}
+      {viewingFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-blue-sail/90 backdrop-blur-sm">
+          <div className="bg-ballroom border-4 border-blue-sail p-5 sm:p-6 max-w-4xl w-full max-h-[95vh] overflow-y-auto space-y-4 shadow-[12px_12px_0_0_#BD1B1F]">
+            <div className="flex items-center justify-between border-b-2 border-blue-sail/20 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="bg-red-inferno text-white font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider border border-blue-sail">
+                  PRATINJAU BERKAS DOKUMEN
+                </span>
+                <h3 className="font-display font-black text-lg uppercase text-blue-sail truncate max-w-md sm:max-w-xl">
+                  {viewingFile.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingFile(null)}
+                className="bg-red-inferno text-white p-1.5 border border-blue-sail hover:bg-red-700 cursor-pointer"
+              >
+                <Icon name="X" size={18} />
+              </button>
+            </div>
+
+            {/* Document Viewer Content */}
+            <div className="bg-white border-2 border-blue-sail p-3">
+              {viewingFile.url.startsWith('data:application/pdf') || viewingFile.url.endsWith('.pdf') ? (
+                <iframe
+                  src={viewingFile.url}
+                  title={viewingFile.title}
+                  className="w-full h-[70vh] border border-blue-sail/30 bg-gray-50"
+                />
+              ) : viewingFile.url.startsWith('data:image/') || viewingFile.url.match(/\.(jpg|jpeg|png|gif|svg)$/i) || viewingFile.url.startsWith('blob:') ? (
+                <div className="bg-gray-900 border border-blue-sail/30 p-4 flex items-center justify-center min-h-[60vh]">
+                  <img
+                    src={viewingFile.url}
+                    alt={viewingFile.title}
+                    className="max-h-[70vh] max-w-full object-contain shadow-lg"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-4 p-4 text-center">
+                  <div className="bg-blue-sail/5 p-4 border border-blue-sail/20 inline-block text-left w-full">
+                    <span className="bg-decor text-blue-sail font-display font-black text-[10px] px-2 py-0.5 uppercase border border-blue-sail inline-block mb-2">
+                      INFORMASI BERKAS PENDAFTARAN
+                    </span>
+                    <p className="text-xs font-mono font-bold text-blue-sail">Nama Berkas: {viewingFile.url}</p>
+                    <p className="text-xs font-sans text-blue-sail/70 mt-1">Status: Berkas telah tercatat di database pendaftaran tim.</p>
+                  </div>
+                  <div className="border-2 border-dashed border-blue-sail/30 p-4 bg-gray-50 flex justify-center">
+                    <img src={SAMPLE_DOC_SVG} alt="Pratinjau Berkas" className="max-h-[50vh] w-auto border-2 border-blue-sail shadow-md" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <div className="flex gap-2">
+                {(viewingFile.url.startsWith('data:') || viewingFile.url.startsWith('http') || viewingFile.url.startsWith('blob:')) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const win = window.open();
+                      if (win) {
+                        if (viewingFile.url.startsWith('data:application/pdf')) {
+                          win.document.write(`<html><head><title>${viewingFile.title}</title></head><body style="margin:0;"><iframe src="${viewingFile.url}" width="100%" height="100%" frameborder="0"></iframe></body></html>`);
+                        } else if (viewingFile.url.startsWith('data:image/')) {
+                          win.document.write(`<html><head><title>${viewingFile.title}</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#111;"><img src="${viewingFile.url}" style="max-width:100%;max-height:100vh;"/></body></html>`);
+                        } else {
+                          win.location.href = viewingFile.url;
+                        }
+                      }
+                    }}
+                    className="bg-blue-sail hover:bg-barbera text-decor font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Icon name="ExternalLink" size={14} />
+                    <span>BUKA DI TAB BARU</span>
+                  </button>
+                )}
+                {viewingFile.url.startsWith('data:') && (
+                  <a
+                    href={viewingFile.url}
+                    download={viewingFile.fileName || 'dokumen_pendaftaran'}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail flex items-center gap-1.5"
+                  >
+                    <Icon name="Download" size={14} />
+                    <span>UNDUH BERKAS</span>
+                  </a>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setViewingFile(null)}
+                className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-6 py-2 border-2 border-blue-sail cursor-pointer"
+              >
+                TUTUP PRATINJAU
               </button>
             </div>
           </div>
