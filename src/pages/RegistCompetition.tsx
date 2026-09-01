@@ -3,10 +3,14 @@ import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
 import { motion, AnimatePresence } from 'motion/react';
 
-interface MemberData {
-  name: string;
-  idFileName: string;
-  idFileUrl: string;
+interface MemberFields {
+  fullName: string;
+  institution: string;
+  studentId: string;
+  major: string;
+  year: string;
+  whatsapp: string;
+  email: string;
 }
 
 export const RegistCompetition: React.FC = () => {
@@ -25,40 +29,43 @@ export const RegistCompetition: React.FC = () => {
 
   // Form State
   const [form, setForm] = useState({
-    // Page 1: Category
-    educationCategory: '' as 'SMA/Sederajat' | 'Mahasiswa (D1–S1)' | '',
+    // Step 1: Competition & Education Choice
+    competitionType: '' as 'BPC' | 'BCC' | '',
+    educationCategory: '' as 'SMA/Sederajat' | 'Mahasiswa' | '',
 
-    // Page 2: Biodata Tim & Ketua
+    // Section 1: Informasi Tim
     teamName: '',
-    institution: '',
-    city: '',
     teamSize: '3' as '3' | '4' | '5',
-    leaderName: '',
+
+    // Section 2: Data Ketua Tim
+    leaderFullName: '',
+    leaderInstitution: '',
+    leaderStudentId: '',
+    leaderMajor: '',
+    leaderYear: '',
     leaderWhatsapp: '',
     leaderEmail: '',
-    leaderIdFileName: '',
-    leaderIdFileUrl: '',
 
-    // Page 3: Data Anggota Tim (Anggota 1 to 4 max)
+    // Section 3: Data Anggota Tim (Anggota 1 to 4 max)
     members: [
-      { name: '', idFileName: '', idFileUrl: '' },
-      { name: '', idFileName: '', idFileUrl: '' },
-      { name: '', idFileName: '', idFileUrl: '' },
-      { name: '', idFileName: '', idFileUrl: '' },
-    ] as MemberData[],
+      { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
+      { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
+      { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
+      { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
+    ] as MemberFields[],
 
-    // Page 4: Bukti Syarat Pendaftaran
-    igStoryFileName: '',
-    igStoryFileUrl: '',
-    twibbonFileName: '',
-    twibbonFileUrl: '',
+    // Section 4: Upload Persyaratan Umum
+    studentStatusFileName: '',
+    studentStatusFileUrl: '',
+    twibbonPosterFileName: '',
+    twibbonPosterFileUrl: '',
     igFollowFileName: '',
     igFollowFileUrl: '',
 
-    // Page 5: Upload File BMC & Konfirmasi
-    bmcFileName: '',
-    bmcFileUrl: '',
-    isDataConfirmed: false,
+    // Section 5: Checkboxes Konfirmasi
+    agreeDataTrue: false,
+    agreeGuidebook: false,
+    agreeRangkaian: false,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -68,17 +75,24 @@ export const RegistCompetition: React.FC = () => {
   const nonLeaderCount = Math.max(0, parseInt(form.teamSize, 10) - 1);
 
   const updateField = (field: string, val: any) => {
-    setForm(prev => ({ ...prev, [field]: val }));
+    setForm(prev => {
+      const updated = { ...prev, [field]: val };
+      // Auto-detect Mahasiswa if BCC is chosen
+      if (field === 'competitionType' && val === 'BCC') {
+        updated.educationCategory = 'Mahasiswa';
+      }
+      return updated;
+    });
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  const updateMember = (index: number, field: keyof MemberData, val: string) => {
+  const updateMember = (index: number, field: keyof MemberFields, val: string) => {
     setForm(prev => {
-      const updated = [...prev.members];
-      updated[index] = { ...updated[index], [field]: val };
-      return { ...prev, members: updated };
+      const updatedMembers = [...prev.members];
+      updatedMembers[index] = { ...updatedMembers[index], [field]: val };
+      return { ...prev, members: updatedMembers };
     });
     const errKey = `member_${index}_${field}`;
     if (errors[errKey]) {
@@ -101,8 +115,11 @@ export const RegistCompetition: React.FC = () => {
   // Step Validations
   const validateStep1 = () => {
     const errs: Record<string, string> = {};
-    if (!form.educationCategory) {
-      errs.educationCategory = 'Pilih salah satu kategori jenjang pendidikan (SMA/Sederajat atau Mahasiswa).';
+    if (!form.competitionType) {
+      errs.competitionType = 'Pilih cabang kompetisi (BPC atau BCC).';
+    }
+    if (form.competitionType === 'BPC' && !form.educationCategory) {
+      errs.educationCategory = 'Pilih jenjang pendidikan tim Anda (SMA/Sederajat atau Mahasiswa).';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -111,19 +128,16 @@ export const RegistCompetition: React.FC = () => {
   const validateStep2 = () => {
     const errs: Record<string, string> = {};
     if (!form.teamName.trim()) errs.teamName = 'Nama Tim wajib diisi';
-    if (!form.institution.trim()) errs.institution = 'Asal Institusi wajib diisi';
-    if (!form.city.trim()) errs.city = 'Kota/Daerah wajib diisi';
-    if (!form.leaderName.trim()) errs.leaderName = 'Nama Ketua wajib diisi';
-    if (!form.leaderWhatsapp.trim()) {
-      errs.leaderWhatsapp = 'Nomor WhatsApp wajib diisi';
-    }
+    if (!form.leaderFullName.trim()) errs.leaderFullName = 'Nama Lengkap Ketua wajib diisi';
+    if (!form.leaderInstitution.trim()) errs.leaderInstitution = 'Asal Institusi wajib diisi';
+    if (!form.leaderStudentId.trim()) errs.leaderStudentId = 'NRP/NIM wajib diisi';
+    if (!form.leaderMajor.trim()) errs.leaderMajor = 'Jurusan wajib diisi';
+    if (!form.leaderYear.trim()) errs.leaderYear = 'Angkatan wajib diisi';
+    if (!form.leaderWhatsapp.trim()) errs.leaderWhatsapp = 'Nomor WhatsApp wajib diisi';
     if (!form.leaderEmail.trim()) {
       errs.leaderEmail = 'Email wajib diisi';
     } else if (!/\S+@\S+\.\S+/.test(form.leaderEmail)) {
       errs.leaderEmail = 'Format email tidak valid';
-    }
-    if (!form.leaderIdFileName) {
-      errs.leaderIdFileName = 'Wajib mengunggah Kartu Identitas Ketua Tim (KTP/SIM/KTM/Kartu Pelajar)';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -132,11 +146,17 @@ export const RegistCompetition: React.FC = () => {
   const validateStep3 = () => {
     const errs: Record<string, string> = {};
     for (let i = 0; i < nonLeaderCount; i++) {
-      if (!form.members[i].name.trim()) {
-        errs[`member_${i}_name`] = `Nama Lengkap Anggota Tim ${i + 1} wajib diisi`;
-      }
-      if (!form.members[i].idFileName) {
-        errs[`member_${i}_idFileName`] = `Wajib mengunggah Kartu Identitas Anggota Tim ${i + 1}`;
+      const m = form.members[i];
+      if (!m.fullName.trim()) errs[`member_${i}_fullName`] = `Nama Lengkap Anggota ${i + 1} wajib diisi`;
+      if (!m.institution.trim()) errs[`member_${i}_institution`] = `Asal Institusi Anggota ${i + 1} wajib diisi`;
+      if (!m.studentId.trim()) errs[`member_${i}_studentId`] = `NRP/NIM Anggota ${i + 1} wajib diisi`;
+      if (!m.major.trim()) errs[`member_${i}_major`] = `Jurusan Anggota ${i + 1} wajib diisi`;
+      if (!m.year.trim()) errs[`member_${i}_year`] = `Angkatan Anggota ${i + 1} wajib diisi`;
+      if (!m.whatsapp.trim()) errs[`member_${i}_whatsapp`] = `Nomor WhatsApp Anggota ${i + 1} wajib diisi`;
+      if (!m.email.trim()) {
+        errs[`member_${i}_email`] = `Email Anggota ${i + 1} wajib diisi`;
+      } else if (!/\S+@\S+\.\S+/.test(m.email)) {
+        errs[`member_${i}_email`] = `Format email Anggota ${i + 1} tidak valid`;
       }
     }
     setErrors(errs);
@@ -145,14 +165,14 @@ export const RegistCompetition: React.FC = () => {
 
   const validateStep4 = () => {
     const errs: Record<string, string> = {};
-    if (!form.igStoryFileName) {
-      errs.igStoryFileName = 'Wajib upload bukti PDF Instagram Story poster TSF 2026';
+    if (!form.studentStatusFileName) {
+      errs.studentStatusFileName = 'Wajib mengunggah Bukti Status Mahasiswa / Pelajar';
     }
-    if (!form.twibbonFileName) {
-      errs.twibbonFileName = 'Wajib upload bukti PDF Instagram Feeds Twibbon TSF 2026';
+    if (!form.twibbonPosterFileName) {
+      errs.twibbonPosterFileName = 'Wajib mengunggah Bukti Upload Twibbon & Poster TDC Summit Fest 2026';
     }
     if (!form.igFollowFileName) {
-      errs.igFollowFileName = 'Wajib upload bukti PDF Follow Instagram @tdcsummitfest_its & @tdcits';
+      errs.igFollowFileName = 'Wajib mengunggah Bukti Follow @tdcsummitfest_its';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -160,11 +180,14 @@ export const RegistCompetition: React.FC = () => {
 
   const validateStep5 = () => {
     const errs: Record<string, string> = {};
-    if (!form.bmcFileName) {
-      errs.bmcFileName = 'Wajib mengunggah file BMC (format PDF dengan nama: BMC_Nama Tim)';
+    if (!form.agreeDataTrue) {
+      errs.agreeDataTrue = 'Anda harus mengonfirmasi bahwa seluruh data yang diberikan benar';
     }
-    if (!form.isDataConfirmed) {
-      errs.isDataConfirmed = 'Anda harus mengonfirmasi bahwa seluruh data sudah benar sebelum mengirimkan pendaftaran';
+    if (!form.agreeGuidebook) {
+      errs.agreeGuidebook = 'Anda harus menyetujui bahwa Anda telah membaca guidebook';
+    }
+    if (!form.agreeRangkaian) {
+      errs.agreeRangkaian = 'Anda harus menyatakan bersedia mengikuti seluruh rangkaian acara';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -175,18 +198,18 @@ export const RegistCompetition: React.FC = () => {
 
     setIsSubmitting(true);
     setTimeout(() => {
-      // Pass formatted data to AppContext
-      const memberNames = form.members.slice(0, nonLeaderCount).map(m => m.name);
+      // Formatted members list for AppContext
+      const memberNames = form.members.slice(0, nonLeaderCount).map(m => `${m.fullName} (${m.institution})`);
       addCompetitionRegistration({
         team_name: form.teamName,
-        leader_name: form.leaderName,
+        leader_name: form.leaderFullName,
         members: memberNames,
-        institution: form.institution,
+        institution: form.leaderInstitution,
         contact: form.leaderWhatsapp,
         email: form.leaderEmail,
-        category_id: form.educationCategory,
-        payment_proof_url: form.leaderIdFileUrl || form.leaderIdFileName || 'Kartu_Identitas_Ketua',
-        file_url: form.bmcFileUrl || form.bmcFileName || 'File_BMC'
+        category_id: `${form.competitionType} - ${form.educationCategory}`,
+        payment_proof_url: form.studentStatusFileUrl || form.studentStatusFileName || 'Bukti_Status_Mahasiswa',
+        file_url: form.twibbonPosterFileUrl || form.twibbonPosterFileName || 'Bukti_Persyaratan'
       });
 
       setIsSubmitting(false);
@@ -259,7 +282,7 @@ export const RegistCompetition: React.FC = () => {
                   SIAPKAN TIM TERBAIKMU!
                 </h3>
                 <p className="text-xs text-blue-sail/80 leading-relaxed font-sans">
-                  Pendaftaran dibuka untuk kategori <strong>SMA/Sederajat</strong> &amp; <strong>Mahasiswa (D1–S1)</strong>.
+                  Pendaftaran dibuka untuk cabang <strong>BPC</strong> (SMA &amp; Mahasiswa) &amp; <strong>BCC</strong> (Mahasiswa).
                 </p>
 
                 {/* Prominent Featured CTA Button */}
@@ -440,8 +463,8 @@ export const RegistCompetition: React.FC = () => {
             <div className="space-y-1">
               <span className="font-display font-bold text-[10px] text-red-inferno uppercase">KATEGORI JENJANG PENDIDIKAN</span>
               <p className="text-xs font-sans font-bold flex items-center gap-2">
-                <span className="bg-blue-sail text-decor px-2 py-0.5 font-display font-black text-[10px]">1</span> SMA/Sederajat
-                <span className="bg-blue-sail text-decor px-2 py-0.5 font-display font-black text-[10px]">2</span> Mahasiswa (D1–S1)
+                <span className="bg-blue-sail text-decor px-2 py-0.5 font-display font-black text-[10px]">BPC</span> SMA/Sederajat &amp; Mahasiswa
+                <span className="bg-blue-sail text-decor px-2 py-0.5 font-display font-black text-[10px]">BCC</span> Khusus Mahasiswa
               </p>
               <p className="text-[11px] text-blue-sail/70 font-sans">
                 Pendaftaran hanya dilakukan oleh <strong>KETUA TIM</strong>. Sebelum mengisi, pastikan seluruh syarat pendaftaran sudah lengkap.
@@ -466,7 +489,7 @@ export const RegistCompetition: React.FC = () => {
             SIAPKAH KAMU MENGUBAH INNOVATION INTO IMPACT?
           </h3>
           <p className="text-sm font-sans text-blue-sail/90 max-w-xl mx-auto font-semibold">
-            Yuk, buktikan idemu melalui TDC Summit Fest 2026 Business Plan Competition!
+            Yuk, buktikan idemu melalui TDC Summit Fest 2026 Business Competition!
           </p>
         </div>
 
@@ -519,7 +542,7 @@ export const RegistCompetition: React.FC = () => {
           
           <AnimatePresence mode="wait">
             
-            {/* ─── PAGE 1: KATEGORI PENDIRIKAN ─── */}
+            {/* ─── PAGE 1: KATEGORI KOMPETISI & JENJANG ─── */}
             {step === 1 && (
               <motion.div
                 key="step-1"
@@ -531,100 +554,141 @@ export const RegistCompetition: React.FC = () => {
                 <div className="border-b-2 border-blue-sail/20 pb-4">
                   <span className="font-display font-black text-xs text-red-inferno uppercase tracking-wider block">HALAMAN 1 dari 5</span>
                   <h3 className="font-display font-black text-xl uppercase text-blue-sail">
-                    PILIH KATEGORI JENJANG PENDIDIKAN TIM
+                    PILIH CABANG KOMPETISI &amp; JENJANG PENDIDIKAN
                   </h3>
                   <p className="text-xs text-blue-sail/70 font-sans mt-1">
-                    Silakan memilih kategori sesuai dengan jenjang pendidikan seluruh anggota tim Anda.
+                    Pilih jenis kompetisi yang ingin diikuti oleh tim Anda terlebih dahulu.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  
-                  {/* Option 1: SMA / Sederajat */}
-                  <div
-                    onClick={() => updateField('educationCategory', 'SMA/Sederajat')}
-                    className={`p-6 border-3 cursor-pointer transition-all flex flex-col justify-between space-y-4 ${
-                      form.educationCategory === 'SMA/Sederajat'
-                        ? 'bg-blue-sail text-ballroom border-decor shadow-[6px_6px_0_0_#F6BB02]'
-                        : 'bg-white border-blue-sail text-blue-sail hover:border-decor hover:shadow-[4px_4px_0_0_#2A4C9E]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`font-display font-bold text-xs px-2.5 py-1 border ${
-                        form.educationCategory === 'SMA/Sederajat' ? 'bg-decor text-blue-sail border-blue-sail' : 'bg-blue-sail/10 text-blue-sail border-blue-sail/20'
-                      }`}>
-                        KATEGORI 01
-                      </span>
-                      <Icon name="GraduationCap" size={28} className={form.educationCategory === 'SMA/Sederajat' ? 'text-decor' : 'text-blue-sail'} />
+                {/* Step 1A: Choose Competition Type (BPC or BCC) */}
+                <div className="space-y-3">
+                  <label className="block text-xs font-display font-bold text-blue-sail uppercase">
+                    1. Cabang Kompetisi *
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Option BPC */}
+                    <div
+                      onClick={() => updateField('competitionType', 'BPC')}
+                      className={`p-5 border-3 cursor-pointer transition-all flex flex-col justify-between space-y-3 ${
+                        form.competitionType === 'BPC'
+                          ? 'bg-blue-sail text-ballroom border-decor shadow-[4px_4px_0_0_#F6BB02]'
+                          : 'bg-white border-blue-sail text-blue-sail hover:border-decor'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`font-display font-black text-xs px-2.5 py-1 border ${
+                          form.competitionType === 'BPC' ? 'bg-decor text-blue-sail border-blue-sail' : 'bg-blue-sail/10 text-blue-sail border-blue-sail/20'
+                        }`}>
+                          BPC
+                        </span>
+                        <Icon name="Briefcase" size={24} className={form.competitionType === 'BPC' ? 'text-decor' : 'text-blue-sail'} />
+                      </div>
+                      <div>
+                        <h4 className="font-display font-black text-lg uppercase tracking-tight">
+                          Business Plan Competition
+                        </h4>
+                        <p className={`text-xs font-sans mt-1 ${form.competitionType === 'BPC' ? 'text-ballroom/80' : 'text-blue-sail/70'}`}>
+                          Pengembangan ide bisnis inovatif, relevan, &amp; berdampak.
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-current/20 flex items-center justify-between text-xs font-display font-bold">
+                        <span>{form.competitionType === 'BPC' ? '✓ TERPILIH' : 'KLIK UNTUK MEMILIH'}</span>
+                        <Icon name="ArrowRight" size={14} />
+                      </div>
                     </div>
 
-                    <div>
-                      <h4 className="font-display font-black text-xl uppercase tracking-tight">
-                        SMA / Sederajat
-                      </h4>
-                      <p className={`text-xs font-sans mt-1 ${form.educationCategory === 'SMA/Sederajat' ? 'text-ballroom/80' : 'text-blue-sail/70'}`}>
-                        Khusus pelajar aktif tingkat SMA/SMK/MA/Sederajat di Indonesia.
-                      </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-current/20 flex items-center justify-between text-xs font-display font-bold">
-                      <span className="flex items-center gap-1.5">
-                        {form.educationCategory === 'SMA/Sederajat' ? (
-                          <><Icon name="CheckCircle" size={14} className="text-decor" /> TERPILIH</>
-                        ) : (
-                          'KLIK UNTUK MEMILIH'
-                        )}
-                      </span>
-                      <Icon name="ArrowRight" size={14} />
-                    </div>
-                  </div>
-
-                  {/* Option 2: Mahasiswa (D1-S1) */}
-                  <div
-                    onClick={() => updateField('educationCategory', 'Mahasiswa (D1–S1)')}
-                    className={`p-6 border-3 cursor-pointer transition-all flex flex-col justify-between space-y-4 ${
-                      form.educationCategory === 'Mahasiswa (D1–S1)'
-                        ? 'bg-blue-sail text-ballroom border-decor shadow-[6px_6px_0_0_#F6BB02]'
-                        : 'bg-white border-blue-sail text-blue-sail hover:border-decor hover:shadow-[4px_4px_0_0_#2A4C9E]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`font-display font-bold text-xs px-2.5 py-1 border ${
-                        form.educationCategory === 'Mahasiswa (D1–S1)' ? 'bg-decor text-blue-sail border-blue-sail' : 'bg-blue-sail/10 text-blue-sail border-blue-sail/20'
-                      }`}>
-                        KATEGORI 02
-                      </span>
-                      <Icon name="Award" size={28} className={form.educationCategory === 'Mahasiswa (D1–S1)' ? 'text-decor' : 'text-blue-sail'} />
-                    </div>
-
-                    <div>
-                      <h4 className="font-display font-black text-xl uppercase tracking-tight">
-                        Mahasiswa (D1–S1)
-                      </h4>
-                      <p className={`text-xs font-sans mt-1 ${form.educationCategory === 'Mahasiswa (D1–S1)' ? 'text-ballroom/80' : 'text-blue-sail/70'}`}>
-                        Khusus mahasiswa aktif jenjang D1, D2, D3, D4, maupun S1 perguruan tinggi.
-                      </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-current/20 flex items-center justify-between text-xs font-display font-bold">
-                      <span className="flex items-center gap-1.5">
-                        {form.educationCategory === 'Mahasiswa (D1–S1)' ? (
-                          <><Icon name="CheckCircle" size={14} className="text-decor" /> TERPILIH</>
-                        ) : (
-                          'KLIK UNTUK MEMILIH'
-                        )}
-                      </span>
-                      <Icon name="ArrowRight" size={14} />
+                    {/* Option BCC */}
+                    <div
+                      onClick={() => updateField('competitionType', 'BCC')}
+                      className={`p-5 border-3 cursor-pointer transition-all flex flex-col justify-between space-y-3 ${
+                        form.competitionType === 'BCC'
+                          ? 'bg-blue-sail text-ballroom border-decor shadow-[4px_4px_0_0_#F6BB02]'
+                          : 'bg-white border-blue-sail text-blue-sail hover:border-decor'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`font-display font-black text-xs px-2.5 py-1 border ${
+                          form.competitionType === 'BCC' ? 'bg-decor text-blue-sail border-blue-sail' : 'bg-blue-sail/10 text-blue-sail border-blue-sail/20'
+                        }`}>
+                          BCC
+                        </span>
+                        <Icon name="TrendingUp" size={24} className={form.competitionType === 'BCC' ? 'text-decor' : 'text-blue-sail'} />
+                      </div>
+                      <div>
+                        <h4 className="font-display font-black text-lg uppercase tracking-tight">
+                          Business Case Competition
+                        </h4>
+                        <p className={`text-xs font-sans mt-1 ${form.competitionType === 'BCC' ? 'text-ballroom/80' : 'text-blue-sail/70'}`}>
+                          Analisis studi kasus bisnis nyata &amp; solusi strategis.
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-current/20 flex items-center justify-between text-xs font-display font-bold">
+                        <span>{form.competitionType === 'BCC' ? '✓ TERPILIH (KHUSUS MAHASISWA)' : 'KLIK UNTUK MEMILIH'}</span>
+                        <Icon name="ArrowRight" size={14} />
+                      </div>
                     </div>
                   </div>
-
+                  {errors.competitionType && (
+                    <p className="text-red-600 font-sans text-xs font-semibold">{errors.competitionType}</p>
+                  )}
                 </div>
 
-                {errors.educationCategory && (
-                  <p className="text-red-600 font-sans text-xs font-semibold bg-red-50 p-3 border border-red-300 flex items-center gap-2">
-                    <Icon name="AlertTriangle" size={16} />
-                    <span>{errors.educationCategory}</span>
-                  </p>
+                {/* Step 1B: Choose Education Level (If BPC) OR Auto-Detected (If BCC) */}
+                {form.competitionType === 'BPC' && (
+                  <div className="space-y-3 pt-2 animate-fadeIn">
+                    <label className="block text-xs font-display font-bold text-blue-sail uppercase">
+                      2. Jenjang Pendidikan (BPC) *
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* SMA */}
+                      <div
+                        onClick={() => updateField('educationCategory', 'SMA/Sederajat')}
+                        className={`p-4 border-2 cursor-pointer transition-all flex items-center justify-between ${
+                          form.educationCategory === 'SMA/Sederajat'
+                            ? 'bg-blue-sail text-ballroom border-decor'
+                            : 'bg-white border-blue-sail/40 text-blue-sail hover:border-decor'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon name="GraduationCap" size={20} className={form.educationCategory === 'SMA/Sederajat' ? 'text-decor' : 'text-blue-sail'} />
+                          <span className="font-display font-black text-sm uppercase">SMA / Sederajat</span>
+                        </div>
+                        {form.educationCategory === 'SMA/Sederajat' && <Icon name="CheckCircle" size={18} className="text-decor" />}
+                      </div>
+
+                      {/* Mahasiswa */}
+                      <div
+                        onClick={() => updateField('educationCategory', 'Mahasiswa')}
+                        className={`p-4 border-2 cursor-pointer transition-all flex items-center justify-between ${
+                          form.educationCategory === 'Mahasiswa'
+                            ? 'bg-blue-sail text-ballroom border-decor'
+                            : 'bg-white border-blue-sail/40 text-blue-sail hover:border-decor'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon name="Award" size={20} className={form.educationCategory === 'Mahasiswa' ? 'text-decor' : 'text-blue-sail'} />
+                          <span className="font-display font-black text-sm uppercase">Mahasiswa (D1–S1)</span>
+                        </div>
+                        {form.educationCategory === 'Mahasiswa' && <Icon name="CheckCircle" size={18} className="text-decor" />}
+                      </div>
+                    </div>
+                    {errors.educationCategory && (
+                      <p className="text-red-600 font-sans text-xs font-semibold">{errors.educationCategory}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* If BCC selected: Auto notification */}
+                {form.competitionType === 'BCC' && (
+                  <div className="bg-decor/20 border-2 border-blue-sail p-4 flex items-center gap-3 animate-fadeIn">
+                    <Icon name="Info" size={20} className="text-blue-sail shrink-0" />
+                    <p className="text-xs font-sans text-blue-sail font-semibold">
+                      Kategori <strong>Business Case Competition (BCC)</strong> secara otomatis terdeteksi untuk jenjang <strong>Mahasiswa</strong>.
+                    </p>
+                  </div>
                 )}
 
                 <div className="flex justify-end pt-4">
@@ -641,7 +705,7 @@ export const RegistCompetition: React.FC = () => {
               </motion.div>
             )}
 
-            {/* ─── PAGE 2: BIODATA TIM & KETUA TIM ─── */}
+            {/* ─── PAGE 2: INFORMASI TIM & DATA KETUA TIM ─── */}
             {step === 2 && (
               <motion.div
                 key="step-2"
@@ -653,18 +717,18 @@ export const RegistCompetition: React.FC = () => {
                 <div className="border-b-2 border-blue-sail/20 pb-4">
                   <span className="font-display font-black text-xs text-red-inferno uppercase tracking-wider block">HALAMAN 2 dari 5</span>
                   <h3 className="font-display font-black text-xl uppercase text-blue-sail">
-                    BIODATA TIM &amp; KETUA TIM [{form.educationCategory}]
+                    INFORMASI TIM &amp; DATA KETUA TIM [{form.competitionType} - {form.educationCategory}]
                   </h3>
                   <p className="text-xs text-blue-sail/70 font-sans mt-1">
-                    Lengkapi data resmi identitas tim dan ketua kelompok pendaftar.
+                    Lengkapi informasi nama tim dan biodata ketua tim secara lengkap.
                   </p>
                 </div>
 
-                {/* BIODATA TIM */}
+                {/* SECTION 1: INFORMASI TIM */}
                 <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-4">
                   <h4 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2 border-b border-blue-sail/20 pb-2">
                     <Icon name="Users" size={18} className="text-red-inferno" />
-                    <span>BIODATA TIM</span>
+                    <span>SECTION 1 — INFORMASI TIM</span>
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -684,7 +748,7 @@ export const RegistCompetition: React.FC = () => {
 
                     <div>
                       <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Jumlah Anggota Tim *
+                        Jumlah Anggota Tim * (Termasuk Ketua)
                       </label>
                       <select
                         value={form.teamSize}
@@ -696,65 +760,90 @@ export const RegistCompetition: React.FC = () => {
                         <option value="5">5 Anggota (1 Ketua + 4 Anggota)</option>
                       </select>
                     </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Asal Institusi (SMA/Universitas) *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.institution}
-                        onChange={e => updateField('institution', e.target.value)}
-                        placeholder="Contoh: Institut Teknologi Sepuluh Nopember / SMAN 1 Surabaya"
-                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                      />
-                      <p className="text-[11px] text-blue-sail/60 font-sans italic mt-1">
-                        *Jika anggota tim berasal dari institusi berbeda, tuliskan asal institusi Ketua Tim.
-                      </p>
-                      {errors.institution && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.institution}</p>}
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Kota / Daerah *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.city}
-                        onChange={e => updateField('city', e.target.value)}
-                        placeholder="Contoh: Surabaya, Jawa Timur"
-                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
-                      />
-                      {errors.city && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.city}</p>}
-                    </div>
                   </div>
                 </div>
 
-                {/* BIODATA KETUA TIM */}
+                {/* SECTION 2: DATA KETUA TIM */}
                 <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-4">
                   <h4 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2 border-b border-blue-sail/20 pb-2">
                     <Icon name="Crown" size={18} className="text-decor" />
-                    <span>BIODATA KETUA TIM</span>
+                    <span>SECTION 2 — DATA KETUA TIM</span>
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+                    <div className="sm:col-span-2">
                       <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Nama Ketua *
+                        Nama Lengkap Ketua *
                       </label>
                       <input
                         type="text"
-                        value={form.leaderName}
-                        onChange={e => updateField('leaderName', e.target.value)}
+                        value={form.leaderFullName}
+                        onChange={e => updateField('leaderFullName', e.target.value)}
                         placeholder="Nama lengkap ketua tim"
                         className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
                       />
-                      {errors.leaderName && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderName}</p>}
+                      {errors.leaderFullName && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderFullName}</p>}
                     </div>
 
                     <div>
                       <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Nomor WhatsApp * (wa.me/62xxxxx)
+                        Asal Institusi *
+                      </label>
+                      <input
+                        type="text"
+                        value={form.leaderInstitution}
+                        onChange={e => updateField('leaderInstitution', e.target.value)}
+                        placeholder="SMA / Universitas"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                      />
+                      {errors.leaderInstitution && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderInstitution}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                        NRP / NIM / NISN *
+                      </label>
+                      <input
+                        type="text"
+                        value={form.leaderStudentId}
+                        onChange={e => updateField('leaderStudentId', e.target.value)}
+                        placeholder="NRP / NIM / Kartu Pelajar"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                      />
+                      {errors.leaderStudentId && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderStudentId}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                        Jurusan *
+                      </label>
+                      <input
+                        type="text"
+                        value={form.leaderMajor}
+                        onChange={e => updateField('leaderMajor', e.target.value)}
+                        placeholder="Jurusan / Program Studi"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                      />
+                      {errors.leaderMajor && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderMajor}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                        Angkatan *
+                      </label>
+                      <input
+                        type="text"
+                        value={form.leaderYear}
+                        onChange={e => updateField('leaderYear', e.target.value)}
+                        placeholder="Contoh: 2023 / Kelas 11"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                      />
+                      {errors.leaderYear && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderYear}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                        Nomor WhatsApp *
                       </label>
                       <input
                         type="text"
@@ -766,9 +855,9 @@ export const RegistCompetition: React.FC = () => {
                       {errors.leaderWhatsapp && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderWhatsapp}</p>}
                     </div>
 
-                    <div className="sm:col-span-2">
+                    <div>
                       <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Email Aktif *
+                        Email *
                       </label>
                       <input
                         type="email"
@@ -778,35 +867,6 @@ export const RegistCompetition: React.FC = () => {
                         className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
                       />
                       {errors.leaderEmail && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderEmail}</p>}
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        Upload Kartu Identitas Ketua Tim (KTP/SIM/KTM/Kartu Pelajar) *
-                      </label>
-                      <div className="border-2 border-dashed border-blue-sail/40 p-4 bg-white text-center cursor-pointer hover:border-decor transition-colors">
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={e => handleFileSelect(e, (fName, fUrl) => {
-                            updateField('leaderIdFileName', fName);
-                            updateField('leaderIdFileUrl', fUrl);
-                          })}
-                          className="hidden"
-                          id="leader-id-file"
-                        />
-                        <label htmlFor="leader-id-file" className="cursor-pointer flex flex-col items-center gap-1.5">
-                          <Icon name="UploadCloud" size={24} className="text-red-inferno" />
-                          <span className="text-xs font-display font-bold text-blue-sail uppercase flex items-center gap-1.5">
-                            {form.leaderIdFileName ? (
-                              <><Icon name="CheckCircle" size={14} className="text-emerald-600" /> TERPILIH: {form.leaderIdFileName}</>
-                            ) : (
-                              'Klik untuk Pilih File (pdf/jpg/png)'
-                            )}
-                          </span>
-                        </label>
-                      </div>
-                      {errors.leaderIdFileName && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderIdFileName}</p>}
                     </div>
                   </div>
                 </div>
@@ -832,7 +892,7 @@ export const RegistCompetition: React.FC = () => {
               </motion.div>
             )}
 
-            {/* ─── PAGE 3: DATA ANGGOTA TIM ─── */}
+            {/* ─── PAGE 3: SECTION 3 - DATA ANGGOTA TIM ─── */}
             {step === 3 && (
               <motion.div
                 key="step-3"
@@ -844,66 +904,131 @@ export const RegistCompetition: React.FC = () => {
                 <div className="border-b-2 border-blue-sail/20 pb-4">
                   <span className="font-display font-black text-xs text-red-inferno uppercase tracking-wider block">HALAMAN 3 dari 5</span>
                   <h3 className="font-display font-black text-xl uppercase text-blue-sail">
-                    DATA ANGGOTA TIM ({nonLeaderCount} ANGGOTA NON-KETUA)
+                    SECTION 3 — DATA ANGGOTA TIM ({nonLeaderCount} ANGGOTA)
                   </h3>
                   <p className="text-xs text-blue-sail/70 font-sans mt-1">
-                    Isi data nama lengkap dan kartu identitas untuk {nonLeaderCount} anggota tim selain Ketua.
+                    Isi data lengkap untuk {nonLeaderCount} anggota tim selain Ketua sesuai jumlah anggota yang dipilih.
                   </p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {Array.from({ length: nonLeaderCount }).map((_, idx) => (
-                    <div key={idx} className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-3">
+                    <div key={idx} className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-4">
                       <h4 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2 border-b border-blue-sail/20 pb-2">
                         <Icon name="User" size={16} className="text-red-inferno" />
                         <span>ANGGOTA TIM {idx + 1}</span>
                       </h4>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
+                        <div className="sm:col-span-2">
                           <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                            Nama Lengkap Anggota Tim {idx + 1} *
+                            Nama Lengkap Anggota {idx + 1} *
                           </label>
                           <input
                             type="text"
-                            value={form.members[idx]?.name || ''}
-                            onChange={e => updateMember(idx, 'name', e.target.value)}
+                            value={form.members[idx]?.fullName || ''}
+                            onChange={e => updateMember(idx, 'fullName', e.target.value)}
                             placeholder={`Nama lengkap anggota ${idx + 1}`}
                             className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
                           />
-                          {errors[`member_${idx}_name`] && (
-                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_name`]}</p>
+                          {errors[`member_${idx}_fullName`] && (
+                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_fullName`]}</p>
                           )}
                         </div>
 
                         <div>
                           <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                            Kartu Identitas Anggota Tim {idx + 1} *
+                            Asal Institusi *
                           </label>
-                          <div className="border-2 border-dashed border-blue-sail/40 p-2.5 bg-white text-center cursor-pointer hover:border-decor transition-colors">
-                            <input
-                              type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
-                              onChange={e => handleFileSelect(e, (fName, fUrl) => {
-                                updateMember(idx, 'idFileName', fName);
-                                updateMember(idx, 'idFileUrl', fUrl);
-                              })}
-                              className="hidden"
-                              id={`member-file-${idx}`}
-                            />
-                            <label htmlFor={`member-file-${idx}`} className="cursor-pointer flex items-center justify-center gap-2">
-                              <Icon name="UploadCloud" size={16} className="text-blue-sail" />
-                              <span className="text-xs font-display font-bold text-blue-sail uppercase truncate flex items-center gap-1.5">
-                                {form.members[idx]?.idFileName ? (
-                                  <><Icon name="CheckCircle" size={14} className="text-emerald-600" /> {form.members[idx].idFileName}</>
-                                ) : (
-                                  'Pilih File Identitas'
-                                )}
-                              </span>
-                            </label>
-                          </div>
-                          {errors[`member_${idx}_idFileName`] && (
-                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_idFileName`]}</p>
+                          <input
+                            type="text"
+                            value={form.members[idx]?.institution || ''}
+                            onChange={e => updateMember(idx, 'institution', e.target.value)}
+                            placeholder="SMA / Universitas"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors[`member_${idx}_institution`] && (
+                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_institution`]}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            NRP / NIM / NISN *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.members[idx]?.studentId || ''}
+                            onChange={e => updateMember(idx, 'studentId', e.target.value)}
+                            placeholder="NRP / NIM / Kartu Pelajar"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors[`member_${idx}_studentId`] && (
+                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_studentId`]}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Jurusan *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.members[idx]?.major || ''}
+                            onChange={e => updateMember(idx, 'major', e.target.value)}
+                            placeholder="Jurusan / Program Studi"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors[`member_${idx}_major`] && (
+                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_major`]}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Angkatan *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.members[idx]?.year || ''}
+                            onChange={e => updateMember(idx, 'year', e.target.value)}
+                            placeholder="Contoh: 2023 / Kelas 11"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors[`member_${idx}_year`] && (
+                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_year`]}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Nomor WhatsApp *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.members[idx]?.whatsapp || ''}
+                            onChange={e => updateMember(idx, 'whatsapp', e.target.value)}
+                            placeholder="081234567890"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors[`member_${idx}_whatsapp`] && (
+                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_whatsapp`]}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
+                            Email *
+                          </label>
+                          <input
+                            type="email"
+                            value={form.members[idx]?.email || ''}
+                            onChange={e => updateMember(idx, 'email', e.target.value)}
+                            placeholder="anggota@email.com"
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          {errors[`member_${idx}_email`] && (
+                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_email`]}</p>
                           )}
                         </div>
                       </div>
@@ -925,14 +1050,14 @@ export const RegistCompetition: React.FC = () => {
                     }}
                     className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2"
                   >
-                    <span>LANJUT KE BUKTI SYARAT</span>
+                    <span>LANJUT KE PERSYARATAN UMUM</span>
                     <Icon name="ArrowRight" size={16} />
                   </button>
                 </div>
               </motion.div>
             )}
 
-            {/* ─── PAGE 4: BUKTI SYARAT PENDAFTARAN ─── */}
+            {/* ─── PAGE 4: SECTION 4 - UPLOAD PERSYARATAN UMUM ─── */}
             {step === 4 && (
               <motion.div
                 key="step-4"
@@ -944,129 +1069,97 @@ export const RegistCompetition: React.FC = () => {
                 <div className="border-b-2 border-blue-sail/20 pb-4">
                   <span className="font-display font-black text-xs text-red-inferno uppercase tracking-wider block">HALAMAN 4 dari 5</span>
                   <h3 className="font-display font-black text-xl uppercase text-blue-sail">
-                    BUKTI SYARAT PENDAFTARAN TIM
+                    SECTION 4 — UPLOAD PERSYARATAN UMUM
                   </h3>
                   <p className="text-xs text-blue-sail/70 font-sans mt-1">
-                    Unggah seluruh bukti dokumen persyaratan media sosial dalam format <strong>PDF</strong>.
+                    Unggah seluruh dokumen bukti persyaratan umum pendaftaran.
                   </p>
                 </div>
 
                 <div className="space-y-5">
                   
-                  {/* Task 1: IG Story Poster */}
+                  {/* Document 1: Bukti Status Mahasiswa / Pelajar */}
                   <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">SYARAT 01</span>
-                        <h4 className="font-display font-black text-sm uppercase text-blue-sail">
-                          Bukti Upload Poster TSF 2026 di Instagram Story *
-                        </h4>
-                        <p className="text-xs font-sans text-blue-sail/80 leading-relaxed mt-1">
-                          Bukti upload poster TSF 2026 di story akun pribadi utama Instagram masing-masing anggota dengan tag instagram <strong>@tdcsummitfest_its</strong> dan <strong>@tdcits</strong>.
-                        </p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="text-[11px] font-display font-bold text-blue-sail/60">Poster dapat diakses di:</span>
-                          <span className="bg-decor/40 text-blue-sail font-display font-bold text-[10px] px-2 py-0.5 border border-blue-sail/30 uppercase">
-                            LINK Menyusul
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">DOKUMEN 01</span>
+                    <h4 className="font-display font-black text-sm uppercase text-blue-sail">
+                      Bukti Status Mahasiswa / Kartu Pelajar *
+                    </h4>
+                    <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
+                      Unggah Kartu Tanda Mahasiswa (KTM) / Kartu Pelajar / Surat Keterangan Aktif untuk seluruh anggota tim.
+                    </p>
 
                     <div className="bg-white border border-blue-sail/20 p-3">
-                      <p className="text-[11px] text-red-inferno font-sans font-bold mb-2 flex items-center gap-1.5">
-                        <Icon name="AlertTriangle" size={14} />
-                        <span>Akun tidak boleh private dan SS digabung menjadi 1 file PDF.</span>
-                      </p>
                       <input
                         type="file"
-                        accept=".pdf"
+                        accept=".pdf,.jpg,.jpeg,.png"
                         onChange={e => handleFileSelect(e, (fName, fUrl) => {
-                          updateField('igStoryFileName', fName);
-                          updateField('igStoryFileUrl', fUrl);
+                          updateField('studentStatusFileName', fName);
+                          updateField('studentStatusFileUrl', fUrl);
                         })}
                         className="hidden"
-                        id="ig-story-pdf"
+                        id="student-status-file"
                       />
-                      <label htmlFor="ig-story-pdf" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
-                        <Icon name="FileText" size={16} />
-                        <span>{form.igStoryFileName ? `✓ ${form.igStoryFileName}` : 'Upload PDF Story (1 PDF)'}</span>
+                      <label htmlFor="student-status-file" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
+                        <Icon name="UploadCloud" size={16} />
+                        <span>{form.studentStatusFileName ? `✓ ${form.studentStatusFileName}` : 'Upload Bukti Status (pdf/jpg/png)'}</span>
                       </label>
                     </div>
-                    {errors.igStoryFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.igStoryFileName}</p>}
+                    {errors.studentStatusFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.studentStatusFileName}</p>}
                   </div>
 
-                  {/* Task 2: Twibbon IG Feeds */}
+                  {/* Document 2: Bukti Upload Twibbon dan Poster TSF 2026 */}
                   <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-3">
-                    <div>
-                      <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">SYARAT 02</span>
-                      <h4 className="font-display font-black text-sm uppercase text-blue-sail">
-                        Bukti Upload Twibbon TSF 2026 di Feeds Instagram *
-                      </h4>
-                      <p className="text-xs font-sans text-blue-sail/80 leading-relaxed mt-1">
-                        Bukti upload feeds twibbon TSF 2026 melalui feeds akun pribadi utama Instagram masing-masing anggota dengan tag instagram <strong>@tdcsummitfest_its</strong> dan <strong>@tdcits</strong>.
-                      </p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="text-[11px] font-display font-bold text-blue-sail/60">Twibbon &amp; Caption dapat diakses di:</span>
-                        <span className="bg-decor/40 text-blue-sail font-display font-bold text-[10px] px-2 py-0.5 border border-blue-sail/30 uppercase">
-                          LINK BELUM
-                        </span>
-                      </div>
-                    </div>
+                    <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">DOKUMEN 02</span>
+                    <h4 className="font-display font-black text-sm uppercase text-blue-sail">
+                      Bukti Upload Twibbon dan Poster TDC Summit Fest 2026 *
+                    </h4>
+                    <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
+                      Screenshot bukti unggah twibbon dan poster TSF 2026 di media sosial utama anggota tim.
+                    </p>
 
                     <div className="bg-white border border-blue-sail/20 p-3">
-                      <p className="text-[11px] text-red-inferno font-sans font-bold mb-2 flex items-center gap-1.5">
-                        <Icon name="AlertTriangle" size={14} />
-                        <span>Akun tidak boleh private dan SS digabung menjadi 1 file PDF.</span>
-                      </p>
                       <input
                         type="file"
-                        accept=".pdf"
+                        accept=".pdf,.jpg,.jpeg,.png"
                         onChange={e => handleFileSelect(e, (fName, fUrl) => {
-                          updateField('twibbonFileName', fName);
-                          updateField('twibbonFileUrl', fUrl);
+                          updateField('twibbonPosterFileName', fName);
+                          updateField('twibbonPosterFileUrl', fUrl);
                         })}
                         className="hidden"
-                        id="twibbon-pdf"
+                        id="twibbon-poster-file"
                       />
-                      <label htmlFor="twibbon-pdf" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
-                        <Icon name="FileText" size={16} />
-                        <span>{form.twibbonFileName ? `✓ ${form.twibbonFileName}` : 'Upload PDF Twibbon (1 PDF)'}</span>
+                      <label htmlFor="twibbon-poster-file" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
+                        <Icon name="UploadCloud" size={16} />
+                        <span>{form.twibbonPosterFileName ? `✓ ${form.twibbonPosterFileName}` : 'Upload Bukti Twibbon & Poster'}</span>
                       </label>
                     </div>
-                    {errors.twibbonFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.twibbonFileName}</p>}
+                    {errors.twibbonPosterFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.twibbonPosterFileName}</p>}
                   </div>
 
-                  {/* Task 3: Follow IG */}
+                  {/* Document 3: Bukti Follow @tdcsummitfest_its */}
                   <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-3">
-                    <div>
-                      <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">SYARAT 03</span>
-                      <h4 className="font-display font-black text-sm uppercase text-blue-sail">
-                        Bukti follow akun Instagram @tdcsummitfest_its dan @tdcits *
-                      </h4>
-                      <p className="text-xs font-sans text-blue-sail/80 leading-relaxed mt-1">
-                        Screenshot bukti follow akun Instagram resmi <strong>@tdcsummitfest_its</strong> dan <strong>@tdcits</strong> untuk seluruh anggota tim.
-                      </p>
-                    </div>
+                    <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-wider inline-block mb-1">DOKUMEN 03</span>
+                    <h4 className="font-display font-black text-sm uppercase text-blue-sail">
+                      Bukti Follow @tdcsummitfest_its *
+                    </h4>
+                    <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
+                      Screenshot bukti follow akun Instagram resmi <strong>@tdcsummitfest_its</strong> untuk seluruh anggota tim.
+                    </p>
 
                     <div className="bg-white border border-blue-sail/20 p-3">
-                      <p className="text-[11px] text-red-inferno font-sans font-bold mb-2 flex items-center gap-1.5">
-                        <Icon name="AlertTriangle" size={14} />
-                        <span>SS digabung menjadi 1 file PDF.</span>
-                      </p>
                       <input
                         type="file"
-                        accept=".pdf"
+                        accept=".pdf,.jpg,.jpeg,.png"
                         onChange={e => handleFileSelect(e, (fName, fUrl) => {
                           updateField('igFollowFileName', fName);
                           updateField('igFollowFileUrl', fUrl);
                         })}
                         className="hidden"
-                        id="ig-follow-pdf"
+                        id="ig-follow-file"
                       />
-                      <label htmlFor="ig-follow-pdf" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
-                        <Icon name="FileText" size={16} />
-                        <span>{form.igFollowFileName ? `✓ ${form.igFollowFileName}` : 'Upload PDF Follow IG (1 PDF)'}</span>
+                      <label htmlFor="ig-follow-file" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
+                        <Icon name="UploadCloud" size={16} />
+                        <span>{form.igFollowFileName ? `✓ ${form.igFollowFileName}` : 'Upload Bukti Follow IG'}</span>
                       </label>
                     </div>
                     {errors.igFollowFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.igFollowFileName}</p>}
@@ -1088,14 +1181,14 @@ export const RegistCompetition: React.FC = () => {
                     }}
                     className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2"
                   >
-                    <span>LANJUT KE UPLOAD BMC</span>
+                    <span>LANJUT KE KONFIRMASI AKHIR</span>
                     <Icon name="ArrowRight" size={16} />
                   </button>
                 </div>
               </motion.div>
             )}
 
-            {/* ─── PAGE 5: UPLOAD FILE BMC & KONFIRMASI ─── */}
+            {/* ─── PAGE 5: CHECKBOXES KONFIRMASI & SUBMIT ─── */}
             {step === 5 && (
               <motion.div
                 key="step-5"
@@ -1107,83 +1200,62 @@ export const RegistCompetition: React.FC = () => {
                 <div className="border-b-2 border-blue-sail/20 pb-4">
                   <span className="font-display font-black text-xs text-red-inferno uppercase tracking-wider block">HALAMAN 5 dari 5</span>
                   <h3 className="font-display font-black text-xl uppercase text-blue-sail">
-                    UPLOAD FILE BMC &amp; KONFIRMASI AKHIR
+                    PERNYATAAN &amp; KONFIRMASI PENDAFTARAN
                   </h3>
                   <p className="text-xs text-blue-sail/70 font-sans mt-1">
-                    Unggah dokumen Business Model Canvas (BMC) tim Anda sesuai format resmi.
+                    Silakan centang seluruh pernyataan di bawah ini untuk menyelesaikan pendaftaran tim Anda.
                   </p>
                 </div>
 
-                {/* BMC Template Download Button */}
-                <div className="bg-decor/30 border-2 border-blue-sail p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <span className="font-display font-bold text-[10px] text-red-inferno uppercase">TEMPLATE OFFICIAL BMC</span>
-                    <h4 className="font-display font-bold text-sm text-blue-sail uppercase">
-                      Unduh Template BMC TSF 2026
-                    </h4>
-                    <p className="text-[11px] text-blue-sail/80 font-sans">
-                      Gunakan template resmi untuk pengerjaan Business Model Canvas tim Anda.
-                    </p>
-                  </div>
-                  <a
-                    href="https://intip.in/BMCTSF2026"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-5 py-3 border border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] shrink-0 flex items-center gap-2"
-                  >
-                    <Icon name="ExternalLink" size={14} />
-                    <span>DOWNLOAD TEMPLATE BMC</span>
-                  </a>
-                </div>
-
-                {/* File BMC Upload Input */}
-                <div className="bg-blue-sail/5 border-2 border-blue-sail/30 p-5 space-y-3">
-                  <label className="block text-xs font-display font-bold text-blue-sail uppercase">
-                    Upload File BMC * (Format PDF dengan nama file: BMC_Nama Tim)
-                  </label>
-                  <p className="text-xs font-sans text-blue-sail/70">
-                    Contoh penamaan file: <code className="bg-white border px-1.5 py-0.5 font-sans text-red-inferno font-bold">BMC_Tim Inovasi Masa Depan.pdf</code>
-                  </p>
-
-                  <div className="border-2 border-dashed border-blue-sail/40 p-5 bg-white text-center cursor-pointer hover:border-decor transition-colors">
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={e => handleFileSelect(e, (fName, fUrl) => {
-                        updateField('bmcFileName', fName);
-                        updateField('bmcFileUrl', fUrl);
-                      })}
-                      className="hidden"
-                      id="bmc-pdf-file"
-                    />
-                    <label htmlFor="bmc-pdf-file" className="cursor-pointer flex flex-col items-center gap-2">
-                      <Icon name="UploadCloud" size={32} className="text-red-inferno" />
-                      <span className="text-xs font-display font-bold text-blue-sail uppercase flex items-center gap-1.5">
-                        {form.bmcFileName ? (
-                          <><Icon name="CheckCircle" size={14} className="text-emerald-600" /> FILE TERPILIH: {form.bmcFileName}</>
-                        ) : (
-                          'Klik untuk Unggah File BMC (Format PDF)'
-                        )}
+                {/* Final Checkboxes List */}
+                <div className="space-y-4">
+                  {/* Checkbox 1 */}
+                  <div className="bg-white border-2 border-blue-sail p-4 space-y-1">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.agreeDataTrue}
+                        onChange={e => updateField('agreeDataTrue', e.target.checked)}
+                        className="mt-1 w-5 h-5 accent-red-inferno cursor-pointer"
+                      />
+                      <span className="font-display font-extrabold text-sm text-blue-sail uppercase tracking-wide">
+                        Saya menyatakan seluruh data yang diberikan benar. *
                       </span>
                     </label>
+                    {errors.agreeDataTrue && <p className="text-red-500 text-xs font-sans font-semibold pl-8">{errors.agreeDataTrue}</p>}
                   </div>
-                  {errors.bmcFileName && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.bmcFileName}</p>}
-                </div>
 
-                {/* Final Confirmation Checkbox */}
-                <div className="bg-white border-2 border-blue-sail p-4 space-y-2">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.isDataConfirmed}
-                      onChange={e => updateField('isDataConfirmed', e.target.checked)}
-                      className="mt-1 w-5 h-5 accent-red-inferno cursor-pointer"
-                    />
-                    <span className="font-display font-extrabold text-sm text-blue-sail uppercase tracking-wide">
-                      Apakah semua data yang Anda isi sudah benar? (Iya) *
-                    </span>
-                  </label>
-                  {errors.isDataConfirmed && <p className="text-red-500 text-xs font-sans font-semibold pl-8">{errors.isDataConfirmed}</p>}
+                  {/* Checkbox 2 */}
+                  <div className="bg-white border-2 border-blue-sail p-4 space-y-1">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.agreeGuidebook}
+                        onChange={e => updateField('agreeGuidebook', e.target.checked)}
+                        className="mt-1 w-5 h-5 accent-red-inferno cursor-pointer"
+                      />
+                      <span className="font-display font-extrabold text-sm text-blue-sail uppercase tracking-wide">
+                        Saya telah membaca guidebook dan memahami seluruh ketentuan kompetisi. *
+                      </span>
+                    </label>
+                    {errors.agreeGuidebook && <p className="text-red-500 text-xs font-sans font-semibold pl-8">{errors.agreeGuidebook}</p>}
+                  </div>
+
+                  {/* Checkbox 3 */}
+                  <div className="bg-white border-2 border-blue-sail p-4 space-y-1">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.agreeRangkaian}
+                        onChange={e => updateField('agreeRangkaian', e.target.checked)}
+                        className="mt-1 w-5 h-5 accent-red-inferno cursor-pointer"
+                      />
+                      <span className="font-display font-extrabold text-sm text-blue-sail uppercase tracking-wide">
+                        Saya bersedia mengikuti seluruh rangkaian TDC Summit Fest 2026. *
+                      </span>
+                    </label>
+                    {errors.agreeRangkaian && <p className="text-red-500 text-xs font-sans font-semibold pl-8">{errors.agreeRangkaian}</p>}
+                  </div>
                 </div>
 
                 <div className="flex justify-between pt-4">
@@ -1207,7 +1279,7 @@ export const RegistCompetition: React.FC = () => {
                     ) : (
                       <>
                         <Icon name="Send" size={16} />
-                        <span>SUBMIT PENDAFTARAN BPC</span>
+                        <span>SUBMIT PENDAFTARAN TIM</span>
                       </>
                     )}
                   </button>
@@ -1232,10 +1304,10 @@ export const RegistCompetition: React.FC = () => {
                     <Icon name="CheckCircle" size={14} /> PENDAFTARAN BERHASIL DITERIMA
                   </span>
                   <h3 className="font-display font-black text-2xl sm:text-3xl text-blue-sail uppercase tracking-tight">
-                    Terima Kasih telah mendaftar Business Plan Competition TDC Summit Fest 2026!
+                    Terima Kasih telah mendaftar TDC Summit Fest 2026 Business Competition!
                   </h3>
                   <p className="text-sm font-sans text-blue-sail/80 leading-relaxed">
-                    Data pendaftaran tim <strong>{form.teamName}</strong> telah tercatat secara resmi di database panitia TSF 2026.
+                    Data pendaftaran tim <strong>{form.teamName}</strong> ({form.competitionType} - {form.educationCategory}) telah tercatat secara resmi di database panitia TSF 2026.
                   </p>
                 </div>
 
@@ -1249,7 +1321,7 @@ export const RegistCompetition: React.FC = () => {
                   </p>
 
                   <button
-                    onClick={() => alert('Link Grup WhatsApp Resmi BPC TSF 2026 akan segera dikirimkan via WhatsApp / Email Ketua Tim!')}
+                    onClick={() => alert('Link Grup WhatsApp Resmi TSF 2026 Business Competition akan segera dikirimkan via WhatsApp / Email Ketua Tim!')}
                     className="w-full bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase py-3.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Icon name="MessageCircle" size={18} />
@@ -1258,7 +1330,7 @@ export const RegistCompetition: React.FC = () => {
                 </div>
 
                 <p className="font-display font-black text-base text-red-inferno uppercase tracking-wide">
-                  Sampai jumpa di BPC TSF 2026, Future Innovator!
+                  Sampai jumpa di TSF 2026, Future Innovator!
                 </p>
 
                 <div className="pt-4">
@@ -1266,31 +1338,32 @@ export const RegistCompetition: React.FC = () => {
                     onClick={() => {
                       setStep(1);
                       setForm({
+                        competitionType: '',
                         educationCategory: '',
                         teamName: '',
-                        institution: '',
-                        city: '',
                         teamSize: '3',
-                        leaderName: '',
+                        leaderFullName: '',
+                        leaderInstitution: '',
+                        leaderStudentId: '',
+                        leaderMajor: '',
+                        leaderYear: '',
                         leaderWhatsapp: '',
                         leaderEmail: '',
-                        leaderIdFileName: '',
-                        leaderIdFileUrl: '',
                         members: [
-                          { name: '', idFileName: '', idFileUrl: '' },
-                          { name: '', idFileName: '', idFileUrl: '' },
-                          { name: '', idFileName: '', idFileUrl: '' },
-                          { name: '', idFileName: '', idFileUrl: '' },
+                          { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
+                          { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
+                          { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
+                          { fullName: '', institution: '', studentId: '', major: '', year: '', whatsapp: '', email: '' },
                         ],
-                        igStoryFileName: '',
-                        igStoryFileUrl: '',
-                        twibbonFileName: '',
-                        twibbonFileUrl: '',
+                        studentStatusFileName: '',
+                        studentStatusFileUrl: '',
+                        twibbonPosterFileName: '',
+                        twibbonPosterFileUrl: '',
                         igFollowFileName: '',
                         igFollowFileUrl: '',
-                        bmcFileName: '',
-                        bmcFileUrl: '',
-                        isDataConfirmed: false,
+                        agreeDataTrue: false,
+                        agreeGuidebook: false,
+                        agreeRangkaian: false,
                       });
                     }}
                     className="bg-ballroom hover:bg-gray-100 text-blue-sail font-display font-bold text-xs uppercase px-6 py-3 border-2 border-blue-sail/40 cursor-pointer"
