@@ -226,6 +226,8 @@ async function ensureCompetitionColumns() {
       { name: 'ig_follow_file_url', type: 'text' },
       { name: 'status_stage', type: 'string', defaultVal: 'preliminary' },
       { name: 'status_preliminary', type: 'string', defaultVal: 'pending' },
+      { name: 'status_semifinal', type: 'string', defaultVal: 'pending' },
+      { name: 'status_final', type: 'string', defaultVal: 'pending' },
       { name: 'preliminary_file_url', type: 'text' },
       { name: 'preliminary_file_name', type: 'string' },
       { name: 'preliminary_file_type', type: 'string' },
@@ -1457,18 +1459,21 @@ app.get('/api/admin/users', async (_req: Request, res: Response): Promise<void> 
 // Admin: Update Competition Registration Stage / Status
 app.patch('/api/admin/competitions/:id/status', authenticateToken, async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
-  const { status_stage, status_preliminary } = req.body;
+  const { status_stage, status_preliminary, status_semifinal, status_final } = req.body;
 
   try {
+    await ensureCompetitionColumns();
     const updateData: any = {};
-    if (status_stage) updateData.status_stage = status_stage;
-    if (status_preliminary) updateData.status_preliminary = status_preliminary;
+    if (status_stage !== undefined) updateData.status_stage = status_stage;
+    if (status_preliminary !== undefined) updateData.status_preliminary = status_preliminary;
+    if (status_semifinal !== undefined) updateData.status_semifinal = status_semifinal;
+    if (status_final !== undefined) updateData.status_final = status_final;
 
     await db('competition_registrations').where({ id }).update(updateData);
-    res.json({ message: 'Status kompetisi berhasil diperbarui' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Gagal memperbarui status kompetisi' });
+    res.json({ message: 'Status kelolosan kompetisi berhasil diperbarui' });
+  } catch (err: any) {
+    console.error('Update competition status error:', err);
+    res.status(500).json({ message: err.message || 'Gagal memperbarui status kompetisi' });
   }
 });
 

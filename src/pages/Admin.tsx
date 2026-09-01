@@ -1751,8 +1751,7 @@ export const Admin: React.FC = () => {
                         <tr>
                           <th className="p-4">Identitas Tim</th>
                           <th className="p-4">Cabang &amp; Jenjang</th>
-                          <th className="p-4">Jawaban &amp; Detail</th>
-                          <th className="p-4">Berkas Syarat</th>
+                          <th className="p-4">Detail Jawaban</th>
                           <th className="p-4">Task Preliminary</th>
                           <th className="p-4">Status &amp; Kontrol Kelolosan</th>
                         </tr>
@@ -1778,50 +1777,15 @@ export const Admin: React.FC = () => {
                                 <p className="text-[11px] font-sans font-bold text-blue-sail/70">{eduCat}</p>
                                 <p className="text-[10px] font-sans text-blue-sail/50">Institusi: {reg.institution}</p>
                               </td>
-                              <td className="p-4 space-y-2">
-                                <p className="text-[11px] font-sans leading-relaxed text-blue-sail/85">
-                                  Anggota: {Array.isArray(reg.members) ? reg.members.join(', ') : 'Hanya Ketua'}
-                                </p>
+                              <td className="p-4">
                                 <button
                                   type="button"
                                   onClick={() => setSelectedCompDetail(reg)}
-                                  className="bg-blue-sail hover:bg-barbera text-decor font-display font-black text-[10px] px-3 py-1.5 uppercase border border-blue-sail shadow-[2px_2px_0_0_#F6BB02] flex items-center gap-1 cursor-pointer"
+                                  className="bg-blue-sail hover:bg-barbera text-decor font-display font-black text-xs px-3.5 py-2 uppercase border border-blue-sail shadow-[3px_3px_0_0_#F6BB02] flex items-center gap-1.5 cursor-pointer shrink-0"
                                 >
-                                  <Icon name="FileText" size={12} />
+                                  <Icon name="FileText" size={14} />
                                   <span>LIHAT DETAIL JAWABAN</span>
                                 </button>
-                              </td>
-                              <td className="p-4 space-y-1.5">
-                                {reg.payment_proof_url && (
-                                  <button
-                                    type="button"
-                                    onClick={() => openDoc(reg.payment_proof_url, `KTM / Kartu Pelajar - ${reg.team_name}`)}
-                                    className="text-red-inferno hover:text-barbera font-display font-bold text-[10px] flex items-center gap-1 uppercase cursor-pointer"
-                                  >
-                                    <Icon name="FileText" size={12} />
-                                    <span>KTM / Kartu Pelajar</span>
-                                  </button>
-                                )}
-                                {reg.ig_story_file_url && (
-                                  <button
-                                    type="button"
-                                    onClick={() => openDoc(reg.ig_story_file_url, `Bukti IG Story - ${reg.team_name}`)}
-                                    className="text-blue-600 hover:underline font-display font-bold text-[10px] flex items-center gap-1 uppercase cursor-pointer"
-                                  >
-                                    <Icon name="ExternalLink" size={12} />
-                                    <span>Story PDF</span>
-                                  </button>
-                                )}
-                                {reg.twibbon_file_url && (
-                                  <button
-                                    type="button"
-                                    onClick={() => openDoc(reg.twibbon_file_url, `Bukti Twibbon Feeds - ${reg.team_name}`)}
-                                    className="text-blue-600 hover:underline font-display font-bold text-[10px] flex items-center gap-1 uppercase cursor-pointer"
-                                  >
-                                    <Icon name="ExternalLink" size={12} />
-                                    <span>Twibbon PDF</span>
-                                  </button>
-                                )}
                               </td>
                               <td className="p-4 space-y-1">
                                 {reg.preliminary_file_url ? (

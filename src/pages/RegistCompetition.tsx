@@ -305,7 +305,6 @@ export const RegistCompetition: React.FC = () => {
 
         setIsSubmitting(false);
         setStep('success');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (err: any) {
         setIsSubmitting(false);
         alert(err.message || 'Gagal mengirim pendaftaran kompetisi');
@@ -1629,54 +1628,14 @@ export const RegistCompetition: React.FC = () => {
                   Sampai jumpa di TSF 2026, Future Innovator!
                 </p>
 
-                <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <div className="pt-4 flex items-center justify-center">
                   <button
-                    onClick={() => setCurrentPage('dashboard')}
-                    className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2"
+                    type="button"
+                    onClick={() => { window.location.hash = '#/dashboard'; }}
+                    className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs sm:text-sm uppercase px-8 py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2"
                   >
-                    <Icon name="Trophy" size={16} />
+                    <Icon name="Trophy" size={18} />
                     <span>BUKA DASHBOARD TIM (SUBMIT PRELIMINARY)</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setStep(1);
-                      setForm({
-                        competitionType: '',
-                        educationCategory: '',
-                        teamName: '',
-                        teamSize: '3',
-                        leaderFullName: '',
-                        leaderInstitution: '',
-                        leaderDomicile: '',
-                        leaderStudentId: '',
-                        leaderMajor: '',
-                        leaderGrade: '10',
-                        leaderYear: '',
-                        leaderWhatsapp: '',
-                        leaderEmail: '',
-                        leaderCardFileName: '',
-                        leaderCardFileUrl: '',
-                        members: [
-                          { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
-                          { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
-                          { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
-                          { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
-                        ],
-                        igStoryFileName: '',
-                        igStoryFileUrl: '',
-                        twibbonFileName: '',
-                        twibbonFileUrl: '',
-                        igFollowFileName: '',
-                        igFollowFileUrl: '',
-                        agreeDataTrue: false,
-                        agreeGuidebook: false,
-                        agreeRangkaian: false,
-                      });
-                    }}
-                    className="bg-ballroom hover:bg-gray-100 text-blue-sail font-display font-bold text-xs uppercase px-6 py-3 border-2 border-blue-sail/40 cursor-pointer"
-                  >
-                    DAFTARKAN TIM LAINNYA
                   </button>
                 </div>
               </motion.div>
