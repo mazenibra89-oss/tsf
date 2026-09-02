@@ -391,11 +391,11 @@ export const ParticipantDashboard: React.FC = () => {
                 }`}>
                   {myTeam.status_semifinal === 'passed'
                     ? myTeam.status_final === 'passed'
-                      ? '🏆 JUARA GRAND FINAL'
+                      ? 'JUARA GRAND FINAL'
                       : myTeam.status_final === 'rejected'
                       ? '✕ TIDAK LOLOS FINAL'
                       : 'GRAND FINAL (PENDING)'
-                    : '🔒 TERKUNCI'}
+                    : 'TERKUNCI'}
                 </span>
               </div>
               <h4 className={`font-display font-black text-base uppercase ${myTeam.status_semifinal === 'passed' ? 'text-blue-sail' : 'text-gray-600'}`}>
@@ -567,7 +567,7 @@ export const ParticipantDashboard: React.FC = () => {
                 <div className="bg-emerald-600 text-white p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#000] space-y-2 animate-fadeIn">
                   <div className="flex items-center gap-3 border-b-2 border-white/20 pb-3">
                     <div className="w-10 h-10 bg-decor text-blue-sail flex items-center justify-center font-black text-xl shrink-0 shadow-md">
-                      🎉
+                      <Icon name="Award" size={20} />
                     </div>
                     <div>
                       <span className="bg-decor text-blue-sail font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-widest border border-blue-sail">
@@ -596,9 +596,9 @@ export const ParticipantDashboard: React.FC = () => {
                   <div className="text-xs font-sans text-blue-sail space-y-1">
                     <p><strong>Transfer Rekening Resmi Panitia TSF 2026:</strong></p>
                     <div className="bg-white border border-blue-sail/30 p-3 font-mono space-y-1">
-                      <p>🔹 Bank BCA: <strong>8290-1928-301</strong> a.n. Panitia TDC Summit Fest</p>
-                      <p>🔹 Bank Mandiri: <strong>1400-0192-8301</strong> a.n. TDC SUMMIT FEST 2026</p>
-                      <p>🔹 QRIS All Payment: Scan QRIS pada portal resmi</p>
+                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> Bank BCA: <strong>8290-1928-301</strong> a.n. Panitia TDC Summit Fest</p>
+                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> Bank Mandiri: <strong>1400-0192-8301</strong> a.n. TDC SUMMIT FEST 2026</p>
+                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> QRIS All Payment: Scan QRIS pada portal resmi</p>
                     </div>
                   </div>
                 </div>
@@ -687,7 +687,7 @@ export const ParticipantDashboard: React.FC = () => {
                   <div className="bg-red-inferno text-white p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#000] space-y-3">
                     <div className="flex items-center gap-3 border-b-2 border-white/20 pb-3">
                       <div className="w-10 h-10 bg-white text-red-inferno flex items-center justify-center font-black text-xl shrink-0 shadow-md">
-                        ✕
+                        <Icon name="X" size={20} />
                       </div>
                       <div>
                         <span className="bg-black/40 text-decor font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-widest border border-white/30">
@@ -708,7 +708,7 @@ export const ParticipantDashboard: React.FC = () => {
                   <div className="bg-purple-700 text-white p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#000] space-y-3">
                     <div className="flex items-center gap-3 border-b-2 border-white/20 pb-3">
                       <div className="w-10 h-10 bg-decor text-purple-900 flex items-center justify-center font-black text-xl shrink-0 shadow-md">
-                        🏆
+                        <Icon name="Trophy" size={20} />
                       </div>
                       <div>
                         <span className="bg-decor text-purple-900 font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-widest border border-white/30">

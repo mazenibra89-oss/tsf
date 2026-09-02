@@ -1908,7 +1908,7 @@ export const Admin: React.FC = () => {
                     >
                       <option value="all">Semua Grand Final</option>
                       <option value="pending">Pending Final</option>
-                      <option value="passed">🏆 Lolos Final (Juara)</option>
+                      <option value="passed">✓ Lolos Final (Juara)</option>
                       <option value="rejected">✕ Tidak Lolos Final</option>
                     </select>
                   </div>
@@ -4629,7 +4629,7 @@ export const Admin: React.FC = () => {
                             : 'bg-white text-purple-700 border-purple-400'
                         }`}
                       >
-                        🏆 Lolos Final (Juara)
+                        ✓ Lolos Final (Juara)
                       </button>
                       <button
                         onClick={async () => {
