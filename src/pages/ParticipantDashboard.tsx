@@ -563,6 +563,26 @@ export const ParticipantDashboard: React.FC = () => {
             {/* IF PAYMENT NOT VERIFIED YET */}
             {myTeam.payment_semifinal_status !== 'verified' ? (
               <div className="space-y-6">
+                {/* Preliminary Passed Congratulations Alert */}
+                <div className="bg-emerald-600 text-white p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#000] space-y-2 animate-fadeIn">
+                  <div className="flex items-center gap-3 border-b-2 border-white/20 pb-3">
+                    <div className="w-10 h-10 bg-decor text-blue-sail flex items-center justify-center font-black text-xl shrink-0 shadow-md">
+                      🎉
+                    </div>
+                    <div>
+                      <span className="bg-decor text-blue-sail font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-widest border border-blue-sail">
+                        PENGUMUMAN HASIL PRELIMINARY
+                      </span>
+                      <h4 className="font-display font-black text-xl uppercase tracking-tight text-white mt-0.5">
+                        SELAMAT! TIM ANDA RESMI LOLOS KE BABAK SEMI FINAL!
+                      </h4>
+                    </div>
+                  </div>
+                  <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
+                    Selamat kepada tim <strong>{myTeam.team_name}</strong>! Berkas submission Preliminary ({myTeam.preliminary_file_type || (myTeam.competition_type === 'BCC' ? 'Executive Summary' : 'BMC')}) Anda telah dinilai oleh dewan juri dan dinyatakan <strong>LOLOS KE BABAK SEMI FINAL</strong>. Untuk mengonfirmasi keikutsertaan dan mengunggah proposal Semi Final, silakan lakukan pembayaran registrasi Semi Final di bawah ini.
+                  </p>
+                </div>
+
                 {/* Payment Info Card */}
                 <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#000]">
                   <div className="flex items-center justify-between border-b border-blue-sail/20 pb-2">

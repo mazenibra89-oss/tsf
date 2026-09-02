@@ -196,6 +196,47 @@ export const Admin: React.FC = () => {
   const [selectedCompDetail, setSelectedCompDetail] = useState<import('../types').CompetitionRegistration | null>(null);
   const [viewingFile, setViewingFile] = useState<{ url: string; title: string; fileName?: string } | null>(null);
 
+  // Filter States for Competition Registrations
+  const [compFilterType, setCompFilterType] = useState<'all' | 'BPC' | 'BCC'>('all');
+  const [compFilterCategory, setCompFilterCategory] = useState<'all' | 'SMA/Sederajat' | 'Mahasiswa'>('all');
+  const [compFilterPreliminary, setCompFilterPreliminary] = useState<'all' | 'pending' | 'passed' | 'rejected'>('all');
+  const [compFilterPayment, setCompFilterPayment] = useState<'all' | 'none' | 'pending' | 'verified'>('all');
+  const [compFilterSemifinal, setCompFilterSemifinal] = useState<'all' | 'pending' | 'passed' | 'rejected'>('all');
+  const [compFilterFinal, setCompFilterFinal] = useState<'all' | 'pending' | 'passed' | 'rejected'>('all');
+  const [compSearchQuery, setCompSearchQuery] = useState('');
+
+  const filteredCompetitionRegistrations = competitionRegistrations.filter(reg => {
+    const compType = reg.competition_type || (reg.category_id?.includes('BCC') ? 'BCC' : 'BPC');
+    const eduCat = reg.education_category || (reg.category_id?.includes('SMA') ? 'SMA/Sederajat' : 'Mahasiswa');
+
+    if (compFilterType !== 'all' && compType !== compFilterType) return false;
+    if (compFilterCategory !== 'all' && eduCat !== compFilterCategory) return false;
+    
+    const prelimStatus = reg.status_preliminary || 'pending';
+    if (compFilterPreliminary !== 'all' && prelimStatus !== compFilterPreliminary) return false;
+
+    const payStatus = reg.payment_semifinal_status || 'none';
+    if (compFilterPayment !== 'all' && payStatus !== compFilterPayment) return false;
+
+    const semiStatus = reg.status_semifinal || 'pending';
+    if (compFilterSemifinal !== 'all' && semiStatus !== compFilterSemifinal) return false;
+
+    const finalStatus = reg.status_final || 'pending';
+    if (compFilterFinal !== 'all' && finalStatus !== compFilterFinal) return false;
+
+    if (compSearchQuery.trim() !== '') {
+      const q = compSearchQuery.toLowerCase();
+      const matchName = reg.team_name?.toLowerCase().includes(q);
+      const matchLeader = reg.leader_name?.toLowerCase().includes(q);
+      const matchInst = reg.institution?.toLowerCase().includes(q);
+      const matchEmail = reg.email?.toLowerCase().includes(q);
+      const matchContact = reg.contact?.toLowerCase().includes(q);
+      if (!matchName && !matchLeader && !matchInst && !matchEmail && !matchContact) return false;
+    }
+
+    return true;
+  });
+
   const SAMPLE_DOC_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="100%" height="100%" fill="%232A4C9E"/><rect x="20" y="20" width="560" height="360" fill="%23FFF" stroke="%23F6BB02" stroke-width="4"/><text x="50%" y="80" font-family="sans-serif" font-size="22" font-weight="bold" fill="%232A4C9E" text-anchor="middle">TDC SUMMIT FEST 2026</text><text x="50%" y="120" font-family="sans-serif" font-size="16" font-weight="bold" fill="%23BD1B1F" text-anchor="middle">BERKAS PRATINJAU PENDAFTARAN KOMPETISI</text><line x1="50" y1="140" x2="550" y2="140" stroke="%232A4C9E" stroke-width="2"/><text x="60" y="180" font-family="sans-serif" font-size="14" fill="%23333">Status Berkas: Terverifikasi Sistem</text><text x="60" y="220" font-family="sans-serif" font-size="14" fill="%23333">Tipe Berkas: Kartu Identitas / KTM / Persyaratan Lomba</text><text x="60" y="260" font-family="sans-serif" font-size="14" fill="%23333">Status Validasi: Sesuai Ketentuan Pedoman</text><rect x="60" y="300" width="480" height="40" fill="%23F6BB02"/><text x="50%" y="325" font-family="sans-serif" font-size="14" font-weight="bold" fill="%232A4C9E" text-anchor="middle">DOC VERIFIED BY TDC COMMITTEE 2026</text></svg>`;
 
   const getParsedLeader = (reg: any) => {
@@ -1736,13 +1777,151 @@ export const Admin: React.FC = () => {
                 </button>
               </div>
 
+              {/* Filter & Search Panel for Competition */}
+              <div className="bg-ballroom border-4 border-blue-sail p-4 sm:p-5 shadow-[6px_6px_0_0_#2A4C9E] space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-blue-sail/20 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Icon name="Filter" size={18} className="text-red-inferno" />
+                    <h3 className="font-display font-black text-sm uppercase text-blue-sail">
+                      FILTER &amp; PENCARIAN TIM PENDAFTAR
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-blue-sail text-decor font-display font-black text-[11px] px-3 py-1 border border-decor uppercase">
+                      MENAMPILKAN {filteredCompetitionRegistrations.length} DARI {competitionRegistrations.length} TIM
+                    </span>
+                    {(compFilterType !== 'all' || compFilterCategory !== 'all' || compFilterPreliminary !== 'all' || compFilterPayment !== 'all' || compFilterSemifinal !== 'all' || compFilterFinal !== 'all' || compSearchQuery !== '') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCompFilterType('all');
+                          setCompFilterCategory('all');
+                          setCompFilterPreliminary('all');
+                          setCompFilterPayment('all');
+                          setCompFilterSemifinal('all');
+                          setCompFilterFinal('all');
+                          setCompSearchQuery('');
+                        }}
+                        className="bg-red-inferno hover:bg-red-700 text-white font-display font-bold text-[10px] uppercase px-2.5 py-1 border border-blue-sail flex items-center gap-1 cursor-pointer"
+                      >
+                        <Icon name="RotateCcw" size={12} />
+                        <span>RESET FILTER</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative">
+                  <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-sail/50" />
+                  <input
+                    type="text"
+                    placeholder="Cari berdasarkan nama tim, ketua, email, nomor whatsapp, atau institusi..."
+                    value={compSearchQuery}
+                    onChange={e => setCompSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-white border-2 border-blue-sail text-xs font-sans font-semibold text-blue-sail placeholder-blue-sail/40 focus:outline-none focus:border-decor"
+                  />
+                </div>
+
+                {/* Dropdown Filters Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+                  {/* Cabang Lomba */}
+                  <div className="space-y-1">
+                    <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Cabang Lomba</label>
+                    <select
+                      value={compFilterType}
+                      onChange={e => setCompFilterType(e.target.value as any)}
+                      className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
+                    >
+                      <option value="all">Semua Cabang</option>
+                      <option value="BPC">BPC (Business Plan)</option>
+                      <option value="BCC">BCC (Business Case)</option>
+                    </select>
+                  </div>
+
+                  {/* Jenjang */}
+                  <div className="space-y-1">
+                    <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Jenjang Pendidikan</label>
+                    <select
+                      value={compFilterCategory}
+                      onChange={e => setCompFilterCategory(e.target.value as any)}
+                      className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
+                    >
+                      <option value="all">Semua Jenjang</option>
+                      <option value="SMA/Sederajat">SMA / Sederajat</option>
+                      <option value="Mahasiswa">Mahasiswa</option>
+                    </select>
+                  </div>
+
+                  {/* Preliminary */}
+                  <div className="space-y-1">
+                    <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Status Preliminary</label>
+                    <select
+                      value={compFilterPreliminary}
+                      onChange={e => setCompFilterPreliminary(e.target.value as any)}
+                      className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
+                    >
+                      <option value="all">Semua Preliminary</option>
+                      <option value="pending">Kondisi Awal (Pending)</option>
+                      <option value="passed">✓ Lolos Preliminary</option>
+                      <option value="rejected">✕ Tidak Lolos Preliminary</option>
+                    </select>
+                  </div>
+
+                  {/* Pembayaran Semi Final */}
+                  <div className="space-y-1">
+                    <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Bayar Semi Final</label>
+                    <select
+                      value={compFilterPayment}
+                      onChange={e => setCompFilterPayment(e.target.value as any)}
+                      className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
+                    >
+                      <option value="all">Semua Bayar</option>
+                      <option value="none">Belum Bayar</option>
+                      <option value="pending">Menunggu Verifikasi</option>
+                      <option value="verified">✓ Diverifikasi</option>
+                    </select>
+                  </div>
+
+                  {/* Semi Final */}
+                  <div className="space-y-1">
+                    <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Status Semi Final</label>
+                    <select
+                      value={compFilterSemifinal}
+                      onChange={e => setCompFilterSemifinal(e.target.value as any)}
+                      className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
+                    >
+                      <option value="all">Semua Semi Final</option>
+                      <option value="pending">Pending Semi Final</option>
+                      <option value="passed">✓ Lolos Semi Final</option>
+                      <option value="rejected">✕ Tidak Lolos Semi Final</option>
+                    </select>
+                  </div>
+
+                  {/* Final */}
+                  <div className="space-y-1">
+                    <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Status Grand Final</label>
+                    <select
+                      value={compFilterFinal}
+                      onChange={e => setCompFilterFinal(e.target.value as any)}
+                      className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
+                    >
+                      <option value="all">Semua Grand Final</option>
+                      <option value="pending">Pending Final</option>
+                      <option value="passed">🏆 Lolos Final (Juara)</option>
+                      <option value="rejected">✕ Tidak Lolos Final</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               {/* Table Data */}
               <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
-                {competitionRegistrations.length === 0 ? (
+                {filteredCompetitionRegistrations.length === 0 ? (
                   <div className="p-12 text-center">
                     <Icon name="Trophy" size={40} className="text-blue-sail/30 mx-auto mb-2" />
-                    <p className="text-sm font-semibold">Belum Ada Tim Kompetisi Terdaftar</p>
-                    <p className="text-xs text-blue-sail/50 mt-1">Isi Formulir pendaftaran kompetisi di menu utama untuk merekam data pendaftaran.</p>
+                    <p className="text-sm font-semibold">Tidak Ada Tim Yang Sesuai Filter &amp; Pencarian</p>
+                    <p className="text-xs text-blue-sail/50 mt-1">Coba ubah opsi filter atau kata kunci pencarian Anda.</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -1757,7 +1936,7 @@ export const Admin: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y-2 divide-blue-sail/15">
-                        {competitionRegistrations.map(reg => {
+                        {filteredCompetitionRegistrations.map(reg => {
                           const compType = reg.competition_type || (reg.category_id?.includes('BCC') ? 'BCC' : 'BPC');
                           const eduCat = reg.education_category || (reg.category_id?.includes('SMA') ? 'SMA/Sederajat' : 'Mahasiswa');
                           const isBPC = compType === 'BPC';
