@@ -789,7 +789,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ambassadorApplications: [],
     subEvents: SEED_SUB_EVENTS,
     competitions: SEED_COMPETITIONS,
-    competitionRegistrations: [],
+    competitionRegistrations: (() => {
+      try {
+        const cached = localStorage.getItem('tsf_cache_comp_regs');
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
+      return [];
+    })(),
     thriftProducts: SEED_PRODUCTS,
     thriftVendors: SEED_VENDORS,
     vendorApplications: [],
@@ -803,7 +809,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : null;
   });
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('tsf_user_token'));
-  const [myTeam, setMyTeam] = useState<import('../types').CompetitionRegistration | null>(null);
+  const [myTeam, setMyTeam] = useState<import('../types').CompetitionRegistration | null>(() => {
+    const savedUser = localStorage.getItem('tsf_user_data');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        const cachedTeam = localStorage.getItem(`tsf_my_team_${parsedUser.id}`);
+        if (cachedTeam) return JSON.parse(cachedTeam);
+      } catch (e) {}
+    }
+    return null;
+  });
   const [adminUsers, setAdminUsers] = useState<import('../types').User[]>([]);
 
   // Helper for authenticated requests
@@ -917,11 +933,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res.ok) {
         const teamData = await res.json();
         setMyTeam(teamData);
-      } else {
+        try {
+          localStorage.setItem(`tsf_my_team_${activeUser.id}`, JSON.stringify(teamData));
+        } catch (e) {}
+      } else if (res.status === 404) {
+        // Only reset if server explicitly responds 404 (Team truly not registered)
         setMyTeam(null);
+        try {
+          localStorage.removeItem(`tsf_my_team_${activeUser.id}`);
+        } catch (e) {}
       }
+      // On 500/502/network glitch: DO NOT setMyTeam(null)! Keep existing team in state/cache.
     } catch (err) {
       console.error('Failed to fetch my competition team:', err);
+      // Restore from cache if available
+      try {
+        const cached = localStorage.getItem(`tsf_my_team_${activeUser.id}`);
+        if (cached) {
+          setMyTeam(JSON.parse(cached));
+        }
+      } catch (e) {}
     }
   };
 
@@ -1025,8 +1056,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await fetch(getApiUrl('/api/state'));
       if (res.ok) {
         const data = await res.json();
-        setState(data);
-        if (Array.isArray(data.users)) {
+        setState(prev => {
+          const compRegs = (Array.isArray(data.competitionRegistrations) && data.competitionRegistrations.length > 0)
+            ? data.competitionRegistrations
+            : (prev.competitionRegistrations && prev.competitionRegistrations.length > 0 ? prev.competitionRegistrations : []);
+          
+          if (compRegs.length > 0) {
+            try { localStorage.setItem('tsf_cache_comp_regs', JSON.stringify(compRegs)); } catch (e) {}
+          }
+
+          return {
+            ...prev,
+            ...data,
+            competitionRegistrations: compRegs.length > 0 ? compRegs : prev.competitionRegistrations || []
+          };
+        });
+
+        if (Array.isArray(data.users) && data.users.length > 0) {
           setAdminUsers(data.users);
         }
       }
@@ -1039,10 +1085,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     fetchState();
-    // Poll state every 15 seconds to sync data across devices
-    const interval = setInterval(fetchState, 15000);
+    if (currentUser) {
+      fetchMyTeam(currentUser);
+    }
+    // Poll state & myTeam every 15 seconds to safely sync data across devices
+    const interval = setInterval(() => {
+      fetchState();
+      if (currentUser) {
+        fetchMyTeam(currentUser);
+      }
+    }, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUser?.id]);
 
   const resetToDefault = async () => {
     try {
