@@ -592,15 +592,58 @@ export const RegistCompetition: React.FC = () => {
       {/* 3. MULTI-STEP REGISTRATION FORM SECTION */}
       <section id="competition-form-section" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
         
-        {/* Step Indicator Header */}
-        <div className="bg-blue-sail text-ballroom border-4 border-blue-sail p-6 shadow-[6px_6px_0_0_#2A4C9E] mb-8">
-          <div className="flex items-center justify-between mb-4 border-b border-ballroom/20 pb-4">
-            <div>
-              <span className="font-display font-bold text-xs text-decor tracking-wider uppercase">FORM PENDAFTARAN TIM</span>
-              <h2 className="font-display font-black text-2xl uppercase tracking-tight">
-                COMPETITION REGISTRATION FORM
-              </h2>
+        {myTeam ? (
+          <div className="bg-ballroom border-4 border-blue-sail p-8 shadow-[10px_10px_0_0_#BD1B1F] space-y-6 text-center animate-fadeIn">
+            <div className="w-16 h-16 bg-red-inferno text-white flex items-center justify-center mx-auto border-2 border-blue-sail shadow-[4px_4px_0_0_#000]">
+              <Icon name="CheckCircle2" size={36} />
             </div>
+            <div className="space-y-2">
+              <span className="bg-decor text-blue-sail font-display font-black text-xs px-3 py-1 border border-blue-sail uppercase tracking-wider inline-block">
+                AKUN TELAH TERDAFTAR
+              </span>
+              <h3 className="font-display font-black text-2xl sm:text-3xl text-blue-sail uppercase tracking-tight">
+                AKUN ANDA SUDAH MENDAFTARKAN TIM
+              </h3>
+              <p className="text-sm font-sans text-blue-sail/80 max-w-xl mx-auto leading-relaxed">
+                Setiap akun pengguna hanya diperbolehkan mendaftarkan 1 tim di kompetisi TDC Summit Fest 2026. Akun Anda telah terdaftar sebagai ketua tim:
+              </p>
+            </div>
+
+            <div className="bg-decor/20 border-2 border-blue-sail p-5 max-w-md mx-auto space-y-2 text-left shadow-[4px_4px_0_0_#000]">
+              <div className="flex items-center justify-between border-b border-blue-sail/20 pb-2">
+                <span className="font-display font-black text-base text-blue-sail uppercase">
+                  TIM {myTeam.team_name.toUpperCase()}
+                </span>
+                <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2 py-0.5 uppercase">
+                  CABANG {myTeam.competition_type || 'BPC'}
+                </span>
+              </div>
+              <p className="text-xs font-sans text-blue-sail"><strong>Ketua Tim:</strong> {myTeam.leader_name}</p>
+              <p className="text-xs font-sans text-blue-sail"><strong>Institusi:</strong> {myTeam.institution}</p>
+              <p className="text-xs font-sans text-blue-sail"><strong>Tahap Kompetisi:</strong> {myTeam.status_stage?.toUpperCase() || 'PRELIMINARY'}</p>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => { window.location.hash = '#/dashboard'; }}
+                className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs sm:text-sm uppercase px-8 py-4 border-2 border-blue-sail shadow-[5px_5px_0_0_#BD1B1F] cursor-pointer inline-flex items-center gap-2"
+              >
+                <Icon name="Trophy" size={18} />
+                <span>MASUK KE DASHBOARD TIM SAYA</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Step Indicator Header */}
+            <div className="bg-blue-sail text-ballroom border-4 border-blue-sail p-6 shadow-[6px_6px_0_0_#2A4C9E] mb-8">
+              <div className="flex items-center justify-between mb-4 border-b border-ballroom/20 pb-4">
+                <div>
+                  <span className="font-display font-bold text-xs text-decor tracking-wider uppercase">FORM PENDAFTARAN TIM</span>
+                  <h2 className="font-display font-black text-2xl uppercase tracking-tight">
+                    COMPETITION REGISTRATION FORM
+                  </h2>
+                </div>
             {step !== 'success' && (
               <span className="bg-decor text-blue-sail font-display font-black text-xs px-3.5 py-1.5 border border-blue-sail tracking-wider">
                 HALAMAN {step} / 5
@@ -1644,6 +1687,8 @@ export const RegistCompetition: React.FC = () => {
           </AnimatePresence>
 
         </div>
+        </>
+        )}
       </section>
 
       <AuthModal

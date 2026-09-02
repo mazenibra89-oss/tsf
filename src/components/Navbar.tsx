@@ -10,13 +10,13 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) => {
-  const { currentUser, logoutUser } = useApp();
+  const { currentUser, logoutUser, myTeam } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
-  let ctaText = 'Daftar Competition';
-  let ctaPage = 'competition';
+  let ctaText = myTeam ? 'Dashboard Tim' : 'Daftar Competition';
+  let ctaPage = myTeam ? 'dashboard' : 'competition';
 
   const menuItems = [
     { id: 'home', label: 'Home' },
@@ -139,8 +139,17 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
             </button>
           </div>
 
-          {/* Mobile hamburger button */}
+          {/* Mobile hamburger button & quick Dashboard button */}
           <div className="flex items-center space-x-2 lg:hidden">
+            {currentUser && (
+              <button
+                onClick={() => handleNavClick('dashboard')}
+                className="bg-decor text-blue-sail font-display font-black text-[10px] sm:text-xs uppercase px-2.5 py-1.5 border-2 border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] flex items-center gap-1 cursor-pointer"
+              >
+                <Icon name="Trophy" size={13} />
+                <span>DASHBOARD TIM</span>
+              </button>
+            )}
             <button
               id="nav-hamburger"
               onClick={() => setIsOpen(!isOpen)}
@@ -158,22 +167,32 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, setCurrentPage }) =
         <div className="lg:hidden bg-blue-sail border-t border-ballroom/10 animate-fadeIn">
           <div className="px-2 pt-2 pb-4 space-y-1">
             {currentUser && (
-              <div className="px-4 py-3 bg-ballroom/10 border-b border-ballroom/10 flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Icon name="User" size={16} className="text-decor" />
-                  <span className="font-display font-bold text-xs text-decor uppercase">
-                    {currentUser.name}
-                  </span>
+              <div className="px-4 py-3 bg-ballroom/10 border-b border-ballroom/10 space-y-2 mb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Icon name="User" size={16} className="text-decor" />
+                    <span className="font-display font-bold text-xs text-decor uppercase truncate max-w-[150px]">
+                      {currentUser.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      setIsLogoutConfirmOpen(true);
+                    }}
+                    className="bg-red-inferno text-white text-[10px] font-display font-bold px-2 py-1 uppercase flex items-center gap-1 border border-blue-sail cursor-pointer"
+                  >
+                    <Icon name="LogOut" size={12} />
+                    <span>LOGOUT</span>
+                  </button>
                 </div>
+
                 <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    setIsLogoutConfirmOpen(true);
-                  }}
-                  className="bg-red-inferno text-white text-[10px] font-display font-bold px-2 py-1 uppercase flex items-center gap-1 border border-blue-sail"
+                  onClick={() => handleNavClick('dashboard')}
+                  className="w-full bg-decor text-blue-sail font-display font-black text-xs uppercase py-2.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Icon name="LogOut" size={12} />
-                  <span>LOGOUT</span>
+                  <Icon name="Trophy" size={16} />
+                  <span>MASUK DASHBOARD TIM</span>
                 </button>
               </div>
             )}

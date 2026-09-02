@@ -681,10 +681,6 @@ export const ParticipantDashboard: React.FC = () => {
                     <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
                       Terima kasih yang sebesar-besarnya atas kerja keras dan kontribusi luar biasa dari tim <strong>{myTeam.team_name}</strong> pada babak Semi Final TDC Summit Fest 2026. Meskipun langkah tim Anda terhenti di babak Semi Final, karya dan dedikasi tim Anda sangat kami apresiasi!
                     </p>
-                    <div className="bg-black/30 p-3 border border-white/30 flex items-center justify-between text-[11px] font-mono font-bold text-decor">
-                      <span>STATUS HASIL JUDGING: TIDAK LOLOS SEMI FINAL</span>
-                      <span>E-SERTIFIKAT KEPESERTAAN AKAN DIKIRIMKAN VIA EMAIL</span>
-                    </div>
                   </div>
                 )}
 
