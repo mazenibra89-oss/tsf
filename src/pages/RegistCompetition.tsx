@@ -34,53 +34,79 @@ export const RegistCompetition: React.FC = () => {
     }
   };
 
-  // Step state: 1 | 2 | 3 | 4 | 5 | 'success'
-  const [step, setStep] = useState<number | 'success'>(1);
+  const DRAFT_KEY = 'tsf_regist_competition_draft_v1';
 
-  // Form State
-  const [form, setForm] = useState({
-    // Step 1: Competition & Education Choice
+  // Load initial draft from localStorage if available
+  const initialDraft = (() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to parse draft:', e);
+    }
+    return null;
+  })();
+
+  // Step state: 1 | 2 | 3 | 4 | 5 | 'success'
+  const [step, setStep] = useState<number | 'success'>(initialDraft?.step || 1);
+  const [hasRestoredDraft, setHasRestoredDraft] = useState<boolean>(!!initialDraft);
+
+  const defaultForm = {
     competitionType: '' as 'BPC' | 'BCC' | '',
     educationCategory: '' as 'SMA/Sederajat' | 'Mahasiswa' | '',
-
-    // Section 1: Informasi Tim
     teamName: '',
     teamSize: '3' as '3' | '4' | '5',
-
-    // Section 2: Data Ketua Tim
     leaderFullName: '',
-    leaderInstitution: '', // Asal Sekolah (SMA) / Asal Institusi (Mahasiswa)
-    leaderDomicile: '', // Domisili (SMA)
-    leaderStudentId: '', // NRP/NIM (Mahasiswa)
-    leaderMajor: '', // Jurusan (Mahasiswa)
-    leaderGrade: '10' as '10' | '11' | '12', // Kelas (SMA)
-    leaderYear: '', // Angkatan (Mahasiswa)
+    leaderInstitution: '',
+    leaderDomicile: '',
+    leaderStudentId: '',
+    leaderMajor: '',
+    leaderGrade: '10' as '10' | '11' | '12',
+    leaderYear: '',
     leaderWhatsapp: '',
     leaderEmail: '',
-    leaderCardFileName: '', // KTM / Kartu Pelajar (Max 3MB)
+    leaderCardFileName: '',
     leaderCardFileUrl: '',
-
-    // Section 3: Data Anggota Tim (Anggota 1 to 4 max)
     members: [
       { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
       { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
       { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
       { fullName: '', institution: '', domicile: '', studentId: '', major: '', grade: '10', year: '', whatsapp: '', email: '', cardFileName: '', cardFileUrl: '' },
     ] as MemberFields[],
-
-    // Section 4: Upload Persyaratan Umum
     igStoryFileName: '',
     igStoryFileUrl: '',
     twibbonFileName: '',
     twibbonFileUrl: '',
     igFollowFileName: '',
     igFollowFileUrl: '',
-
-    // Section 5: Checkboxes Konfirmasi
     agreeDataTrue: false,
     agreeGuidebook: false,
     agreeRangkaian: false,
-  });
+  };
+
+  const [form, setForm] = useState(initialDraft?.form || defaultForm);
+
+  // Auto-save draft on form or step change
+  React.useEffect(() => {
+    if (step !== 'success') {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step }));
+      } catch (e) {
+        console.error('Failed to save draft:', e);
+      }
+    }
+  }, [form, step]);
+
+  const resetFormDraft = () => {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch (e) {}
+    setForm(defaultForm);
+    setStep(1);
+    setHasRestoredDraft(false);
+  };
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -304,6 +330,7 @@ export const RegistCompetition: React.FC = () => {
         } as any);
 
         setIsSubmitting(false);
+        try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
         setStep('success');
       } catch (err: any) {
         setIsSubmitting(false);
@@ -635,6 +662,26 @@ export const RegistCompetition: React.FC = () => {
           </div>
         ) : (
           <>
+            {hasRestoredDraft && step !== 'success' && (
+              <div className="bg-decor/20 border-3 border-blue-sail p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[4px_4px_0_0_#000] text-xs font-sans text-blue-sail animate-fadeIn">
+                <div className="flex items-center gap-2">
+                  <Icon name="BookmarkCheck" size={20} className="text-blue-sail shrink-0" />
+                  <div>
+                    <span className="font-display font-black uppercase text-blue-sail block">DRAFT OTOMATIS DIPULIHKAN</span>
+                    <span className="text-blue-sail/80">Jawaban pendaftaran Anda telah tersimpan otomatis dan dilanjutkan dari Halaman {step}.</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={resetFormDraft}
+                  className="bg-red-inferno hover:bg-red-700 text-white font-display font-bold text-[10px] uppercase px-3.5 py-2 border border-blue-sail shrink-0 cursor-pointer flex items-center gap-1 shadow-[2px_2px_0_0_#000]"
+                >
+                  <Icon name="RotateCcw" size={12} />
+                  <span>Mulai Dari Awal (Hapus Draft)</span>
+                </button>
+              </div>
+            )}
+
             {/* Step Indicator Header */}
             <div className="bg-blue-sail text-ballroom border-4 border-blue-sail p-6 shadow-[6px_6px_0_0_#2A4C9E] mb-8">
               <div className="flex items-center justify-between mb-4 border-b border-ballroom/20 pb-4">

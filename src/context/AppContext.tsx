@@ -958,7 +958,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Gagal mengunggah berkas preliminary');
     await fetchMyTeam();
-    await fetchState();
+    fetchState().catch(() => {});
   };
 
   const submitSemiFinalPayment = async (
@@ -978,7 +978,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Gagal mengunggah bukti pembayaran');
     await fetchMyTeam();
-    await fetchState();
+    fetchState().catch(() => {});
   };
 
   const submitSemiFinalFile = async (
@@ -998,7 +998,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Gagal mengunggah berkas Semi Final');
     await fetchMyTeam();
-    await fetchState();
+    fetchState().catch(() => {});
   };
 
   const updateCompetitionRegistrationStatus = async (

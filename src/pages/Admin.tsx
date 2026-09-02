@@ -4441,7 +4441,7 @@ export const Admin: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => openDoc(selectedCompDetail.payment_semifinal_url, `Bukti Pembayaran Semi Final - ${selectedCompDetail.team_name}`)}
+                        onClick={() => openDoc(selectedCompDetail.payment_semifinal_url, `Bukti Pembayaran Semi Final - ${selectedCompDetail.team_name}`, selectedCompDetail.payment_semifinal_file_name || 'bukti_transfer')}
                         className="bg-blue-sail text-decor font-display font-black text-xs uppercase px-3 py-1.5 border border-blue-sail flex items-center gap-1 cursor-pointer"
                       >
                         <Icon name="FileText" size={12} />
@@ -4690,13 +4690,7 @@ export const Admin: React.FC = () => {
 
             {/* Document Viewer Content */}
             <div className="bg-white border-2 border-blue-sail p-3">
-              {viewingFile.url.startsWith('data:application/pdf') || viewingFile.url.includes('pdf') || viewingFile.url.endsWith('.pdf') ? (
-                <iframe
-                  src={viewingFile.url}
-                  title={viewingFile.title}
-                  className="w-full h-[70vh] border border-blue-sail/30 bg-gray-50"
-                />
-              ) : viewingFile.url.startsWith('data:image/') || viewingFile.url.match(/\.(jpg|jpeg|png|gif|svg)$/i) || viewingFile.url.startsWith('blob:') ? (
+              {viewingFile.url.startsWith('data:image/') || viewingFile.url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) || viewingFile.fileName?.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) ? (
                 <div className="bg-gray-900 border border-blue-sail/30 p-4 flex items-center justify-center min-h-[60vh]">
                   <img
                     src={viewingFile.url}
@@ -4704,13 +4698,19 @@ export const Admin: React.FC = () => {
                     className="max-h-[70vh] max-w-full object-contain shadow-lg"
                   />
                 </div>
+              ) : viewingFile.url.startsWith('data:application/pdf') || viewingFile.url.startsWith('data:pdf') || viewingFile.url.endsWith('.pdf') || viewingFile.fileName?.endsWith('.pdf') || viewingFile.url.startsWith('data:application/') ? (
+                <iframe
+                  src={viewingFile.url}
+                  title={viewingFile.title}
+                  className="w-full h-[70vh] border border-blue-sail/30 bg-gray-50"
+                />
               ) : (
                 <div className="space-y-4 p-4 text-center">
                   <div className="bg-blue-sail/5 p-4 border border-blue-sail/20 inline-block text-left w-full">
                     <span className="bg-decor text-blue-sail font-display font-black text-[10px] px-2 py-0.5 uppercase border border-blue-sail inline-block mb-2">
                       INFORMASI BERKAS PENDAFTARAN
                     </span>
-                    <p className="text-xs font-mono font-bold text-blue-sail">Nama Berkas: {viewingFile.url}</p>
+                    <p className="text-xs font-mono font-bold text-blue-sail">Nama Berkas: {viewingFile.fileName || viewingFile.title}</p>
                     <p className="text-xs font-sans text-blue-sail/70 mt-1">Status: Berkas telah tercatat di database pendaftaran tim.</p>
                   </div>
                   <div className="border-2 border-dashed border-blue-sail/30 p-4 bg-gray-50 flex justify-center">
@@ -4744,16 +4744,30 @@ export const Admin: React.FC = () => {
                     <span>BUKA DI TAB BARU</span>
                   </button>
                 )}
-                {viewingFile.url.startsWith('data:') && (
-                  <a
-                    href={viewingFile.url}
-                    download={viewingFile.fileName || 'dokumen_pendaftaran'}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail flex items-center gap-1.5"
-                  >
-                    <Icon name="Download" size={14} />
-                    <span>UNDUH BERKAS</span>
-                  </a>
-                )}
+                {viewingFile.url.startsWith('data:') && (() => {
+                  const getExt = () => {
+                    if (viewingFile.url.startsWith('data:image/jpeg') || viewingFile.url.startsWith('data:image/jpg')) return '.jpg';
+                    if (viewingFile.url.startsWith('data:image/png')) return '.png';
+                    if (viewingFile.url.startsWith('data:image/webp')) return '.webp';
+                    if (viewingFile.url.startsWith('data:image/gif')) return '.gif';
+                    if (viewingFile.url.startsWith('data:application/pdf')) return '.pdf';
+                    if (viewingFile.fileName && viewingFile.fileName.includes('.')) return '.' + viewingFile.fileName.split('.').pop();
+                    return '.pdf';
+                  };
+                  const ext = getExt();
+                  const rawName = (viewingFile.fileName || 'berkas_pendaftaran').replace(/\.[^/.]+$/, '');
+                  const downloadName = `${rawName}${ext}`;
+                  return (
+                    <a
+                      href={viewingFile.url}
+                      download={downloadName}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Icon name="Download" size={14} />
+                      <span>UNDUH BERKAS ({ext.toUpperCase().replace('.', '')})</span>
+                    </a>
+                  );
+                })()}
               </div>
 
               <button
