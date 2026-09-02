@@ -545,8 +545,18 @@ export const ParticipantDashboard: React.FC = () => {
                   PORTAL BABAK SEMI FINAL TIM {myTeam.team_name.toUpperCase()}
                 </h3>
               </div>
-              <span className="bg-decor text-blue-sail font-display font-black text-xs px-3 py-1 border border-blue-sail uppercase">
-                STATUS: LOLOS PRELIMINARY
+              <span className={`font-display font-black text-xs px-3 py-1 border uppercase ${
+                myTeam.status_semifinal === 'passed'
+                  ? 'bg-purple-700 text-white border-purple-900'
+                  : myTeam.status_semifinal === 'rejected'
+                  ? 'bg-red-inferno text-white border-blue-sail'
+                  : 'bg-decor text-blue-sail border-blue-sail'
+              }`}>
+                {myTeam.status_semifinal === 'passed'
+                  ? 'STATUS: LOLOS SEMI FINAL'
+                  : myTeam.status_semifinal === 'rejected'
+                  ? 'STATUS: TIDAK LOLOS SEMI FINAL'
+                  : 'STATUS: LOLOS PRELIMINARY'}
               </span>
             </div>
 
@@ -652,15 +662,64 @@ export const ParticipantDashboard: React.FC = () => {
             ) : (
               /* IF PAYMENT IS VERIFIED -> SHOW SEMI FINAL TASK SUBMISSION FORM! */
               <div className="space-y-6">
-                <div className="bg-emerald-600 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
-                  <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
-                    <Icon name="CheckCircle" size={22} />
-                    <span>PEMBAYARAN DIVERIFIKASI — FORM SUBMISSION SEMI FINAL TERBUKA!</span>
-                  </h4>
-                  <p className="text-xs font-sans text-white/90">
-                    Pembayaran registrasi Semi Final Anda telah diverifikasi oleh Panitia. Silakan unggah berkas proposal / solusi studi kasus Semi Final tim Anda di bawah ini.
-                  </p>
-                </div>
+                {/* Status Announcements for Semi Final */}
+                {myTeam.status_semifinal === 'rejected' && (
+                  <div className="bg-red-inferno text-white p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#000] space-y-3">
+                    <div className="flex items-center gap-3 border-b-2 border-white/20 pb-3">
+                      <div className="w-10 h-10 bg-white text-red-inferno flex items-center justify-center font-black text-xl shrink-0 shadow-md">
+                        ✕
+                      </div>
+                      <div>
+                        <span className="bg-black/40 text-decor font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-widest border border-white/30">
+                          PENGUMUMAN HASIL JUDGING SEMI FINAL
+                        </span>
+                        <h4 className="font-display font-black text-xl uppercase tracking-tight text-white mt-0.5">
+                          MOHON MAAF, TIM ANDA BELUM LOLOS KE BABAK GRAND FINAL
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
+                      Terima kasih yang sebesar-besarnya atas kerja keras dan kontribusi luar biasa dari tim <strong>{myTeam.team_name}</strong> pada babak Semi Final TDC Summit Fest 2026. Meskipun langkah tim Anda terhenti di babak Semi Final, karya dan dedikasi tim Anda sangat kami apresiasi!
+                    </p>
+                    <div className="bg-black/30 p-3 border border-white/30 flex items-center justify-between text-[11px] font-mono font-bold text-decor">
+                      <span>STATUS HASIL JUDGING: TIDAK LOLOS SEMI FINAL</span>
+                      <span>E-SERTIFIKAT KEPESERTAAN AKAN DIKIRIMKAN VIA EMAIL</span>
+                    </div>
+                  </div>
+                )}
+
+                {myTeam.status_semifinal === 'passed' && (
+                  <div className="bg-purple-700 text-white p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#000] space-y-3">
+                    <div className="flex items-center gap-3 border-b-2 border-white/20 pb-3">
+                      <div className="w-10 h-10 bg-decor text-purple-900 flex items-center justify-center font-black text-xl shrink-0 shadow-md">
+                        🏆
+                      </div>
+                      <div>
+                        <span className="bg-decor text-purple-900 font-display font-black text-[10px] px-2.5 py-0.5 uppercase tracking-widest border border-white/30">
+                          PENGUMUMAN HASIL JUDGING SEMI FINAL
+                        </span>
+                        <h4 className="font-display font-black text-xl uppercase tracking-tight text-white mt-0.5">
+                          SELAMAT! TIM ANDA RESMI LOLOS KE BABAK GRAND FINAL!
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
+                      Selamat kepada tim <strong>{myTeam.team_name}</strong>! Solusi dan proposal Semi Final Anda berhasil memukau dewan juri dan dinyatakan <strong>LOLOS KE BABAK GRAND FINAL</strong>. Persiapkan presentasi final tim Anda!
+                    </p>
+                  </div>
+                )}
+
+                {(!myTeam.status_semifinal || myTeam.status_semifinal === 'pending') && (
+                  <div className="bg-emerald-600 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
+                    <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
+                      <Icon name="CheckCircle" size={22} />
+                      <span>PEMBAYARAN DIVERIFIKASI — FORM SUBMISSION SEMI FINAL TERBUKA!</span>
+                    </h4>
+                    <p className="text-xs font-sans text-white/90">
+                      Pembayaran registrasi Semi Final Anda telah diverifikasi oleh Panitia. Silakan unggah berkas proposal / solusi studi kasus Semi Final tim Anda di bawah ini.
+                    </p>
+                  </div>
+                )}
 
                 {myTeam.semifinal_file_url ? (
                   <div className="bg-blue-sail/5 border-2 border-blue-sail p-5 space-y-3">
