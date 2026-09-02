@@ -180,8 +180,8 @@ export const ParticipantDashboard: React.FC = () => {
   const handlePaymentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
-    if (selected.size > 10 * 1024 * 1024) {
-      setPaymentError('Ukuran file bukti pembayaran maksimal 10MB.');
+    if (selected.size > 3 * 1024 * 1024) {
+      setPaymentError('Ukuran file bukti pembayaran maksimal 3MB.');
       return;
     }
     setPaymentError('');
@@ -708,7 +708,7 @@ export const ParticipantDashboard: React.FC = () => {
                       <label htmlFor="semifinal-payment-file-input" className="cursor-pointer flex flex-col items-center gap-2">
                         <Icon name="FileText" size={36} className="text-blue-sail" />
                         <span className="text-xs font-display font-bold text-blue-sail uppercase">
-                          {paymentFileName ? `✓ FILE TERPILIH: ${paymentFileName}` : 'Klik untuk Pilih File Bukti Transfer (PDF / Gambar, Maksimal 10MB)'}
+                          {paymentFileName ? `✓ FILE TERPILIH: ${paymentFileName}` : 'Klik untuk Pilih File Bukti Transfer (PDF / Gambar, Maksimal 3MB)'}
                         </span>
                       </label>
                     </div>
