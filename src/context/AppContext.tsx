@@ -70,7 +70,8 @@ interface AppContextType extends AppState {
   fetchMyTeam: () => Promise<void>;
   fetchAdminUsers: () => Promise<import('../types').User[]>;
   submitPreliminaryFile: (team_id: string, preliminary_file_url: string, preliminary_file_name: string, preliminary_file_type: 'BMC' | 'Executive Summary') => Promise<void>;
-  updateCompetitionRegistrationStatus: (id: string, payload: { status_stage?: string; status_preliminary?: string; status_semifinal?: string; status_final?: string; }) => Promise<void>;
+  submitSemiFinalPayment: (team_id: string, payment_semifinal_url: string, payment_semifinal_file_name: string) => Promise<void>;
+  updateCompetitionRegistrationStatus: (id: string, payload: { status_stage?: string; status_preliminary?: string; status_semifinal?: string; status_final?: string; payment_semifinal_status?: string; }) => Promise<void>;
 
   // Form Questions Control
   updateFormQuestions: (config: FormQuestionsConfig) => void;
@@ -959,6 +960,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await fetchState();
   };
 
+  const submitSemiFinalPayment = async (
+    team_id: string,
+    payment_semifinal_url: string,
+    payment_semifinal_file_name: string
+  ) => {
+    const res = await fetch(getApiUrl('/api/competitions/submit-semifinal-payment'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        team_id,
+        payment_semifinal_url,
+        payment_semifinal_file_name
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal mengunggah bukti pembayaran');
+    await fetchMyTeam();
+    await fetchState();
+  };
+
   const updateCompetitionRegistrationStatus = async (
     id: string,
     payload: {
@@ -966,6 +987,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status_preliminary?: string;
       status_semifinal?: string;
       status_final?: string;
+      payment_semifinal_status?: string;
     }
   ) => {
     const res = await authFetch(`/api/admin/competitions/${id}/status`, {
@@ -1560,6 +1582,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       fetchMyTeam,
       fetchAdminUsers,
       submitPreliminaryFile,
+      submitSemiFinalPayment,
       updateCompetitionRegistrationStatus
     }}>
       {children}

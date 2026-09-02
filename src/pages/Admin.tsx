@@ -4239,6 +4239,57 @@ export const Admin: React.FC = () => {
                 ) : (
                   <p className="text-xs font-sans text-gray-500 font-bold">Tim belum mengumpulkan berkas Preliminary (BMC / Executive Summary).</p>
                 )}
+
+                {/* Semi Final Payment Proof Section */}
+                {selectedCompDetail.payment_semifinal_url ? (
+                  <div className="bg-emerald-50 p-3 border border-emerald-600 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-2">
+                    <div>
+                      <span className="font-display font-bold text-xs text-emerald-900 uppercase block">
+                        BUKTI PEMBAYARAN REGISTRASI SEMI FINAL
+                      </span>
+                      <span className="text-[11px] font-mono text-emerald-800 font-bold">
+                        Berkas: {selectedCompDetail.payment_semifinal_file_name || 'Bukti_Transfer.pdf'}
+                      </span>
+                      <span className={`text-[10px] font-display font-bold uppercase px-2 py-0.5 border ml-2 ${
+                        selectedCompDetail.payment_semifinal_status === 'verified'
+                          ? 'bg-emerald-600 text-white border-emerald-700'
+                          : 'bg-amber-500 text-white border-amber-600'
+                      }`}>
+                        {selectedCompDetail.payment_semifinal_status === 'verified' ? '✓ DIVERIFIKASI' : 'MENUNGGU VERIFIKASI'}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openDoc(selectedCompDetail.payment_semifinal_url, `Bukti Pembayaran Semi Final - ${selectedCompDetail.team_name}`)}
+                        className="bg-blue-sail text-decor font-display font-black text-xs uppercase px-3 py-1.5 border border-blue-sail flex items-center gap-1 cursor-pointer"
+                      >
+                        <Icon name="FileText" size={12} />
+                        <span>PRATINJAU BUKTI</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { payment_semifinal_status: 'verified' });
+                          setSelectedCompDetail(prev => prev ? { ...prev, payment_semifinal_status: 'verified' } : null);
+                        }}
+                        className={`font-display font-bold text-xs uppercase px-3 py-1.5 border cursor-pointer ${
+                          selectedCompDetail.payment_semifinal_status === 'verified'
+                            ? 'bg-emerald-700 text-white border-emerald-800'
+                            : 'bg-white text-emerald-700 border-emerald-600 hover:bg-emerald-100'
+                        }`}
+                      >
+                        ✓ Setujui Pembayaran
+                      </button>
+                    </div>
+                  </div>
+                ) : selectedCompDetail.status_preliminary === 'passed' ? (
+                  <p className="text-xs font-sans text-amber-800 bg-amber-50 border border-amber-300 p-2 font-bold mt-2">
+                    Tim Lolos Preliminary tapi belum mengunggah bukti pembayaran Semi Final.
+                  </p>
+                ) : null}
             </div>
 
             {/* Stage Progression Controller inside Modal */}

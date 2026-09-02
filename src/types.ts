@@ -158,6 +158,10 @@ export interface CompetitionRegistration {
   preliminary_file_name?: string;
   preliminary_file_type?: 'BMC' | 'Executive Summary';
   preliminary_submitted_at?: string;
+  payment_semifinal_url?: string;
+  payment_semifinal_file_name?: string;
+  payment_semifinal_status?: 'none' | 'pending' | 'verified' | 'rejected';
+  payment_semifinal_submitted_at?: string;
   submitted_at: string;
 }
 

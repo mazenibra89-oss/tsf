@@ -231,7 +231,11 @@ async function ensureCompetitionColumns() {
       { name: 'preliminary_file_url', type: 'text' },
       { name: 'preliminary_file_name', type: 'string' },
       { name: 'preliminary_file_type', type: 'string' },
-      { name: 'preliminary_submitted_at', type: 'timestamp' }
+      { name: 'preliminary_submitted_at', type: 'timestamp' },
+      { name: 'payment_semifinal_url', type: 'text' },
+      { name: 'payment_semifinal_file_name', type: 'string' },
+      { name: 'payment_semifinal_status', type: 'string', defaultVal: 'none' },
+      { name: 'payment_semifinal_submitted_at', type: 'timestamp' }
     ];
 
     for (const col of columns) {
@@ -1456,10 +1460,37 @@ app.get('/api/admin/users', async (_req: Request, res: Response): Promise<void> 
   }
 });
 
-// Admin: Update Competition Registration Stage / Status
+// Participant: Submit Semi Final Payment Proof
+app.post('/api/competitions/submit-semifinal-payment', async (req: Request, res: Response): Promise<void> => {
+  const { team_id, payment_semifinal_url, payment_semifinal_file_name } = req.body;
+
+  if (!team_id || !payment_semifinal_url) {
+    res.status(400).json({ message: 'ID Tim dan berkas bukti pembayaran wajib diisi.' });
+    return;
+  }
+
+  try {
+    await ensureCompetitionColumns();
+    await db('competition_registrations')
+      .where({ id: team_id })
+      .update({
+        payment_semifinal_url,
+        payment_semifinal_file_name: payment_semifinal_file_name || 'bukti_transfer_semifinal.pdf',
+        payment_semifinal_status: 'pending',
+        payment_semifinal_submitted_at: db.fn.now()
+      });
+
+    res.json({ message: 'Bukti pembayaran Semi Final berhasil diunggah' });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Gagal mengunggah bukti pembayaran Semi Final' });
+  }
+});
+
+// Admin: Update Competition Registration Stage / Status / Semi Final Payment
 app.patch('/api/admin/competitions/:id/status', authenticateToken, async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
-  const { status_stage, status_preliminary, status_semifinal, status_final } = req.body;
+  const { status_stage, status_preliminary, status_semifinal, status_final, payment_semifinal_status } = req.body;
 
   try {
     await ensureCompetitionColumns();
@@ -1468,9 +1499,10 @@ app.patch('/api/admin/competitions/:id/status', authenticateToken, async (req: R
     if (status_preliminary !== undefined) updateData.status_preliminary = status_preliminary;
     if (status_semifinal !== undefined) updateData.status_semifinal = status_semifinal;
     if (status_final !== undefined) updateData.status_final = status_final;
+    if (payment_semifinal_status !== undefined) updateData.payment_semifinal_status = payment_semifinal_status;
 
     await db('competition_registrations').where({ id }).update(updateData);
-    res.json({ message: 'Status kelolosan kompetisi berhasil diperbarui' });
+    res.json({ message: 'Status kelolosan & pembayaran kompetisi berhasil diperbarui' });
   } catch (err: any) {
     console.error('Update competition status error:', err);
     res.status(500).json({ message: err.message || 'Gagal memperbarui status kompetisi' });

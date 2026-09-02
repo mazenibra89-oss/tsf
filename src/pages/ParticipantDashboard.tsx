@@ -4,7 +4,7 @@ import { Icon } from '../components/Icon';
 import { AuthModal } from '../components/AuthModal';
 
 export const ParticipantDashboard: React.FC = () => {
-  const { currentUser, myTeam, fetchMyTeam, submitPreliminaryFile, setCurrentPage } = useApp();
+  const { currentUser, myTeam, fetchMyTeam, submitPreliminaryFile, submitSemiFinalPayment, setCurrentPage } = useApp();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -13,6 +13,13 @@ export const ParticipantDashboard: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [paymentFileName, setPaymentFileName] = useState('');
+  const [paymentFileUrl, setPaymentFileUrl] = useState('');
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
 
   useEffect(() => {
     if (currentUser) {
@@ -126,6 +133,43 @@ export const ParticipantDashboard: React.FC = () => {
     } catch (err: any) {
       setIsSubmitting(false);
       setError(err.message || 'Gagal mengunggah berkas');
+    }
+  };
+
+  const handlePaymentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    if (selected.size > 10 * 1024 * 1024) {
+      setPaymentError('Ukuran file bukti pembayaran maksimal 10MB.');
+      return;
+    }
+    setPaymentError('');
+    setPaymentFile(selected);
+    setPaymentFileName(selected.name);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPaymentFileUrl(reader.result as string);
+    };
+    reader.readAsDataURL(selected);
+  };
+
+  const handlePaymentUploadSubmit = async () => {
+    if (!myTeam || (!paymentFileUrl && !paymentFileName)) {
+      setPaymentError('Pilih file bukti pembayaran terlebih dahulu.');
+      return;
+    }
+    setIsSubmittingPayment(true);
+    setPaymentError('');
+    setPaymentSuccessMsg('');
+
+    try {
+      await submitSemiFinalPayment(myTeam.id, paymentFileUrl || paymentFileName, paymentFileName);
+      setIsSubmittingPayment(false);
+      setPaymentSuccessMsg('Bukti pembayaran Semi Final berhasil dikirim! Menunggu verifikasi admin.');
+    } catch (err: any) {
+      setIsSubmittingPayment(false);
+      setPaymentError(err.message || 'Gagal mengunggah bukti pembayaran');
     }
   };
 
@@ -440,6 +484,125 @@ export const ParticipantDashboard: React.FC = () => {
           )}
 
         </div>
+
+        {/* Semi Final Payment Box (Appears when Preliminary is Passed) */}
+        {myTeam.status_preliminary === 'passed' && (
+          <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] space-y-6">
+            <div className="border-b-2 border-blue-sail/20 pb-4">
+              <span className="bg-emerald-600 text-white font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider inline-block mb-1">
+                STAGE 02 — REGISTRASI SEMI FINAL
+              </span>
+              <h3 className="font-display font-black text-2xl uppercase text-blue-sail">
+                PEMBAYARAN REGISTRASI BABAK SEMI FINAL
+              </h3>
+              <p className="text-xs text-blue-sail/80 font-sans mt-1">
+                Selamat! Tim Anda <strong>LOLOS Seleksi Preliminary</strong>. Untuk melanjutkan ke babak Semi Final, silakan lakukan pembayaran registrasi Semi Final.
+              </p>
+            </div>
+
+            {/* Payment Info Card */}
+            <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#000]">
+              <div className="flex items-center justify-between border-b border-blue-sail/20 pb-2">
+                <span className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-1.5">
+                  <Icon name="CreditCard" size={16} /> BIAYA REGISTRASI SEMI FINAL
+                </span>
+                <span className="bg-blue-sail text-decor font-display font-black text-base px-3 py-1 border border-decor">
+                  Rp 150.000 / Tim
+                </span>
+              </div>
+              <div className="text-xs font-sans text-blue-sail space-y-1">
+                <p><strong>Transfer Rekening Resmi Panitia TSF 2026:</strong></p>
+                <div className="bg-white border border-blue-sail/30 p-3 font-mono space-y-1">
+                  <p>🔹 Bank BCA: <strong>8290-1928-301</strong> a.n. Panitia TDC Summit Fest</p>
+                  <p>🔹 Bank Mandiri: <strong>1400-0192-8301</strong> a.n. TDC SUMMIT FEST 2026</p>
+                  <p>🔹 QRIS All Payment: Scan QRIS pada portal pembayaran resmi</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Status alerts */}
+            {myTeam.payment_semifinal_status === 'verified' ? (
+              <div className="bg-emerald-600 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
+                <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
+                  <Icon name="CheckCircle" size={22} />
+                  <span>PEMBAYARAN DIVERIFIKASI — BERHAK BERTANDING DI SEMI FINAL!</span>
+                </h4>
+                <p className="text-xs font-sans opacity-90">
+                  Pembayaran registrasi Semi Final Anda telah diverifikasi oleh Panitia. Tim Anda resmi bertanding di Babak Semi Final TDC Summit Fest 2026.
+                </p>
+              </div>
+            ) : myTeam.payment_semifinal_status === 'pending' || myTeam.payment_semifinal_url ? (
+              <div className="bg-amber-500 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
+                <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
+                  <Icon name="Clock" size={22} />
+                  <span>BUKTI PEMBAYARAN TERKIRIM — MENUNGGU VERIFIKASI ADMIN</span>
+                </h4>
+                <p className="text-xs font-sans opacity-90">
+                  Bukti transfer registrasi Semi Final Anda sedang dalam proses verifikasi oleh panitia. Silakan cek berkala halaman ini.
+                </p>
+                {myTeam.payment_semifinal_file_name && (
+                  <p className="text-xs font-mono font-bold bg-amber-600 px-3 py-1 inline-block border border-amber-400">
+                    Berkas: {myTeam.payment_semifinal_file_name}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h4 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2">
+                  <Icon name="Upload" size={16} className="text-red-inferno" />
+                  <span>UNGGAH BUKTI TRANSFER REGISTRASI SEMI FINAL</span>
+                </h4>
+
+                {paymentError && (
+                  <p className="bg-red-inferno text-white font-sans text-xs p-3 font-semibold border border-blue-sail">
+                    {paymentError}
+                  </p>
+                )}
+                {paymentSuccessMsg && (
+                  <p className="bg-emerald-600 text-white font-sans text-xs p-3 font-semibold border border-blue-sail">
+                    {paymentSuccessMsg}
+                  </p>
+                )}
+
+                <div className="border-2 border-dashed border-blue-sail/40 p-6 bg-white text-center cursor-pointer hover:border-decor transition-colors">
+                  <input
+                    type="file"
+                    accept=".pdf,image/*"
+                    onChange={handlePaymentFileChange}
+                    className="hidden"
+                    id="semifinal-payment-file-input"
+                  />
+                  <label htmlFor="semifinal-payment-file-input" className="cursor-pointer flex flex-col items-center gap-2">
+                    <Icon name="FileText" size={36} className="text-blue-sail" />
+                    <span className="text-xs font-display font-bold text-blue-sail uppercase">
+                      {paymentFileName ? `✓ FILE TERPILIH: ${paymentFileName}` : 'Klik untuk Pilih File Bukti Transfer (PDF / Gambar, Maksimal 10MB)'}
+                    </span>
+                  </label>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    disabled={isSubmittingPayment || !paymentFileName}
+                    onClick={handlePaymentUploadSubmit}
+                    className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isSubmittingPayment ? (
+                      <>
+                        <Icon name="Loader2" size={16} className="animate-spin" />
+                        <span>MENGIRIM BUKTI...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="Upload" size={16} />
+                        <span>SUBMIT BUKTI PEMBAYARAN SEMI FINAL</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* DETAIL TIM & ANGGOTA SECTION */}
         <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[6px_6px_0_0_#2A4C9E] space-y-6">
