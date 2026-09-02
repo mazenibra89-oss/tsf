@@ -162,6 +162,9 @@ export interface CompetitionRegistration {
   payment_semifinal_file_name?: string;
   payment_semifinal_status?: 'none' | 'pending' | 'verified' | 'rejected';
   payment_semifinal_submitted_at?: string;
+  semifinal_file_url?: string;
+  semifinal_file_name?: string;
+  semifinal_submitted_at?: string;
   submitted_at: string;
 }
 

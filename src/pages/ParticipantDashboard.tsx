@@ -4,7 +4,7 @@ import { Icon } from '../components/Icon';
 import { AuthModal } from '../components/AuthModal';
 
 export const ParticipantDashboard: React.FC = () => {
-  const { currentUser, myTeam, fetchMyTeam, submitPreliminaryFile, submitSemiFinalPayment, setCurrentPage } = useApp();
+  const { currentUser, myTeam, fetchMyTeam, submitPreliminaryFile, submitSemiFinalPayment, submitSemiFinalFile, setCurrentPage } = useApp();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -20,6 +20,29 @@ export const ParticipantDashboard: React.FC = () => {
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
+
+  const [semiFile, setSemiFile] = useState<File | null>(null);
+  const [semiFileName, setSemiFileName] = useState('');
+  const [semiFileUrl, setSemiFileUrl] = useState('');
+  const [isSubmittingSemi, setIsSubmittingSemi] = useState(false);
+  const [semiError, setSemiError] = useState('');
+  const [semiSuccessMsg, setSemiSuccessMsg] = useState('');
+
+  const [viewingFile, setViewingFile] = useState<{ url: string; title: string; fileName?: string } | null>(null);
+
+  const SAMPLE_DOC_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="100%" height="100%" fill="%232A4C9E"/><rect x="20" y="20" width="560" height="360" fill="%23FFF" stroke="%23F6BB02" stroke-width="4"/><text x="50%" y="80" font-family="sans-serif" font-size="22" font-weight="bold" fill="%232A4C9E" text-anchor="middle">TDC SUMMIT FEST 2026</text><text x="50%" y="120" font-family="sans-serif" font-size="16" font-weight="bold" fill="%23BD1B1F" text-anchor="middle">BERKAS PRATINJAU DOKUMEN PESERTA</text><line x1="50" y1="140" x2="550" y2="140" stroke="%232A4C9E" stroke-width="2"/><text x="60" y="180" font-family="sans-serif" font-size="14" fill="%23333">Status Berkas: Terverifikasi Sistem</text><text x="60" y="220" font-family="sans-serif" font-size="14" fill="%23333">Tipe Berkas: Kartu Identitas / KTM / Persyaratan Lomba</text><text x="60" y="260" font-family="sans-serif" font-size="14" fill="%23333">Status Validasi: Sesuai Ketentuan Pedoman</text><rect x="60" y="300" width="480" height="40" fill="%23F6BB02"/><text x="50%" y="325" font-family="sans-serif" font-size="14" font-weight="bold" fill="%232A4C9E" text-anchor="middle">DOC VERIFIED BY TDC COMMITTEE 2026</text></svg>`;
+
+  const openDoc = (fileUrl?: string, docTitle?: string, fileName?: string) => {
+    if (!fileUrl) {
+      alert(`Berkas "${docTitle || 'Dokumen'}" belum diunggah.`);
+      return;
+    }
+    setViewingFile({
+      url: fileUrl,
+      title: docTitle || 'Pratinjau Berkas',
+      fileName: fileName || 'berkas_pendaftaran.pdf'
+    });
+  };
 
   useEffect(() => {
     if (currentUser) {
@@ -170,6 +193,43 @@ export const ParticipantDashboard: React.FC = () => {
     } catch (err: any) {
       setIsSubmittingPayment(false);
       setPaymentError(err.message || 'Gagal mengunggah bukti pembayaran');
+    }
+  };
+
+  const handleSemiFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    if (selected.size > 10 * 1024 * 1024) {
+      setSemiError('Ukuran berkas submission Semi Final maksimal 10MB.');
+      return;
+    }
+    setSemiError('');
+    setSemiFile(selected);
+    setSemiFileName(selected.name);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSemiFileUrl(reader.result as string);
+    };
+    reader.readAsDataURL(selected);
+  };
+
+  const handleSemiUploadSubmit = async () => {
+    if (!myTeam || (!semiFileUrl && !semiFileName)) {
+      setSemiError('Pilih berkas submission Semi Final terlebih dahulu.');
+      return;
+    }
+    setIsSubmittingSemi(true);
+    setSemiError('');
+    setSemiSuccessMsg('');
+
+    try {
+      await submitSemiFinalFile(myTeam.id, semiFileUrl || semiFileName, semiFileName);
+      setIsSubmittingSemi(false);
+      setSemiSuccessMsg('Berkas submission Semi Final berhasil dikumpulkan!');
+    } catch (err: any) {
+      setIsSubmittingSemi(false);
+      setSemiError(err.message || 'Gagal mengunggah berkas Semi Final');
     }
   };
 
@@ -353,252 +413,343 @@ export const ParticipantDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Preliminary Submission Action Box */}
-        <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] space-y-6">
-          <div className="border-b-2 border-blue-sail/20 pb-4">
-            <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider inline-block mb-1">
-              SUBMISSION TASK PRELIMINARY
-            </span>
-            <h3 className="font-display font-black text-2xl uppercase text-blue-sail">
-              PENGUMPULAN BERKAS PRELIMINARY — {isBPC ? 'BMC' : 'EXECUTIVE SUMMARY'}
-            </h3>
-            <p className="text-xs text-blue-sail/80 font-sans mt-1">
-              Untuk cabang <strong>{myTeam.competition_type || 'BPC'}</strong>, tim Anda diwajibkan mengunggah berkas <strong>{requiredFileType}</strong> dalam format PDF.
-            </p>
-          </div>
-
-          {/* Submission Status Alerts */}
-          {myTeam.status_preliminary === 'passed' && (
-            <div className="bg-emerald-500 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
-              <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
-                <Icon name="CheckCircle" size={22} />
-                <span>SELAMAT! TIM ANDA DIBERITAKAN LOLOS KE BABAK SEMI FINAL!</span>
-              </h4>
-              <p className="text-xs font-sans text-white/90">
-                Tim {myTeam.team_name} berhasil lolos seleksi babak Preliminary. Informasi pembayaran dan instruksi babak Semi Final akan segera diaktifkan.
-              </p>
-            </div>
-          )}
-
-          {myTeam.status_preliminary === 'rejected' && (
-            <div className="bg-red-inferno text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
-              <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
-                <Icon name="XCircle" size={22} />
-                <span>APRESIASI PENUH UNTUK TIM ANDA</span>
-              </h4>
-              <p className="text-xs font-sans text-white/90">
-                Terima kasih atas partisipasi karya luar biasa dari tim {myTeam.team_name}. Tetap semangat berkarya di kompetisi mendatang!
-              </p>
-            </div>
-          )}
-
-          {/* Current File Preview */}
-          {myTeam.preliminary_file_url ? (
-            <div className="bg-blue-sail/5 border-2 border-blue-sail p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-display font-black text-xs text-emerald-700 bg-emerald-100 px-3 py-1 border border-emerald-300 uppercase flex items-center gap-1.5">
-                  <Icon name="FileCheck" size={16} /> BERKAS SUDAH DIKUMPULKAN
-                </span>
-                <span className="text-[11px] font-sans text-blue-sail/60 font-semibold">
-                  Status: Menunggu Penilaian Dewan Juri
-                </span>
-              </div>
-
-              <div className="bg-white p-4 border border-blue-sail/30 flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="font-display font-bold text-xs text-blue-sail uppercase block">
-                    {myTeam.preliminary_file_name || `Berkas_Preliminary_${myTeam.team_name}.pdf`}
-                  </span>
-                  <p className="text-[11px] font-sans text-blue-sail/70">
-                    Tipe Berkas: {myTeam.preliminary_file_type || (isBPC ? 'BMC' : 'Executive Summary')}
-                  </p>
-                </div>
-                <a
-                  href={myTeam.preliminary_file_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] shrink-0 flex items-center gap-1.5"
-                >
-                  <Icon name="Eye" size={14} />
-                  <span>LIHAT BERKAS</span>
-                </a>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-4">
-              <div className="flex items-center gap-2">
-                <Icon name="Upload" size={20} className="text-red-inferno" />
-                <h4 className="font-display font-black text-sm uppercase text-blue-sail">
-                  UNGGAH BERKAS PRELIMINARY ({requiredFileType})
-                </h4>
-              </div>
-
-              {error && (
-                <p className="text-red-600 text-xs font-sans font-semibold bg-red-50 p-2.5 border border-red-300">
-                  {error}
-                </p>
-              )}
-
-              {successMsg && (
-                <p className="text-emerald-700 text-xs font-sans font-semibold bg-emerald-50 p-2.5 border border-emerald-300">
-                  {successMsg}
-                </p>
-              )}
-
-              <div className="border-2 border-dashed border-blue-sail/40 p-6 bg-white text-center cursor-pointer hover:border-decor transition-colors">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="preliminary-file-input"
-                />
-                <label htmlFor="preliminary-file-input" className="cursor-pointer flex flex-col items-center gap-2">
-                  <Icon name="FileText" size={36} className="text-blue-sail" />
-                  <span className="text-xs font-display font-bold text-blue-sail uppercase">
-                    {fileName ? `✓ FILE TERPILIH: ${fileName}` : `Klik untuk Pilih File PDF ${requiredFileType} (Maksimal 10MB)`}
-                  </span>
-                </label>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <button
-                  disabled={isSubmitting || !fileName}
-                  onClick={handleUploadSubmit}
-                  className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Icon name="Loader2" size={16} className="animate-spin" />
-                      <span>MENGIRIM BERKAS...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="Upload" size={16} />
-                      <span>SUBMIT BERKAS PRELIMINARY</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        {/* Semi Final Payment Box (Appears when Preliminary is Passed) */}
-        {myTeam.status_preliminary === 'passed' && (
+        {/* Preliminary Submission Action Box (Only visible when NOT passed preliminary) */}
+        {myTeam.status_preliminary !== 'passed' && (
           <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] space-y-6">
             <div className="border-b-2 border-blue-sail/20 pb-4">
-              <span className="bg-emerald-600 text-white font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider inline-block mb-1">
-                STAGE 02 — REGISTRASI SEMI FINAL
+              <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider inline-block mb-1">
+                SUBMISSION TASK PRELIMINARY
               </span>
               <h3 className="font-display font-black text-2xl uppercase text-blue-sail">
-                PEMBAYARAN REGISTRASI BABAK SEMI FINAL
+                PENGUMPULAN BERKAS PRELIMINARY — {isBPC ? 'BMC' : 'EXECUTIVE SUMMARY'}
               </h3>
               <p className="text-xs text-blue-sail/80 font-sans mt-1">
-                Selamat! Tim Anda <strong>LOLOS Seleksi Preliminary</strong>. Untuk melanjutkan ke babak Semi Final, silakan lakukan pembayaran registrasi Semi Final.
+                Untuk cabang <strong>{myTeam.competition_type || 'BPC'}</strong>, tim Anda diwajibkan mengunggah berkas <strong>{requiredFileType}</strong> dalam format PDF.
               </p>
             </div>
 
-            {/* Payment Info Card */}
-            <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#000]">
-              <div className="flex items-center justify-between border-b border-blue-sail/20 pb-2">
-                <span className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-1.5">
-                  <Icon name="CreditCard" size={16} /> BIAYA REGISTRASI SEMI FINAL
-                </span>
-                <span className="bg-blue-sail text-decor font-display font-black text-base px-3 py-1 border border-decor">
-                  Rp 150.000 / Tim
-                </span>
+            {/* Submission Status Alerts */}
+            {myTeam.status_preliminary === 'rejected' && (
+              <div className="bg-red-inferno text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
+                <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
+                  <Icon name="XCircle" size={22} />
+                  <span>APRESIASI PENUH UNTUK TIM ANDA</span>
+                </h4>
+                <p className="text-xs font-sans text-white/90">
+                  Terima kasih atas partisipasi karya luar biasa dari tim {myTeam.team_name}. Tetap semangat berkarya di kompetisi mendatang!
+                </p>
               </div>
-              <div className="text-xs font-sans text-blue-sail space-y-1">
-                <p><strong>Transfer Rekening Resmi Panitia TSF 2026:</strong></p>
-                <div className="bg-white border border-blue-sail/30 p-3 font-mono space-y-1">
-                  <p>🔹 Bank BCA: <strong>8290-1928-301</strong> a.n. Panitia TDC Summit Fest</p>
-                  <p>🔹 Bank Mandiri: <strong>1400-0192-8301</strong> a.n. TDC SUMMIT FEST 2026</p>
-                  <p>🔹 QRIS All Payment: Scan QRIS pada portal pembayaran resmi</p>
+            )}
+
+            {/* Current File Preview */}
+            {myTeam.preliminary_file_url ? (
+              <div className="bg-blue-sail/5 border-2 border-blue-sail p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-display font-black text-xs text-emerald-700 bg-emerald-100 px-3 py-1 border border-emerald-300 uppercase flex items-center gap-1.5">
+                    <Icon name="FileCheck" size={16} /> BERKAS SUDAH DIKUMPULKAN
+                  </span>
+                  <span className="text-[11px] font-sans text-blue-sail/60 font-semibold">
+                    Status: Menunggu Penilaian Dewan Juri
+                  </span>
+                </div>
+
+                <div className="bg-white p-4 border border-blue-sail/30 flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="font-display font-bold text-xs text-blue-sail uppercase block">
+                      {myTeam.preliminary_file_name || `Berkas_Preliminary_${myTeam.team_name}.pdf`}
+                    </span>
+                    <p className="text-[11px] font-sans text-blue-sail/70">
+                      Tipe Berkas: {myTeam.preliminary_file_type || (isBPC ? 'BMC' : 'Executive Summary')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openDoc(myTeam.preliminary_file_url, myTeam.preliminary_file_name || 'Berkas Preliminary')}
+                    className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] shrink-0 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Icon name="Eye" size={14} />
+                    <span>LIHAT BERKAS</span>
+                  </button>
                 </div>
               </div>
-            </div>
-
-            {/* Status alerts */}
-            {myTeam.payment_semifinal_status === 'verified' ? (
-              <div className="bg-emerald-600 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
-                <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
-                  <Icon name="CheckCircle" size={22} />
-                  <span>PEMBAYARAN DIVERIFIKASI — BERHAK BERTANDING DI SEMI FINAL!</span>
-                </h4>
-                <p className="text-xs font-sans opacity-90">
-                  Pembayaran registrasi Semi Final Anda telah diverifikasi oleh Panitia. Tim Anda resmi bertanding di Babak Semi Final TDC Summit Fest 2026.
-                </p>
-              </div>
-            ) : myTeam.payment_semifinal_status === 'pending' || myTeam.payment_semifinal_url ? (
-              <div className="bg-amber-500 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
-                <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
-                  <Icon name="Clock" size={22} />
-                  <span>BUKTI PEMBAYARAN TERKIRIM — MENUNGGU VERIFIKASI ADMIN</span>
-                </h4>
-                <p className="text-xs font-sans opacity-90">
-                  Bukti transfer registrasi Semi Final Anda sedang dalam proses verifikasi oleh panitia. Silakan cek berkala halaman ini.
-                </p>
-                {myTeam.payment_semifinal_file_name && (
-                  <p className="text-xs font-mono font-bold bg-amber-600 px-3 py-1 inline-block border border-amber-400">
-                    Berkas: {myTeam.payment_semifinal_file_name}
-                  </p>
-                )}
-              </div>
             ) : (
-              <div className="space-y-4">
-                <h4 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2">
-                  <Icon name="Upload" size={16} className="text-red-inferno" />
-                  <span>UNGGAH BUKTI TRANSFER REGISTRASI SEMI FINAL</span>
-                </h4>
+              <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Icon name="Upload" size={20} className="text-red-inferno" />
+                  <h4 className="font-display font-black text-sm uppercase text-blue-sail">
+                    UNGGAH BERKAS PRELIMINARY ({requiredFileType})
+                  </h4>
+                </div>
 
-                {paymentError && (
-                  <p className="bg-red-inferno text-white font-sans text-xs p-3 font-semibold border border-blue-sail">
-                    {paymentError}
+                {error && (
+                  <p className="text-red-600 text-xs font-sans font-semibold bg-red-50 p-2.5 border border-red-300">
+                    {error}
                   </p>
                 )}
-                {paymentSuccessMsg && (
-                  <p className="bg-emerald-600 text-white font-sans text-xs p-3 font-semibold border border-blue-sail">
-                    {paymentSuccessMsg}
+
+                {successMsg && (
+                  <p className="text-emerald-700 text-xs font-sans font-semibold bg-emerald-50 p-2.5 border border-emerald-300">
+                    {successMsg}
                   </p>
                 )}
 
                 <div className="border-2 border-dashed border-blue-sail/40 p-6 bg-white text-center cursor-pointer hover:border-decor transition-colors">
                   <input
                     type="file"
-                    accept=".pdf,image/*"
-                    onChange={handlePaymentFileChange}
+                    accept=".pdf"
+                    onChange={handleFileChange}
                     className="hidden"
-                    id="semifinal-payment-file-input"
+                    id="preliminary-file-input"
                   />
-                  <label htmlFor="semifinal-payment-file-input" className="cursor-pointer flex flex-col items-center gap-2">
+                  <label htmlFor="preliminary-file-input" className="cursor-pointer flex flex-col items-center gap-2">
                     <Icon name="FileText" size={36} className="text-blue-sail" />
                     <span className="text-xs font-display font-bold text-blue-sail uppercase">
-                      {paymentFileName ? `✓ FILE TERPILIH: ${paymentFileName}` : 'Klik untuk Pilih File Bukti Transfer (PDF / Gambar, Maksimal 10MB)'}
+                      {fileName ? `✓ FILE TERPILIH: ${fileName}` : `Klik untuk Pilih File PDF ${requiredFileType} (Maksimal 10MB)`}
                     </span>
                   </label>
                 </div>
 
                 <div className="flex justify-end pt-2">
                   <button
-                    disabled={isSubmittingPayment || !paymentFileName}
-                    onClick={handlePaymentUploadSubmit}
+                    disabled={isSubmitting || !fileName}
+                    onClick={handleUploadSubmit}
                     className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2 disabled:opacity-50"
                   >
-                    {isSubmittingPayment ? (
+                    {isSubmitting ? (
                       <>
                         <Icon name="Loader2" size={16} className="animate-spin" />
-                        <span>MENGIRIM BUKTI...</span>
+                        <span>MENGIRIM BERKAS...</span>
                       </>
                     ) : (
                       <>
                         <Icon name="Upload" size={16} />
-                        <span>SUBMIT BUKTI PEMBAYARAN SEMI FINAL</span>
+                        <span>SUBMIT BERKAS PRELIMINARY</span>
                       </>
                     )}
                   </button>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Semi Final Portal Box (Appears when Preliminary is Passed) */}
+        {myTeam.status_preliminary === 'passed' && (
+          <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] space-y-6">
+            <div className="border-b-2 border-blue-sail/20 pb-4 flex items-center justify-between">
+              <div>
+                <span className="bg-emerald-600 text-white font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider inline-block mb-1">
+                  STAGE 02 — BABAK SEMI FINAL
+                </span>
+                <h3 className="font-display font-black text-2xl uppercase text-blue-sail">
+                  PORTAL BABAK SEMI FINAL TIM {myTeam.team_name.toUpperCase()}
+                </h3>
+              </div>
+              <span className="bg-decor text-blue-sail font-display font-black text-xs px-3 py-1 border border-blue-sail uppercase">
+                STATUS: LOLOS PRELIMINARY
+              </span>
+            </div>
+
+            {/* IF PAYMENT NOT VERIFIED YET */}
+            {myTeam.payment_semifinal_status !== 'verified' ? (
+              <div className="space-y-6">
+                {/* Payment Info Card */}
+                <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#000]">
+                  <div className="flex items-center justify-between border-b border-blue-sail/20 pb-2">
+                    <span className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-1.5">
+                      <Icon name="CreditCard" size={16} /> BIAYA REGISTRASI SEMI FINAL
+                    </span>
+                    <span className="bg-blue-sail text-decor font-display font-black text-base px-3 py-1 border border-decor">
+                      Rp 150.000 / Tim
+                    </span>
+                  </div>
+                  <div className="text-xs font-sans text-blue-sail space-y-1">
+                    <p><strong>Transfer Rekening Resmi Panitia TSF 2026:</strong></p>
+                    <div className="bg-white border border-blue-sail/30 p-3 font-mono space-y-1">
+                      <p>🔹 Bank BCA: <strong>8290-1928-301</strong> a.n. Panitia TDC Summit Fest</p>
+                      <p>🔹 Bank Mandiri: <strong>1400-0192-8301</strong> a.n. TDC SUMMIT FEST 2026</p>
+                      <p>🔹 QRIS All Payment: Scan QRIS pada portal resmi</p>
+                    </div>
+                  </div>
+                </div>
+
+                {myTeam.payment_semifinal_status === 'pending' || myTeam.payment_semifinal_url ? (
+                  <div className="bg-amber-500 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-3">
+                    <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
+                      <Icon name="Clock" size={22} />
+                      <span>BUKTI PEMBAYARAN SUDAH DIKUMPULKAN — MENUNGGU VERIFIKASI ADMIN</span>
+                    </h4>
+                    <p className="text-xs font-sans opacity-90">
+                      Bukti pembayaran Anda sedang diverifikasi oleh panitia. Setelah dikonfirmasi Admin, form submission berkas Semi Final akan otomatis terbuka di halaman ini.
+                    </p>
+                    {myTeam.payment_semifinal_url && (
+                      <button
+                        type="button"
+                        onClick={() => openDoc(myTeam.payment_semifinal_url, `Bukti Pembayaran Semi Final - ${myTeam.team_name}`)}
+                        className="bg-blue-sail text-decor font-display font-black text-xs uppercase px-4 py-2 border border-blue-sail inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Icon name="FileText" size={14} />
+                        <span>LIHAT BUKTI TRANSFER SAYA</span>
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <h4 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2">
+                      <Icon name="Upload" size={16} className="text-red-inferno" />
+                      <span>UNGGAH BUKTI TRANSFER REGISTRASI SEMI FINAL</span>
+                    </h4>
+
+                    {paymentError && (
+                      <p className="bg-red-inferno text-white font-sans text-xs p-3 font-semibold border border-blue-sail">
+                        {paymentError}
+                      </p>
+                    )}
+                    {paymentSuccessMsg && (
+                      <p className="bg-emerald-600 text-white font-sans text-xs p-3 font-semibold border border-blue-sail">
+                        {paymentSuccessMsg}
+                      </p>
+                    )}
+
+                    <div className="border-2 border-dashed border-blue-sail/40 p-6 bg-white text-center cursor-pointer hover:border-decor transition-colors">
+                      <input
+                        type="file"
+                        accept=".pdf,image/*"
+                        onChange={handlePaymentFileChange}
+                        className="hidden"
+                        id="semifinal-payment-file-input"
+                      />
+                      <label htmlFor="semifinal-payment-file-input" className="cursor-pointer flex flex-col items-center gap-2">
+                        <Icon name="FileText" size={36} className="text-blue-sail" />
+                        <span className="text-xs font-display font-bold text-blue-sail uppercase">
+                          {paymentFileName ? `✓ FILE TERPILIH: ${paymentFileName}` : 'Klik untuk Pilih File Bukti Transfer (PDF / Gambar, Maksimal 10MB)'}
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <button
+                        disabled={isSubmittingPayment || !paymentFileName}
+                        onClick={handlePaymentUploadSubmit}
+                        className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {isSubmittingPayment ? (
+                          <>
+                            <Icon name="Loader2" size={16} className="animate-spin" />
+                            <span>MENGIRIM BUKTI...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Icon name="Upload" size={16} />
+                            <span>SUBMIT BUKTI PEMBAYARAN SEMI FINAL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* IF PAYMENT IS VERIFIED -> SHOW SEMI FINAL TASK SUBMISSION FORM! */
+              <div className="space-y-6">
+                <div className="bg-emerald-600 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
+                  <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
+                    <Icon name="CheckCircle" size={22} />
+                    <span>PEMBAYARAN DIVERIFIKASI — FORM SUBMISSION SEMI FINAL TERBUKA!</span>
+                  </h4>
+                  <p className="text-xs font-sans text-white/90">
+                    Pembayaran registrasi Semi Final Anda telah diverifikasi oleh Panitia. Silakan unggah berkas proposal / solusi studi kasus Semi Final tim Anda di bawah ini.
+                  </p>
+                </div>
+
+                {myTeam.semifinal_file_url ? (
+                  <div className="bg-blue-sail/5 border-2 border-blue-sail p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-display font-black text-xs text-emerald-700 bg-emerald-100 px-3 py-1 border border-emerald-300 uppercase flex items-center gap-1.5">
+                        <Icon name="FileCheck" size={16} /> BERKAS SEMI FINAL SUDAH DIKUMPULKAN
+                      </span>
+                      <span className="text-[11px] font-sans text-blue-sail/60 font-semibold">
+                        Status: Menunggu Penilaian Juri Semi Final
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-4 border border-blue-sail/30 flex items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <span className="font-display font-bold text-xs text-blue-sail uppercase block">
+                          {myTeam.semifinal_file_name || `Proposal_SemiFinal_${myTeam.team_name}.pdf`}
+                        </span>
+                        <p className="text-[11px] font-sans text-blue-sail/70">
+                          Format: PDF Document
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openDoc(myTeam.semifinal_file_url, `Berkas Submission Semi Final - ${myTeam.team_name}`)}
+                        className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] shrink-0 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Icon name="Eye" size={14} />
+                        <span>LIHAT BERKAS SEMI FINAL</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Icon name="Upload" size={20} className="text-red-inferno" />
+                      <h4 className="font-display font-black text-sm uppercase text-blue-sail">
+                        UNGGAH BERKAS SUBMISSION SEMI FINAL (PROPOSAL / FULL SOLUTION PDF)
+                      </h4>
+                    </div>
+
+                    {semiError && (
+                      <p className="text-red-600 text-xs font-sans font-semibold bg-red-50 p-2.5 border border-red-300">
+                        {semiError}
+                      </p>
+                    )}
+
+                    {semiSuccessMsg && (
+                      <p className="text-emerald-700 text-xs font-sans font-semibold bg-emerald-50 p-2.5 border border-emerald-300">
+                        {semiSuccessMsg}
+                      </p>
+                    )}
+
+                    <div className="border-2 border-dashed border-blue-sail/40 p-6 bg-white text-center cursor-pointer hover:border-decor transition-colors">
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleSemiFileChange}
+                        className="hidden"
+                        id="semifinal-file-input"
+                      />
+                      <label htmlFor="semifinal-file-input" className="cursor-pointer flex flex-col items-center gap-2">
+                        <Icon name="FileText" size={36} className="text-blue-sail" />
+                        <span className="text-xs font-display font-bold text-blue-sail uppercase">
+                          {semiFileName ? `✓ FILE TERPILIH: ${semiFileName}` : 'Klik untuk Pilih File PDF Submission Semi Final (Maksimal 10MB)'}
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <button
+                        disabled={isSubmittingSemi || !semiFileName}
+                        onClick={handleSemiUploadSubmit}
+                        className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {isSubmittingSemi ? (
+                          <>
+                            <Icon name="Loader2" size={16} className="animate-spin" />
+                            <span>MENGIRIM BERKAS...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Icon name="Upload" size={16} />
+                            <span>SUBMIT BERKAS SEMI FINAL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -644,15 +795,14 @@ export const ParticipantDashboard: React.FC = () => {
               </div>
 
               {myTeam.payment_proof_url && (
-                <a
-                  href={myTeam.payment_proof_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-red-inferno hover:underline pt-1"
+                <button
+                  type="button"
+                  onClick={() => openDoc(myTeam.payment_proof_url, `KTM / Kartu Pelajar Ketua - ${myTeam.leader_name}`)}
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-red-inferno hover:underline pt-1 cursor-pointer"
                 >
                   <Icon name="FileText" size={14} />
                   <span>KTM / Kartu Pelajar Ketua</span>
-                </a>
+                </button>
               )}
             </div>
 
@@ -679,15 +829,14 @@ export const ParticipantDashboard: React.FC = () => {
                 </div>
 
                 {m.cardFileUrl && (
-                  <a
-                    href={m.cardFileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-blue-sail hover:underline pt-1"
+                  <button
+                    type="button"
+                    onClick={() => openDoc(m.cardFileUrl, `KTM / Kartu Pelajar Anggota ${idx + 1} - ${m.fullName || m.name}`)}
+                    className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-blue-sail hover:underline pt-1 cursor-pointer"
                   >
                     <Icon name="FileText" size={14} />
                     <span>KTM / Kartu Pelajar Anggota {idx + 1}</span>
-                  </a>
+                  </button>
                 )}
               </div>
             ))}
@@ -701,25 +850,139 @@ export const ParticipantDashboard: React.FC = () => {
             </h4>
             <div className="flex flex-wrap gap-4 text-xs font-mono">
               {myTeam.ig_story_file_url && (
-                <a href={myTeam.ig_story_file_url} target="_blank" rel="noreferrer" className="text-red-inferno hover:underline flex items-center gap-1 font-bold">
+                <button
+                  type="button"
+                  onClick={() => openDoc(myTeam.ig_story_file_url, `Bukti IG Story - ${myTeam.team_name}`)}
+                  className="text-red-inferno hover:underline flex items-center gap-1 font-bold cursor-pointer"
+                >
                   <Icon name="FileText" size={14} /> Bukti IG Story (PDF)
-                </a>
+                </button>
               )}
               {myTeam.twibbon_file_url && (
-                <a href={myTeam.twibbon_file_url} target="_blank" rel="noreferrer" className="text-red-inferno hover:underline flex items-center gap-1 font-bold">
+                <button
+                  type="button"
+                  onClick={() => openDoc(myTeam.twibbon_file_url, `Bukti Twibbon Feeds - ${myTeam.team_name}`)}
+                  className="text-red-inferno hover:underline flex items-center gap-1 font-bold cursor-pointer"
+                >
                   <Icon name="FileText" size={14} /> Bukti Twibbon Feeds (PDF)
-                </a>
+                </button>
               )}
               {myTeam.ig_follow_file_url && (
-                <a href={myTeam.ig_follow_file_url} target="_blank" rel="noreferrer" className="text-red-inferno hover:underline flex items-center gap-1 font-bold">
+                <button
+                  type="button"
+                  onClick={() => openDoc(myTeam.ig_follow_file_url, `Bukti Follow IG - ${myTeam.team_name}`)}
+                  className="text-red-inferno hover:underline flex items-center gap-1 font-bold cursor-pointer"
+                >
                   <Icon name="FileText" size={14} /> Bukti Follow IG (PDF)
-                </a>
+                </button>
               )}
             </div>
           </div>
         </div>
 
       </section>
+
+      {/* BERKAS FILE PREVIEW MODAL FOR PARTICIPANT DASHBOARD */}
+      {viewingFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-blue-sail/90 backdrop-blur-sm">
+          <div className="bg-ballroom border-4 border-blue-sail p-5 sm:p-6 max-w-4xl w-full max-h-[95vh] overflow-y-auto space-y-4 shadow-[12px_12px_0_0_#BD1B1F]">
+            <div className="flex items-center justify-between border-b-2 border-blue-sail/20 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="bg-red-inferno text-white font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider border border-blue-sail">
+                  PRATINJAU DOKUMEN TIM
+                </span>
+                <h3 className="font-display font-black text-lg uppercase text-blue-sail truncate max-w-md sm:max-w-xl">
+                  {viewingFile.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingFile(null)}
+                className="bg-red-inferno text-white p-1.5 border border-blue-sail hover:bg-red-700 cursor-pointer"
+              >
+                <Icon name="X" size={18} />
+              </button>
+            </div>
+
+            {/* Document Viewer Content */}
+            <div className="bg-white border-2 border-blue-sail p-3">
+              {viewingFile.url.startsWith('data:application/pdf') || viewingFile.url.endsWith('.pdf') ? (
+                <iframe
+                  src={viewingFile.url}
+                  title={viewingFile.title}
+                  className="w-full h-[70vh] border border-blue-sail/30 bg-gray-50"
+                />
+              ) : viewingFile.url.startsWith('data:image/') || viewingFile.url.match(/\.(jpg|jpeg|png|gif|svg)$/i) || viewingFile.url.startsWith('blob:') ? (
+                <div className="bg-gray-900 border border-blue-sail/30 p-4 flex items-center justify-center min-h-[60vh]">
+                  <img
+                    src={viewingFile.url}
+                    alt={viewingFile.title}
+                    className="max-h-[70vh] max-w-full object-contain shadow-lg"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-4 p-4 text-center">
+                  <div className="bg-blue-sail/5 p-4 border border-blue-sail/20 inline-block text-left w-full">
+                    <span className="bg-decor text-blue-sail font-display font-black text-[10px] px-2 py-0.5 uppercase border border-blue-sail inline-block mb-2">
+                      INFORMASI BERKAS TIM
+                    </span>
+                    <p className="text-xs font-mono font-bold text-blue-sail">Nama Berkas: {viewingFile.url}</p>
+                    <p className="text-xs font-sans text-blue-sail/70 mt-1">Status: Berkas telah tersimpan di sistem portal pendaftaran.</p>
+                  </div>
+                  <div className="border-2 border-dashed border-blue-sail/30 p-4 bg-gray-50 flex justify-center">
+                    <img src={SAMPLE_DOC_SVG} alt="Pratinjau Berkas" className="max-h-[50vh] w-auto border-2 border-blue-sail shadow-md" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <div className="flex gap-2">
+                {(viewingFile.url.startsWith('data:') || viewingFile.url.startsWith('http') || viewingFile.url.startsWith('blob:')) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const win = window.open();
+                      if (win) {
+                        if (viewingFile.url.startsWith('data:application/pdf')) {
+                          win.document.write(`<html><head><title>${viewingFile.title}</title></head><body style="margin:0;"><iframe src="${viewingFile.url}" width="100%" height="100%" frameborder="0"></iframe></body></html>`);
+                        } else if (viewingFile.url.startsWith('data:image/')) {
+                          win.document.write(`<html><head><title>${viewingFile.title}</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#111;"><img src="${viewingFile.url}" style="max-width:100%;max-height:100vh;"/></body></html>`);
+                        } else {
+                          win.location.href = viewingFile.url;
+                        }
+                      }
+                    }}
+                    className="bg-blue-sail hover:bg-barbera text-decor font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Icon name="ExternalLink" size={14} />
+                    <span>BUKA DI TAB BARU</span>
+                  </button>
+                )}
+                {viewingFile.url.startsWith('data:') && (
+                  <a
+                    href={viewingFile.url}
+                    download={viewingFile.fileName || 'dokumen_pendaftaran'}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail flex items-center gap-1.5"
+                  >
+                    <Icon name="Download" size={14} />
+                    <span>UNDUH BERKAS</span>
+                  </a>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setViewingFile(null)}
+                className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-6 py-2 border-2 border-blue-sail cursor-pointer"
+              >
+                TUTUP PRATINJAU
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

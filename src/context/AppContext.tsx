@@ -71,6 +71,7 @@ interface AppContextType extends AppState {
   fetchAdminUsers: () => Promise<import('../types').User[]>;
   submitPreliminaryFile: (team_id: string, preliminary_file_url: string, preliminary_file_name: string, preliminary_file_type: 'BMC' | 'Executive Summary') => Promise<void>;
   submitSemiFinalPayment: (team_id: string, payment_semifinal_url: string, payment_semifinal_file_name: string) => Promise<void>;
+  submitSemiFinalFile: (team_id: string, semifinal_file_url: string, semifinal_file_name: string) => Promise<void>;
   updateCompetitionRegistrationStatus: (id: string, payload: { status_stage?: string; status_preliminary?: string; status_semifinal?: string; status_final?: string; payment_semifinal_status?: string; }) => Promise<void>;
 
   // Form Questions Control
@@ -980,6 +981,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await fetchState();
   };
 
+  const submitSemiFinalFile = async (
+    team_id: string,
+    semifinal_file_url: string,
+    semifinal_file_name: string
+  ) => {
+    const res = await fetch(getApiUrl('/api/competitions/submit-semifinal'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        team_id,
+        semifinal_file_url,
+        semifinal_file_name
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal mengunggah berkas Semi Final');
+    await fetchMyTeam();
+    await fetchState();
+  };
+
   const updateCompetitionRegistrationStatus = async (
     id: string,
     payload: {
@@ -1583,6 +1604,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       fetchAdminUsers,
       submitPreliminaryFile,
       submitSemiFinalPayment,
+      submitSemiFinalFile,
       updateCompetitionRegistrationStatus
     }}>
       {children}

@@ -235,7 +235,10 @@ async function ensureCompetitionColumns() {
       { name: 'payment_semifinal_url', type: 'text' },
       { name: 'payment_semifinal_file_name', type: 'string' },
       { name: 'payment_semifinal_status', type: 'string', defaultVal: 'none' },
-      { name: 'payment_semifinal_submitted_at', type: 'timestamp' }
+      { name: 'payment_semifinal_submitted_at', type: 'timestamp' },
+      { name: 'semifinal_file_url', type: 'text' },
+      { name: 'semifinal_file_name', type: 'string' },
+      { name: 'semifinal_submitted_at', type: 'timestamp' }
     ];
 
     for (const col of columns) {
@@ -1484,6 +1487,32 @@ app.post('/api/competitions/submit-semifinal-payment', async (req: Request, res:
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Gagal mengunggah bukti pembayaran Semi Final' });
+  }
+});
+
+// Participant: Submit Semi Final Task Submission File
+app.post('/api/competitions/submit-semifinal', async (req: Request, res: Response): Promise<void> => {
+  const { team_id, semifinal_file_url, semifinal_file_name } = req.body;
+
+  if (!team_id || !semifinal_file_url) {
+    res.status(400).json({ message: 'ID Tim dan berkas submission Semi Final wajib diisi.' });
+    return;
+  }
+
+  try {
+    await ensureCompetitionColumns();
+    await db('competition_registrations')
+      .where({ id: team_id })
+      .update({
+        semifinal_file_url,
+        semifinal_file_name: semifinal_file_name || 'berkas_semifinal.pdf',
+        semifinal_submitted_at: db.fn.now()
+      });
+
+    res.json({ message: 'Berkas submission Semi Final berhasil dikumpulkan' });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Gagal mengunggah berkas Semi Final' });
   }
 });
 

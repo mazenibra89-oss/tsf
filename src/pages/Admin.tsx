@@ -4290,6 +4290,32 @@ export const Admin: React.FC = () => {
                     Tim Lolos Preliminary tapi belum mengunggah bukti pembayaran Semi Final.
                   </p>
                 ) : null}
+
+                {/* Semi Final Task Submission File Section for Admin */}
+                {selectedCompDetail.semifinal_file_url ? (
+                  <div className="bg-purple-50 p-3 border border-purple-600 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-2">
+                    <div>
+                      <span className="font-display font-bold text-xs text-purple-900 uppercase block">
+                        BERKAS SUBMISSION SEMI FINAL (PROPOSAL / SOLUSI STUDI KASUS)
+                      </span>
+                      <span className="text-[11px] font-mono text-purple-800 font-bold">
+                        Berkas: {selectedCompDetail.semifinal_file_name || 'Berkas_SemiFinal.pdf'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openDoc(selectedCompDetail.semifinal_file_url, `Berkas Semi Final - ${selectedCompDetail.team_name}`)}
+                      className="bg-purple-700 hover:bg-purple-800 text-white font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail flex items-center gap-1.5 cursor-pointer shrink-0"
+                    >
+                      <Icon name="FileCheck" size={14} />
+                      <span>BUKA BERKAS SEMI FINAL PDF</span>
+                    </button>
+                  </div>
+                ) : selectedCompDetail.payment_semifinal_status === 'verified' ? (
+                  <p className="text-xs font-sans text-purple-800 bg-purple-50 border border-purple-300 p-2 font-bold mt-2">
+                    Pembayaran Semi Final sudah terverifikasi. Tim belum mengunggah berkas submission Semi Final.
+                  </p>
+                ) : null}
             </div>
 
             {/* Stage Progression Controller inside Modal */}
