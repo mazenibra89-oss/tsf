@@ -4690,7 +4690,7 @@ export const Admin: React.FC = () => {
 
             {/* Document Viewer Content */}
             <div className="bg-white border-2 border-blue-sail p-3">
-              {viewingFile.url.startsWith('data:application/pdf') || viewingFile.url.endsWith('.pdf') ? (
+              {viewingFile.url.startsWith('data:application/pdf') || viewingFile.url.includes('pdf') || viewingFile.url.endsWith('.pdf') ? (
                 <iframe
                   src={viewingFile.url}
                   title={viewingFile.title}

@@ -114,6 +114,15 @@ export const ParticipantDashboard: React.FC = () => {
   const isBPC = myTeam.competition_type === 'BPC' || myTeam.category_id?.includes('BPC');
   const requiredFileType = isBPC ? 'BMC (Business Model Canvas)' : 'Executive Summary';
 
+  const readFileAsDataUrl = (fileObj: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(fileObj);
+    });
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError('');
     setSuccessMsg('');
@@ -125,18 +134,27 @@ export const ParticipantDashboard: React.FC = () => {
       }
       setFile(selectedFile);
       setFileName(selectedFile.name);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        setFileUrl(dataUrl);
-      };
-      reader.readAsDataURL(selectedFile);
+      setFileUrl(''); // Reset until read complete
+      readFileAsDataUrl(selectedFile).then(url => setFileUrl(url)).catch(() => {});
     }
   };
 
   const handleUploadSubmit = async () => {
-    if (!fileName && !fileUrl) {
-      setError(`Wajib memilih file PDF ${requiredFileType}`);
+    let targetUrl = fileUrl;
+    if (!targetUrl && file) {
+      setIsSubmitting(true);
+      try {
+        targetUrl = await readFileAsDataUrl(file);
+        setFileUrl(targetUrl);
+      } catch (e) {
+        setIsSubmitting(false);
+        setError('Gagal membaca berkas file PDF. Silakan pilih kembali berkas Anda.');
+        return;
+      }
+    }
+
+    if (!targetUrl || (!targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('blob:'))) {
+      setError(`Wajib memilih berkas file PDF ${requiredFileType}`);
       return;
     }
 
@@ -147,8 +165,8 @@ export const ParticipantDashboard: React.FC = () => {
     try {
       await submitPreliminaryFile(
         myTeam.id,
-        fileUrl || fileName,
-        fileName || `Berkas_Preliminary_${myTeam.team_name}.pdf`,
+        targetUrl,
+        fileName || file?.name || `Berkas_Preliminary_${myTeam.team_name}.pdf`,
         isBPC ? 'BMC' : 'Executive Summary'
       );
       setIsSubmitting(false);
@@ -169,16 +187,25 @@ export const ParticipantDashboard: React.FC = () => {
     setPaymentError('');
     setPaymentFile(selected);
     setPaymentFileName(selected.name);
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPaymentFileUrl(reader.result as string);
-    };
-    reader.readAsDataURL(selected);
+    setPaymentFileUrl('');
+    readFileAsDataUrl(selected).then(url => setPaymentFileUrl(url)).catch(() => {});
   };
 
   const handlePaymentUploadSubmit = async () => {
-    if (!myTeam || (!paymentFileUrl && !paymentFileName)) {
+    let targetUrl = paymentFileUrl;
+    if (!targetUrl && paymentFile) {
+      setIsSubmittingPayment(true);
+      try {
+        targetUrl = await readFileAsDataUrl(paymentFile);
+        setPaymentFileUrl(targetUrl);
+      } catch (e) {
+        setIsSubmittingPayment(false);
+        setPaymentError('Gagal membaca berkas bukti pembayaran. Silakan pilih kembali berkas Anda.');
+        return;
+      }
+    }
+
+    if (!myTeam || !targetUrl || (!targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('blob:'))) {
       setPaymentError('Pilih file bukti pembayaran terlebih dahulu.');
       return;
     }
@@ -187,7 +214,7 @@ export const ParticipantDashboard: React.FC = () => {
     setPaymentSuccessMsg('');
 
     try {
-      await submitSemiFinalPayment(myTeam.id, paymentFileUrl || paymentFileName, paymentFileName);
+      await submitSemiFinalPayment(myTeam.id, targetUrl, paymentFileName || paymentFile?.name || 'bukti_transfer.pdf');
       setIsSubmittingPayment(false);
       setPaymentSuccessMsg('Bukti pembayaran Semi Final berhasil dikirim! Menunggu verifikasi admin.');
     } catch (err: any) {
@@ -206,16 +233,25 @@ export const ParticipantDashboard: React.FC = () => {
     setSemiError('');
     setSemiFile(selected);
     setSemiFileName(selected.name);
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setSemiFileUrl(reader.result as string);
-    };
-    reader.readAsDataURL(selected);
+    setSemiFileUrl('');
+    readFileAsDataUrl(selected).then(url => setSemiFileUrl(url)).catch(() => {});
   };
 
   const handleSemiUploadSubmit = async () => {
-    if (!myTeam || (!semiFileUrl && !semiFileName)) {
+    let targetUrl = semiFileUrl;
+    if (!targetUrl && semiFile) {
+      setIsSubmittingSemi(true);
+      try {
+        targetUrl = await readFileAsDataUrl(semiFile);
+        setSemiFileUrl(targetUrl);
+      } catch (e) {
+        setIsSubmittingSemi(false);
+        setSemiError('Gagal membaca berkas proposal Semi Final. Silakan pilih kembali berkas Anda.');
+        return;
+      }
+    }
+
+    if (!myTeam || !targetUrl || (!targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('blob:'))) {
       setSemiError('Pilih berkas submission Semi Final terlebih dahulu.');
       return;
     }
@@ -224,7 +260,7 @@ export const ParticipantDashboard: React.FC = () => {
     setSemiSuccessMsg('');
 
     try {
-      await submitSemiFinalFile(myTeam.id, semiFileUrl || semiFileName, semiFileName);
+      await submitSemiFinalFile(myTeam.id, targetUrl, semiFileName || semiFile?.name || 'berkas_semifinal.pdf');
       setIsSubmittingSemi(false);
       setSemiSuccessMsg('Berkas submission Semi Final berhasil dikumpulkan!');
     } catch (err: any) {
