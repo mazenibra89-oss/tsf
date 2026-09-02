@@ -170,6 +170,8 @@ export const ParticipantDashboard: React.FC = () => {
             <div className={`border-3 p-4 relative space-y-2 shadow-[3px_3px_0_0_#BD1B1F] ${
               myTeam.status_preliminary === 'passed'
                 ? 'bg-emerald-50 border-emerald-600'
+                : myTeam.status_preliminary === 'rejected'
+                ? 'bg-red-50 border-red-500'
                 : 'bg-decor/20 border-blue-sail'
             }`}>
               <div className="flex items-center justify-between">
@@ -179,9 +181,19 @@ export const ParticipantDashboard: React.FC = () => {
                 <span className={`font-display font-bold text-[10px] px-2 py-0.5 uppercase ${
                   myTeam.status_preliminary === 'passed'
                     ? 'bg-emerald-600 text-white'
+                    : myTeam.status_preliminary === 'rejected'
+                    ? 'bg-red-inferno text-white'
+                    : myTeam.preliminary_file_url
+                    ? 'bg-blue-600 text-white'
                     : 'bg-amber-500 text-white'
                 }`}>
-                  {myTeam.status_preliminary === 'passed' ? 'LOLOS' : 'TAHAP PRELIMINARY'}
+                  {myTeam.status_preliminary === 'passed'
+                    ? '✓ LOLOS PRELIMINARY'
+                    : myTeam.status_preliminary === 'rejected'
+                    ? '✕ TIDAK LOLOS'
+                    : myTeam.preliminary_file_url
+                    ? 'DOKUMEN DITERIMA'
+                    : 'PENILAIAN / PENDING'}
                 </span>
               </div>
               <h4 className="font-display font-black text-base uppercase text-blue-sail">
@@ -193,21 +205,39 @@ export const ParticipantDashboard: React.FC = () => {
             </div>
 
             {/* Stage 2: Semi Final */}
-            <div className={`border-2 p-4 space-y-2 ${
+            <div className={`border-3 p-4 space-y-2 transition-all ${
               myTeam.status_preliminary === 'passed'
-                ? 'bg-decor/20 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                ? myTeam.status_semifinal === 'passed'
+                  ? 'bg-emerald-50 border-emerald-600 shadow-[3px_3px_0_0_#BD1B1F]'
+                  : myTeam.status_semifinal === 'rejected'
+                  ? 'bg-red-50 border-red-500 shadow-[3px_3px_0_0_#BD1B1F]'
+                  : 'bg-decor/20 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-gray-100 border-blue-sail/30 opacity-60'
             }`}>
               <div className="flex items-center justify-between">
-                <span className="bg-gray-300 text-gray-700 font-display font-black text-[10px] px-2.5 py-0.5 uppercase border border-gray-400">
+                <span className={`font-display font-black text-[10px] px-2.5 py-0.5 uppercase border ${
+                  myTeam.status_preliminary === 'passed'
+                    ? 'bg-blue-sail text-decor border-decor'
+                    : 'bg-gray-300 text-gray-700 border-gray-400'
+                }`}>
                   STAGE 02
                 </span>
                 <span className={`font-display font-bold text-[10px] px-2 py-0.5 uppercase flex items-center gap-1 ${
                   myTeam.status_preliminary === 'passed'
-                    ? 'bg-emerald-600 text-white'
+                    ? myTeam.status_semifinal === 'passed'
+                      ? 'bg-emerald-600 text-white'
+                      : myTeam.status_semifinal === 'rejected'
+                      ? 'bg-red-inferno text-white'
+                      : 'bg-amber-500 text-white'
                     : 'bg-gray-400 text-white'
                 }`}>
-                  {myTeam.status_preliminary === 'passed' ? 'TERBUNGKUS' : 'TERKUNCI'}
+                  {myTeam.status_preliminary === 'passed'
+                    ? myTeam.status_semifinal === 'passed'
+                      ? '✓ LOLOS SEMI FINAL'
+                      : myTeam.status_semifinal === 'rejected'
+                      ? '✕ TIDAK LOLOS SEMI FINAL'
+                      : 'SEMI FINAL (PENDING)'
+                    : '🔒 TERKUNCI'}
                 </span>
               </div>
               <h4 className="font-display font-black text-base uppercase text-blue-sail">
@@ -215,26 +245,60 @@ export const ParticipantDashboard: React.FC = () => {
               </h4>
               <p className="text-xs font-sans text-blue-sail/80">
                 {myTeam.status_preliminary === 'passed'
-                  ? 'Selamat! Tim Anda berhak mengikuti babak Semi Final.'
-                  : 'Terbuka setelah pengumuman hasil seleksi Preliminary.'}
+                  ? myTeam.status_semifinal === 'passed'
+                    ? 'Selamat! Tim Anda LOLOS ke babak Grand Final!'
+                    : myTeam.status_semifinal === 'rejected'
+                    ? 'Mohon maaf, perjalanan tim Anda terhenti di babak Semi Final.'
+                    : 'Selamat! Tim Anda berhak mengikuti babak Semi Final.'
+                  : 'Terbuka setelah pengumuman kelolosan babak Preliminary.'}
               </p>
             </div>
 
             {/* Stage 3: Grand Final */}
-            <div className="bg-gray-100 border-2 border-blue-sail/30 p-4 space-y-2 opacity-60">
+            <div className={`border-3 p-4 space-y-2 transition-all ${
+              myTeam.status_semifinal === 'passed'
+                ? myTeam.status_final === 'passed'
+                  ? 'bg-purple-50 border-purple-600 shadow-[3px_3px_0_0_#BD1B1F]'
+                  : myTeam.status_final === 'rejected'
+                  ? 'bg-red-50 border-red-500 shadow-[3px_3px_0_0_#BD1B1F]'
+                  : 'bg-decor/20 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-gray-100 border-blue-sail/30 opacity-60'
+            }`}>
               <div className="flex items-center justify-between">
-                <span className="bg-gray-300 text-gray-700 font-display font-black text-[10px] px-2.5 py-0.5 uppercase border border-gray-400">
+                <span className={`font-display font-black text-[10px] px-2.5 py-0.5 uppercase border ${
+                  myTeam.status_semifinal === 'passed'
+                    ? 'bg-blue-sail text-decor border-decor'
+                    : 'bg-gray-300 text-gray-700 border-gray-400'
+                }`}>
                   STAGE 03
                 </span>
-                <span className="bg-gray-400 text-white font-display font-bold text-[10px] px-2 py-0.5 uppercase flex items-center gap-1">
-                  <Icon name="Lock" size={12} /> TERKUNCI
+                <span className={`font-display font-bold text-[10px] px-2 py-0.5 uppercase flex items-center gap-1 ${
+                  myTeam.status_semifinal === 'passed'
+                    ? myTeam.status_final === 'passed'
+                      ? 'bg-purple-700 text-white'
+                      : myTeam.status_final === 'rejected'
+                      ? 'bg-red-inferno text-white'
+                      : 'bg-amber-500 text-white'
+                    : 'bg-gray-400 text-white'
+                }`}>
+                  {myTeam.status_semifinal === 'passed'
+                    ? myTeam.status_final === 'passed'
+                      ? '🏆 JUARA GRAND FINAL'
+                      : myTeam.status_final === 'rejected'
+                      ? '✕ TIDAK LOLOS FINAL'
+                      : 'GRAND FINAL (PENDING)'
+                    : '🔒 TERKUNCI'}
                 </span>
               </div>
-              <h4 className="font-display font-black text-base uppercase text-gray-600">
+              <h4 className={`font-display font-black text-base uppercase ${myTeam.status_semifinal === 'passed' ? 'text-blue-sail' : 'text-gray-600'}`}>
                 GRAND FINAL &amp; AWARDING
               </h4>
-              <p className="text-xs font-sans text-gray-500">
-                Presentasi akhir &amp; penganugerahan pemenang.
+              <p className={`text-xs font-sans ${myTeam.status_semifinal === 'passed' ? 'text-blue-sail/80' : 'text-gray-500'}`}>
+                {myTeam.status_semifinal === 'passed'
+                  ? myTeam.status_final === 'passed'
+                    ? 'Selamat! Tim Anda meraih Juara Grand Final TDC Summit Fest 2026!'
+                    : 'Selamat! Tim Anda bertanding di babak Grand Final!'
+                  : 'Presentasi akhir &amp; penganugerahan pemenang.'}
               </p>
             </div>
 
