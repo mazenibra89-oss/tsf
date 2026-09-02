@@ -17,6 +17,10 @@ export const ParticipantDashboard: React.FC = () => {
   useEffect(() => {
     if (currentUser) {
       fetchMyTeam();
+      const interval = setInterval(() => {
+        fetchMyTeam();
+      }, 3000);
+      return () => clearInterval(interval);
     }
   }, [currentUser]);
 

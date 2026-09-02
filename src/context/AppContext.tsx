@@ -974,6 +974,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     if (!res.ok) throw new Error('Gagal memperbarui status');
     await fetchState();
+    await fetchMyTeam();
   };
 
   const fetchState = async () => {
