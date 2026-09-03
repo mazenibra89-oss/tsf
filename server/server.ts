@@ -1746,9 +1746,9 @@ app.post('/api/reset', authenticateToken, async (req: Request, res: Response): P
 // Serve static frontend build files in production if dist exists
 // Check both possible dist locations (from project root or from dist/ itself)
 const distCandidates = [
-  path.join(__dirname, '..', 'dist'),
-  path.join(__dirname, '..'),  // when __dirname IS dist/
-  __dirname  // fallback
+  path.join(appDir, '..', 'dist'),
+  path.join(appDir, '..'),  // when appDir IS dist/
+  appDir  // fallback
 ];
 const distPath = distCandidates.find(d => fs.existsSync(path.join(d, 'index.html'))) || distCandidates[0];
 
