@@ -140,20 +140,24 @@ async function initDatabase() {
     await ensureCompetitionColumns();
     await ensureCompetitionCategories();
 
-    // Auto update p-1 phase to ambassador_recruitment and active status
+    // Only migrate old staff_recruitment phase name → ambassador_recruitment if it still exists
+    // This is a one-time migration, not a forced overwrite
     if (await db.schema.hasTable('event_phases')) {
-      await db('event_phases')
-        .where({ id: 'p-1' })
-        .orWhere({ name: 'staff_recruitment' })
-        .update({
-          name: 'ambassador_recruitment',
-          label: 'Recruitment CI & SA',
-          status: 'active',
-          start_date: '2026-08-01',
-          end_date: '2026-08-31',
-          description: 'Open Recruitment Campus Influencer (ITS) & Student Ambassador (SMA/SMK Surabaya) TDC Summit Fest 2026!',
-          cta_link: '/recruitment'
-        });
+      const oldPhase = await db('event_phases').where({ name: 'staff_recruitment' }).first();
+      if (oldPhase) {
+        await db('event_phases')
+          .where({ name: 'staff_recruitment' })
+          .update({
+            name: 'ambassador_recruitment',
+            label: 'Recruitment CI & SA',
+            status: 'active',
+            start_date: '2026-08-01',
+            end_date: '2026-08-31',
+            description: 'Open Recruitment Campus Influencer (ITS) & Student Ambassador (SMA/SMK Surabaya) TDC Summit Fest 2026!',
+            cta_link: '/recruitment'
+          });
+        console.log('Migrated staff_recruitment phase to ambassador_recruitment.');
+      }
     }
 
     console.log('Running database seeds...');
@@ -514,7 +518,13 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
     const qConfig = await db('form_questions_config').where({ id: 'main_config' }).first().catch(() => undefined);
     const users = await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc').catch(() => []);
 
-    const parseJson = (val: any) => typeof val === 'string' ? JSON.parse(val) : val;
+    const parseJson = (val: any) => {
+      if (val == null) return val;
+      if (typeof val === 'string') {
+        try { return JSON.parse(val); } catch { return val; }
+      }
+      return val;
+    };
 
     res.json({
       phases,
@@ -1723,8 +1733,15 @@ app.post('/api/reset', authenticateToken, async (req: Request, res: Response): P
 });
 
 // Serve static frontend build files in production if dist exists
-const distPath = path.join(__dirname, '..', 'dist');
-if (fs.existsSync(distPath)) {
+// Check both possible dist locations (from project root or from dist/ itself)
+const distCandidates = [
+  path.join(__dirname, '..', 'dist'),
+  path.join(__dirname, '..'),  // when __dirname IS dist/
+  __dirname  // fallback
+];
+const distPath = distCandidates.find(d => fs.existsSync(path.join(d, 'index.html'))) || distCandidates[0];
+
+if (fs.existsSync(path.join(distPath, 'index.html'))) {
   app.use(express.static(distPath));
   app.get('*', (req: Request, res: Response, next: NextFunction): void => {
     if (req.path.startsWith('/api')) {
@@ -1735,8 +1752,20 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-// Start Server
-app.listen(PORT, async () => {
-  console.log(`Server is running on port ${PORT}`);
-  await initDatabase();
-});
+// Start Server — initialize database BEFORE accepting requests to prevent race condition
+const startServer = async () => {
+  try {
+    console.log('Initializing database before starting server...');
+    await initDatabase();
+    console.log('Database initialization complete.');
+  } catch (err) {
+    console.error('CRITICAL: Database initialization failed:', err);
+    // Continue starting server so it can at least serve error responses
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+};
+
+startServer();

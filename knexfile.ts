@@ -13,7 +13,11 @@ const getDirname = () => {
 };
 const appDir = getDirname();
 
-dotenv.config({ path: path.join(appDir, '.env') });
+// Detect if running from dist/ folder (production build)
+const isProduction = appDir.endsWith('dist') || appDir.endsWith('dist/') || appDir.endsWith('dist\\');
+const projectRoot = isProduction ? path.join(appDir, '..') : appDir;
+
+dotenv.config({ path: path.join(projectRoot, '.env') });
 
 const usePostgres = Boolean(process.env.DATABASE_URL || (process.env.DB_HOST && process.env.DB_HOST !== 'localhost'));
 
@@ -27,27 +31,28 @@ const config = usePostgres ? {
     database: process.env.DB_NAME || 'tsf_db',
   },
   migrations: {
-    directory: path.join(__dirname, 'server', 'db', 'migrations'),
+    directory: path.join(projectRoot, 'server', 'db', 'migrations'),
     extension: 'ts',
   },
   seeds: {
-    directory: path.join(__dirname, 'server', 'db', 'seeds'),
+    directory: path.join(projectRoot, 'server', 'db', 'seeds'),
     extension: 'ts',
   },
 } : {
   client: 'sqlite3',
   connection: {
-    filename: path.join(__dirname, 'server', 'db', 'tsf_local.sqlite'),
+    filename: path.join(projectRoot, 'server', 'db', 'tsf_local.sqlite'),
   },
   useNullAsDefault: true,
   migrations: {
-    directory: path.join(__dirname, 'server', 'db', 'migrations'),
+    directory: path.join(projectRoot, 'server', 'db', 'migrations'),
     extension: 'ts',
   },
   seeds: {
-    directory: path.join(__dirname, 'server', 'db', 'seeds'),
+    directory: path.join(projectRoot, 'server', 'db', 'seeds'),
     extension: 'ts',
   },
 };
 
 export default config;
+
