@@ -8,11 +8,20 @@ import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
 import db from './db';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const getDirname = () => {
+  try {
+    if (typeof __dirname !== 'undefined' && __dirname) return __dirname;
+    if (typeof import.meta !== 'undefined' && import.meta.url) {
+      return path.dirname(fileURLToPath(import.meta.url));
+    }
+  } catch (e) {}
+  return process.cwd();
+};
+const appDir = getDirname();
 
 // Load environment variables
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
+dotenv.config({ path: path.join(appDir, '..', '.env') });
+dotenv.config({ path: path.join(appDir, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5005;
