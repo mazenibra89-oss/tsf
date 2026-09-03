@@ -1918,10 +1918,36 @@ export const Admin: React.FC = () => {
               {/* Table Data */}
               <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
                 {filteredCompetitionRegistrations.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <Icon name="Trophy" size={40} className="text-blue-sail/30 mx-auto mb-2" />
-                    <p className="text-sm font-semibold">Tidak Ada Tim Yang Sesuai Filter &amp; Pencarian</p>
-                    <p className="text-xs text-blue-sail/50 mt-1">Coba ubah opsi filter atau kata kunci pencarian Anda.</p>
+                  <div className="p-12 text-center space-y-3">
+                    <Icon name="Trophy" size={40} className="text-blue-sail/30 mx-auto" />
+                    <div>
+                      <p className="text-sm font-semibold text-blue-sail">
+                        {competitionRegistrations.length === 0 ? 'Belum Ada Tim Pendaftar Yang Terdeteksi' : 'Tidak Ada Tim Yang Sesuai Filter &amp; Pencarian'}
+                      </p>
+                      <p className="text-xs text-blue-sail/50 mt-1">
+                        {competitionRegistrations.length === 0
+                          ? 'Silakan refresh atau pastikan koneksi backend server aktif.'
+                          : `Terdapat total ${competitionRegistrations.length} tim terdaftar, tetapi tidak ada yang cocok dengan kombinasi filter saat ini.`}
+                      </p>
+                    </div>
+                    {competitionRegistrations.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCompFilterType('all');
+                          setCompFilterCategory('all');
+                          setCompFilterPreliminary('all');
+                          setCompFilterPayment('all');
+                          setCompFilterSemifinal('all');
+                          setCompFilterFinal('all');
+                          setCompSearchQuery('');
+                        }}
+                        className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-5 py-2.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <Icon name="RotateCcw" size={14} />
+                        <span>TAMPILKAN SEMUA {competitionRegistrations.length} TIM (RESET FILTER)</span>
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
