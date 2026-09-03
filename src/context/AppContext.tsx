@@ -1053,7 +1053,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const fetchState = async () => {
     try {
-      const res = await fetch(getApiUrl('/api/state'));
+      const res = await fetch(getApiUrl('/api/state?t=' + Date.now()), {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         setState(prev => {
