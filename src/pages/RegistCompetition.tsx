@@ -141,36 +141,7 @@ export const RegistCompetition: React.FC = () => {
     }
   };
 
-  // Helper for File Inputs with Size Validation
-  const handleFileSelect = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    maxSizeMb: number,
-    onSuccess: (fileName: string, fileUrl: string) => void,
-    errKey?: string
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const maxSizeBytes = maxSizeMb * 1024 * 1024;
-      if (file.size > maxSizeBytes) {
-        const msg = `Ukuran berkas melebihi batas maksimal ${maxSizeMb}MB (${(file.size / (1024 * 1024)).toFixed(1)}MB)`;
-        if (errKey) {
-          setErrors(prev => ({ ...prev, [errKey]: msg }));
-        } else {
-          alert(msg);
-        }
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        if (errKey && errors[errKey]) {
-          setErrors(prev => ({ ...prev, [errKey]: '' }));
-        }
-        onSuccess(file.name, dataUrl);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // File inputs replaced by direct URL inputs to prevent server memory spikes
 
   // Step Validations
   const validateStep1 = () => {
@@ -211,8 +182,8 @@ export const RegistCompetition: React.FC = () => {
       errs.leaderEmail = 'Format email tidak valid';
     }
 
-    if (!form.leaderCardFileName) {
-      errs.leaderCardFileName = isSMA ? 'Wajib mengunggah Kartu Pelajar Ketua Tim (Maks 3MB)' : 'Wajib mengunggah KTM Ketua Tim (Maks 3MB)';
+    if (!form.leaderCardFileUrl.trim()) {
+      errs.leaderCardFileUrl = isSMA ? 'Link Google Drive Kartu Pelajar Ketua Tim wajib diisi' : 'Link Google Drive KTM Ketua Tim wajib diisi';
     }
 
     setErrors(errs);
@@ -242,8 +213,8 @@ export const RegistCompetition: React.FC = () => {
         errs[`member_${i}_email`] = `Format email Anggota ${i + 1} tidak valid`;
       }
 
-      if (!m.cardFileName) {
-        errs[`member_${i}_cardFileName`] = isSMA ? `Wajib upload Kartu Pelajar Anggota ${i + 1} (Maks 3MB)` : `Wajib upload KTM Anggota ${i + 1} (Maks 3MB)`;
+      if (!m.cardFileUrl.trim()) {
+        errs[`member_${i}_cardFileUrl`] = isSMA ? `Link Google Drive Kartu Pelajar Anggota ${i + 1} wajib diisi` : `Link Google Drive KTM Anggota ${i + 1} wajib diisi`;
       }
     }
     setErrors(errs);
@@ -252,14 +223,14 @@ export const RegistCompetition: React.FC = () => {
 
   const validateStep4 = () => {
     const errs: Record<string, string> = {};
-    if (!form.igStoryFileName) {
-      errs.igStoryFileName = 'Wajib upload Bukti Upload Poster TSF 2026 di Instagram Story (Maks 5MB PDF)';
+    if (!form.igStoryFileUrl.trim()) {
+      errs.igStoryFileUrl = 'Link Google Drive Bukti Upload Poster TSF 2026 di Instagram Story wajib diisi';
     }
-    if (!form.twibbonFileName) {
-      errs.twibbonFileName = 'Wajib upload Bukti Upload Twibbon TSF 2026 di Feeds Instagram (Maks 5MB PDF)';
+    if (!form.twibbonFileUrl.trim()) {
+      errs.twibbonFileUrl = 'Link Google Drive Bukti Upload Twibbon TSF 2026 di Feeds Instagram wajib diisi';
     }
-    if (!form.igFollowFileName) {
-      errs.igFollowFileName = 'Wajib upload Bukti Follow Instagram @tdcsummitfest_its dan @tdcits (Maks 5MB PDF)';
+    if (!form.igFollowFileUrl.trim()) {
+      errs.igFollowFileUrl = 'Link Google Drive Bukti Follow Instagram @tdcsummitfest_its dan @tdcits wajib diisi';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -1104,34 +1075,25 @@ export const RegistCompetition: React.FC = () => {
                       {errors.leaderEmail && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderEmail}</p>}
                     </div>
 
-                    {/* Upload KTM / Kartu Pelajar (Max 3MB) */}
+                    {/* Upload KTM / Kartu Pelajar */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                        {isSMA ? 'Upload Kartu Pelajar Ketua Tim * (Maksimal 3MB)' : 'Upload KTM (Kartu Tanda Mahasiswa) Ketua Tim * (Maksimal 3MB)'}
+                        {isSMA ? 'Link GDrive Kartu Pelajar Ketua Tim *' : 'Link GDrive KTM Ketua Tim *'}
                       </label>
-                      <div className="border-2 border-dashed border-blue-sail/40 p-4 bg-white text-center cursor-pointer hover:border-decor transition-colors">
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={e => handleFileSelect(e, 3, (fName, fUrl) => {
-                            updateField('leaderCardFileName', fName);
-                            updateField('leaderCardFileUrl', fUrl);
-                          }, 'leaderCardFileName')}
-                          className="hidden"
-                          id="leader-card-file"
-                        />
-                        <label htmlFor="leader-card-file" className="cursor-pointer flex flex-col items-center gap-1.5">
-                          <Icon name="UploadCloud" size={24} className="text-red-inferno" />
-                          <span className="text-xs font-display font-bold text-blue-sail uppercase flex items-center gap-1.5">
-                            {form.leaderCardFileName ? (
-                              <><Icon name="CheckCircle" size={14} className="text-emerald-600" /> TERPILIH: {form.leaderCardFileName}</>
-                            ) : (
-                              isSMA ? 'Klik untuk Unggah Kartu Pelajar (pdf/jpg/png, Maks 3MB)' : 'Klik untuk Unggah KTM (pdf/jpg/png, Maks 3MB)'
-                            )}
-                          </span>
-                        </label>
-                      </div>
-                      {errors.leaderCardFileName && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderCardFileName}</p>}
+                      <input
+                        type="url"
+                        value={form.leaderCardFileUrl}
+                        onChange={e => {
+                          updateField('leaderCardFileUrl', e.target.value);
+                          updateField('leaderCardFileName', 'Link GDrive');
+                        }}
+                        placeholder="https://drive.google.com/..."
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                      />
+                      <p className="text-[10px] text-blue-sail/60 font-sans mt-1">
+                        Pastikan akses link "Anyone with the link / Siapa saja yang memiliki tautan"
+                      </p>
+                      {errors.leaderCardFileUrl && <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors.leaderCardFileUrl}</p>}
                     </div>
 
                   </div>
@@ -1355,35 +1317,26 @@ export const RegistCompetition: React.FC = () => {
                           )}
                         </div>
 
-                        {/* Upload KTM / Kartu Pelajar for Member (Max 3MB) */}
+                        {/* Upload KTM / Kartu Pelajar for Member */}
                         <div className="sm:col-span-2">
                           <label className="block text-xs font-display font-bold text-blue-sail uppercase mb-1">
-                            {isSMA ? `Upload Kartu Pelajar Anggota ${idx + 1} * (Maksimal 3MB)` : `Upload KTM (Kartu Tanda Mahasiswa) Anggota ${idx + 1} * (Maksimal 3MB)`}
+                            {isSMA ? `Link GDrive Kartu Pelajar Anggota ${idx + 1} *` : `Link GDrive KTM Anggota ${idx + 1} *`}
                           </label>
-                          <div className="border-2 border-dashed border-blue-sail/40 p-3 bg-white text-center cursor-pointer hover:border-decor transition-colors">
-                            <input
-                              type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
-                              onChange={e => handleFileSelect(e, 3, (fName, fUrl) => {
-                                updateMember(idx, 'cardFileName', fName);
-                                updateMember(idx, 'cardFileUrl', fUrl);
-                              }, `member_${idx}_cardFileName`)}
-                              className="hidden"
-                              id={`member-card-file-${idx}`}
-                            />
-                            <label htmlFor={`member-card-file-${idx}`} className="cursor-pointer flex items-center justify-center gap-2">
-                              <Icon name="UploadCloud" size={18} className="text-blue-sail" />
-                              <span className="text-xs font-display font-bold text-blue-sail uppercase truncate">
-                                {form.members[idx]?.cardFileName ? (
-                                  `✓ TERPILIH: ${form.members[idx].cardFileName}`
-                                ) : (
-                                  isSMA ? 'Unggah Kartu Pelajar (pdf/jpg/png, Maks 3MB)' : 'Unggah KTM (pdf/jpg/png, Maks 3MB)'
-                                )}
-                              </span>
-                            </label>
-                          </div>
-                          {errors[`member_${idx}_cardFileName`] && (
-                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_cardFileName`]}</p>
+                          <input
+                            type="url"
+                            value={form.members[idx]?.cardFileUrl || ''}
+                            onChange={e => {
+                              updateMember(idx, 'cardFileUrl', e.target.value);
+                              updateMember(idx, 'cardFileName', 'Link GDrive');
+                            }}
+                            placeholder="https://drive.google.com/..."
+                            className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                          />
+                          <p className="text-[10px] text-blue-sail/60 font-sans mt-1">
+                            Pastikan akses link "Anyone with the link / Siapa saja yang memiliki tautan"
+                          </p>
+                          {errors[`member_${idx}_cardFileUrl`] && (
+                            <p className="text-red-500 text-xs font-sans font-semibold mt-1">{errors[`member_${idx}_cardFileUrl`]}</p>
                           )}
                         </div>
 
@@ -1454,25 +1407,21 @@ export const RegistCompetition: React.FC = () => {
                     <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2">
                       <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
                         <Icon name="AlertCircle" size={14} />
-                        <span>Akun tidak boleh private dan SS digabung menjadi 1 file PDF (Maksimal 5MB).</span>
+                        <span>Akun tidak boleh private dan SS digabung menjadi 1 file di dalam Google Drive.</span>
                       </p>
                       
                       <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={e => handleFileSelect(e, 5, (fName, fUrl) => {
-                          updateField('igStoryFileName', fName);
-                          updateField('igStoryFileUrl', fUrl);
-                        }, 'igStoryFileName')}
-                        className="hidden"
-                        id="ig-story-pdf"
+                        type="url"
+                        value={form.igStoryFileUrl}
+                        onChange={e => {
+                          updateField('igStoryFileUrl', e.target.value);
+                          updateField('igStoryFileName', 'Link GDrive');
+                        }}
+                        placeholder="Link Google Drive"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2 text-sm font-sans text-blue-sail outline-none"
                       />
-                      <label htmlFor="ig-story-pdf" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2.5 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
-                        <Icon name="FileText" size={16} />
-                        <span>{form.igStoryFileName ? `✓ ${form.igStoryFileName}` : 'Upload PDF Story (Maks 5MB)'}</span>
-                      </label>
                     </div>
-                    {errors.igStoryFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.igStoryFileName}</p>}
+                    {errors.igStoryFileUrl && <p className="text-red-500 text-xs font-sans font-semibold">{errors.igStoryFileUrl}</p>}
                   </div>
 
                   {/* Task 2: Twibbon IG Feeds (Max 5MB PDF) */}
@@ -1495,25 +1444,21 @@ export const RegistCompetition: React.FC = () => {
                     <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2">
                       <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
                         <Icon name="AlertCircle" size={14} />
-                        <span>Akun tidak boleh private dan SS digabung menjadi 1 file PDF (Maksimal 5MB).</span>
+                        <span>Akun tidak boleh private dan SS digabung menjadi 1 file di dalam Google Drive.</span>
                       </p>
 
                       <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={e => handleFileSelect(e, 5, (fName, fUrl) => {
-                          updateField('twibbonFileName', fName);
-                          updateField('twibbonFileUrl', fUrl);
-                        }, 'twibbonFileName')}
-                        className="hidden"
-                        id="twibbon-pdf"
+                        type="url"
+                        value={form.twibbonFileUrl}
+                        onChange={e => {
+                          updateField('twibbonFileUrl', e.target.value);
+                          updateField('twibbonFileName', 'Link GDrive');
+                        }}
+                        placeholder="Link Google Drive"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2 text-sm font-sans text-blue-sail outline-none"
                       />
-                      <label htmlFor="twibbon-pdf" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2.5 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
-                        <Icon name="FileText" size={16} />
-                        <span>{form.twibbonFileName ? `✓ ${form.twibbonFileName}` : 'Upload PDF Twibbon (Maks 5MB)'}</span>
-                      </label>
                     </div>
-                    {errors.twibbonFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.twibbonFileName}</p>}
+                    {errors.twibbonFileUrl && <p className="text-red-500 text-xs font-sans font-semibold">{errors.twibbonFileUrl}</p>}
                   </div>
 
                   {/* Task 3: Follow IG (Max 5MB PDF) */}
@@ -1529,25 +1474,21 @@ export const RegistCompetition: React.FC = () => {
                     <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2">
                       <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
                         <Icon name="AlertCircle" size={14} />
-                        <span>SS digabung menjadi 1 file PDF (Maksimal 5MB).</span>
+                        <span>SS digabung menjadi 1 file di dalam Google Drive.</span>
                       </p>
 
                       <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={e => handleFileSelect(e, 5, (fName, fUrl) => {
-                          updateField('igFollowFileName', fName);
-                          updateField('igFollowFileUrl', fUrl);
-                        }, 'igFollowFileName')}
-                        className="hidden"
-                        id="ig-follow-pdf"
+                        type="url"
+                        value={form.igFollowFileUrl}
+                        onChange={e => {
+                          updateField('igFollowFileUrl', e.target.value);
+                          updateField('igFollowFileName', 'Link GDrive');
+                        }}
+                        placeholder="Link Google Drive"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2 text-sm font-sans text-blue-sail outline-none"
                       />
-                      <label htmlFor="ig-follow-pdf" className="cursor-pointer inline-flex items-center gap-2 bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2.5 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]">
-                        <Icon name="FileText" size={16} />
-                        <span>{form.igFollowFileName ? `✓ ${form.igFollowFileName}` : 'Upload PDF Follow IG (Maks 5MB)'}</span>
-                      </label>
                     </div>
-                    {errors.igFollowFileName && <p className="text-red-500 text-xs font-sans font-semibold">{errors.igFollowFileName}</p>}
+                    {errors.igFollowFileUrl && <p className="text-red-500 text-xs font-sans font-semibold">{errors.igFollowFileUrl}</p>}
                   </div>
 
                 </div>

@@ -114,47 +114,13 @@ export const ParticipantDashboard: React.FC = () => {
   const isBPC = myTeam.competition_type === 'BPC' || myTeam.category_id?.includes('BPC');
   const requiredFileType = isBPC ? 'BMC (Business Model Canvas)' : 'Executive Summary';
 
-  const readFileAsDataUrl = (fileObj: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (err) => reject(err);
-      reader.readAsDataURL(fileObj);
-    });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError('');
-    setSuccessMsg('');
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        setError('Ukuran berkas melebihi 10MB');
-        return;
-      }
-      setFile(selectedFile);
-      setFileName(selectedFile.name);
-      setFileUrl(''); // Reset until read complete
-      readFileAsDataUrl(selectedFile).then(url => setFileUrl(url)).catch(() => {});
-    }
-  };
+  // File inputs replaced by direct URL inputs to prevent server memory spikes
 
   const handleUploadSubmit = async () => {
     let targetUrl = fileUrl;
-    if (!targetUrl && file) {
-      setIsSubmitting(true);
-      try {
-        targetUrl = await readFileAsDataUrl(file);
-        setFileUrl(targetUrl);
-      } catch (e) {
-        setIsSubmitting(false);
-        setError('Gagal membaca berkas file PDF. Silakan pilih kembali berkas Anda.');
-        return;
-      }
-    }
 
-    if (!targetUrl || (!targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('blob:'))) {
-      setError(`Wajib memilih berkas file PDF ${requiredFileType}`);
+    if (!targetUrl || !targetUrl.startsWith('http')) {
+      setError(`Wajib mengisi Link Google Drive berkas ${requiredFileType}`);
       return;
     }
 
@@ -166,7 +132,7 @@ export const ParticipantDashboard: React.FC = () => {
       await submitPreliminaryFile(
         myTeam.id,
         targetUrl,
-        fileName || file?.name || `Berkas_Preliminary_${myTeam.team_name}.pdf`,
+        'Link GDrive',
         isBPC ? 'BMC' : 'Executive Summary'
       );
       setIsSubmitting(false);
@@ -177,36 +143,12 @@ export const ParticipantDashboard: React.FC = () => {
     }
   };
 
-  const handlePaymentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
-    if (selected.size > 3 * 1024 * 1024) {
-      setPaymentError('Ukuran file bukti pembayaran maksimal 3MB.');
-      return;
-    }
-    setPaymentError('');
-    setPaymentFile(selected);
-    setPaymentFileName(selected.name);
-    setPaymentFileUrl('');
-    readFileAsDataUrl(selected).then(url => setPaymentFileUrl(url)).catch(() => {});
-  };
-
+  // Payment handler removed, using URL directly
   const handlePaymentUploadSubmit = async () => {
     let targetUrl = paymentFileUrl;
-    if (!targetUrl && paymentFile) {
-      setIsSubmittingPayment(true);
-      try {
-        targetUrl = await readFileAsDataUrl(paymentFile);
-        setPaymentFileUrl(targetUrl);
-      } catch (e) {
-        setIsSubmittingPayment(false);
-        setPaymentError('Gagal membaca berkas bukti pembayaran. Silakan pilih kembali berkas Anda.');
-        return;
-      }
-    }
 
-    if (!myTeam || !targetUrl || (!targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('blob:'))) {
-      setPaymentError('Pilih file bukti pembayaran terlebih dahulu.');
+    if (!myTeam || !targetUrl || !targetUrl.startsWith('http')) {
+      setPaymentError('Isi Link Google Drive bukti pembayaran terlebih dahulu.');
       return;
     }
     setIsSubmittingPayment(true);
@@ -214,7 +156,7 @@ export const ParticipantDashboard: React.FC = () => {
     setPaymentSuccessMsg('');
 
     try {
-      await submitSemiFinalPayment(myTeam.id, targetUrl, paymentFileName || paymentFile?.name || 'bukti_transfer.pdf');
+      await submitSemiFinalPayment(myTeam.id, targetUrl, 'Link GDrive');
       setIsSubmittingPayment(false);
       setPaymentSuccessMsg('Bukti pembayaran Semi Final berhasil dikirim! Menunggu verifikasi admin.');
     } catch (err: any) {
@@ -223,36 +165,12 @@ export const ParticipantDashboard: React.FC = () => {
     }
   };
 
-  const handleSemiFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
-    if (selected.size > 10 * 1024 * 1024) {
-      setSemiError('Ukuran berkas submission Semi Final maksimal 10MB.');
-      return;
-    }
-    setSemiError('');
-    setSemiFile(selected);
-    setSemiFileName(selected.name);
-    setSemiFileUrl('');
-    readFileAsDataUrl(selected).then(url => setSemiFileUrl(url)).catch(() => {});
-  };
-
+  // Semi final file handler removed, using URL directly
   const handleSemiUploadSubmit = async () => {
     let targetUrl = semiFileUrl;
-    if (!targetUrl && semiFile) {
-      setIsSubmittingSemi(true);
-      try {
-        targetUrl = await readFileAsDataUrl(semiFile);
-        setSemiFileUrl(targetUrl);
-      } catch (e) {
-        setIsSubmittingSemi(false);
-        setSemiError('Gagal membaca berkas proposal Semi Final. Silakan pilih kembali berkas Anda.');
-        return;
-      }
-    }
 
-    if (!myTeam || !targetUrl || (!targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('blob:'))) {
-      setSemiError('Pilih berkas submission Semi Final terlebih dahulu.');
+    if (!myTeam || !targetUrl || !targetUrl.startsWith('http')) {
+      setSemiError('Isi Link Google Drive berkas submission Semi Final terlebih dahulu.');
       return;
     }
     setIsSubmittingSemi(true);
@@ -260,7 +178,7 @@ export const ParticipantDashboard: React.FC = () => {
     setSemiSuccessMsg('');
 
     try {
-      await submitSemiFinalFile(myTeam.id, targetUrl, semiFileName || semiFile?.name || 'berkas_semifinal.pdf');
+      await submitSemiFinalFile(myTeam.id, targetUrl, 'Link GDrive');
       setIsSubmittingSemi(false);
       setSemiSuccessMsg('Berkas submission Semi Final berhasil dikumpulkan!');
     } catch (err: any) {
@@ -529,25 +447,27 @@ export const ParticipantDashboard: React.FC = () => {
                   </p>
                 )}
 
-                <div className="border-2 border-dashed border-blue-sail/40 p-6 bg-white text-center cursor-pointer hover:border-decor transition-colors">
+                <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2 mt-4">
+                  <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
+                    <Icon name="AlertCircle" size={14} />
+                    <span>Pastikan akses Google Drive diatur ke "Siapa saja yang memiliki tautan".</span>
+                  </p>
+                  
                   <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="preliminary-file-input"
+                    type="url"
+                    value={fileUrl}
+                    onChange={(e) => {
+                      setFileUrl(e.target.value);
+                      setError('');
+                    }}
+                    placeholder="Link Google Drive Berkas"
+                    className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
                   />
-                  <label htmlFor="preliminary-file-input" className="cursor-pointer flex flex-col items-center gap-2">
-                    <Icon name="FileText" size={36} className="text-blue-sail" />
-                    <span className="text-xs font-display font-bold text-blue-sail uppercase">
-                      {fileName ? `✓ FILE TERPILIH: ${fileName}` : `Klik untuk Pilih File PDF ${requiredFileType} (Maksimal 10MB)`}
-                    </span>
-                  </label>
                 </div>
 
                 <div className="flex justify-end pt-2">
                   <button
-                    disabled={isSubmitting || !fileName}
+                    disabled={isSubmitting || !fileUrl}
                     onClick={handleUploadSubmit}
                     className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2 disabled:opacity-50"
                   >
@@ -697,25 +617,27 @@ export const ParticipantDashboard: React.FC = () => {
                       </p>
                     )}
 
-                    <div className="border-2 border-dashed border-blue-sail/40 p-6 bg-white text-center cursor-pointer hover:border-decor transition-colors">
+                    <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2 mt-4">
+                      <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
+                        <Icon name="AlertCircle" size={14} />
+                        <span>Pastikan akses Google Drive diatur ke "Siapa saja yang memiliki tautan".</span>
+                      </p>
+                      
                       <input
-                        type="file"
-                        accept=".pdf,image/*"
-                        onChange={handlePaymentFileChange}
-                        className="hidden"
-                        id="semifinal-payment-file-input"
+                        type="url"
+                        value={paymentFileUrl}
+                        onChange={(e) => {
+                          setPaymentFileUrl(e.target.value);
+                          setPaymentError('');
+                        }}
+                        placeholder="Link Google Drive Bukti Transfer"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
                       />
-                      <label htmlFor="semifinal-payment-file-input" className="cursor-pointer flex flex-col items-center gap-2">
-                        <Icon name="FileText" size={36} className="text-blue-sail" />
-                        <span className="text-xs font-display font-bold text-blue-sail uppercase">
-                          {paymentFileName ? `✓ FILE TERPILIH: ${paymentFileName}` : 'Klik untuk Pilih File Bukti Transfer (PDF / Gambar, Maksimal 3MB)'}
-                        </span>
-                      </label>
                     </div>
 
                     <div className="flex justify-end pt-2">
                       <button
-                        disabled={isSubmittingPayment || !paymentFileName}
+                        disabled={isSubmittingPayment || !paymentFileUrl}
                         onClick={handlePaymentUploadSubmit}
                         className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2 disabled:opacity-50"
                       >
@@ -823,25 +745,27 @@ export const ParticipantDashboard: React.FC = () => {
                       </p>
                     )}
 
-                    <div className="border-2 border-dashed border-blue-sail/40 p-6 bg-white text-center cursor-pointer hover:border-decor transition-colors">
+                    <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2 mt-4">
+                      <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
+                        <Icon name="AlertCircle" size={14} />
+                        <span>Pastikan akses Google Drive diatur ke "Siapa saja yang memiliki tautan".</span>
+                      </p>
+                      
                       <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleSemiFileChange}
-                        className="hidden"
-                        id="semifinal-file-input"
+                        type="url"
+                        value={semiFileUrl}
+                        onChange={(e) => {
+                          setSemiFileUrl(e.target.value);
+                          setSemiError('');
+                        }}
+                        placeholder="Link Google Drive Berkas Semifinal"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
                       />
-                      <label htmlFor="semifinal-file-input" className="cursor-pointer flex flex-col items-center gap-2">
-                        <Icon name="FileText" size={36} className="text-blue-sail" />
-                        <span className="text-xs font-display font-bold text-blue-sail uppercase">
-                          {semiFileName ? `✓ FILE TERPILIH: ${semiFileName}` : 'Klik untuk Pilih File PDF Submission Semi Final (Maksimal 10MB)'}
-                        </span>
-                      </label>
                     </div>
 
                     <div className="flex justify-end pt-2">
                       <button
-                        disabled={isSubmittingSemi || !semiFileName}
+                        disabled={isSubmittingSemi || !semiFileUrl}
                         onClick={handleSemiUploadSubmit}
                         className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2 disabled:opacity-50"
                       >
