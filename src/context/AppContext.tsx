@@ -1088,13 +1088,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (currentUser) {
       fetchMyTeam(currentUser);
     }
-    // Poll state & myTeam every 15 seconds to safely sync data across devices
+    // Poll state & myTeam every 60 seconds to safely sync data across devices
     const interval = setInterval(() => {
       fetchState();
       if (currentUser) {
         fetchMyTeam(currentUser);
       }
-    }, 15000);
+    }, 60000);
     return () => clearInterval(interval);
   }, [currentUser?.id]);
 

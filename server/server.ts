@@ -138,6 +138,7 @@ async function initDatabase() {
 
     // Auto update competition_registrations table if missing new columns
     await ensureCompetitionColumns();
+    await ensureCompetitionCategories();
 
     // Auto update p-1 phase to ambassador_recruitment and active status
     if (await db.schema.hasTable('event_phases')) {
@@ -322,7 +323,7 @@ app.post('/api/user/register', async (req: Request, res: Response): Promise<void
   const cleanName = String(name || '').trim();
 
   try {
-    await ensureUsersTable();
+
     const existing = await db('users').where({ email: cleanEmail }).first();
     if (existing) {
       res.status(400).json({ message: 'Email ini sudah terdaftar. Silakan gunakan menu Login.' });
@@ -367,7 +368,7 @@ app.post('/api/user/login', async (req: Request, res: Response): Promise<void> =
   const cleanEmail = String(email || '').toLowerCase().trim();
 
   try {
-    await ensureUsersTable();
+
     const user = await db('users').where({ email: cleanEmail }).first();
     if (!user || !user.password_hash) {
       res.status(401).json({ message: 'Email atau password yang Anda masukkan salah' });
@@ -499,25 +500,19 @@ app.get('/api/auth/admins', authenticateToken, async (req: Request, res: Respons
 // -------------------------------------------------------------
 app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
   try {
-    const phases = (await db.schema.hasTable('event_phases')) ? await db('event_phases').orderBy('id', 'asc') : [];
-    const divisions = (await db.schema.hasTable('divisions')) ? await db('divisions').orderBy('id', 'asc') : [];
-    const staffApplications = (await db.schema.hasTable('staff_applications')) ? await db('staff_applications').orderBy('submitted_at', 'desc') : [];
-    const ambassadorApplications = (await db.schema.hasTable('ambassador_applications'))
-      ? await db('ambassador_applications').orderBy('submitted_at', 'desc')
-      : [];
-    const pe1Registrations = (await db.schema.hasTable('pe1_registrations'))
-      ? await db('pe1_registrations').orderBy('submitted_at', 'desc')
-      : [];
-    const subEvents = (await db.schema.hasTable('sub_events')) ? await db('sub_events').orderBy('id', 'asc') : [];
-    const competitions = (await db.schema.hasTable('competitions')) ? await db('competitions').orderBy('id', 'asc') : [];
-    const competitionRegistrations = (await db.schema.hasTable('competition_registrations')) ? await db('competition_registrations').orderBy('submitted_at', 'desc') : [];
-    const thriftProducts = (await db.schema.hasTable('thrift_products')) ? await db('thrift_products').orderBy('id', 'desc') : [];
-    const thriftVendors = (await db.schema.hasTable('thrift_vendors')) ? await db('thrift_vendors').orderBy('id', 'asc') : [];
-    const vendorApplications = (await db.schema.hasTable('vendor_applications')) ? await db('vendor_applications').orderBy('submitted_at', 'desc') : [];
-    const qConfig = (await db.schema.hasTable('form_questions_config')) ? await db('form_questions_config').where({ id: 'main_config' }).first() : undefined;
-    const users = (await db.schema.hasTable('users'))
-      ? await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc')
-      : [];
+    const phases = await db('event_phases').orderBy('id', 'asc').catch(() => []);
+    const divisions = await db('divisions').orderBy('id', 'asc').catch(() => []);
+    const staffApplications = await db('staff_applications').orderBy('submitted_at', 'desc').catch(() => []);
+    const ambassadorApplications = await db('ambassador_applications').orderBy('submitted_at', 'desc').catch(() => []);
+    const pe1Registrations = await db('pe1_registrations').orderBy('submitted_at', 'desc').catch(() => []);
+    const subEvents = await db('sub_events').orderBy('id', 'asc').catch(() => []);
+    const competitions = await db('competitions').orderBy('id', 'asc').catch(() => []);
+    const competitionRegistrations = await db('competition_registrations').orderBy('submitted_at', 'desc').catch(() => []);
+    const thriftProducts = await db('thrift_products').orderBy('id', 'desc').catch(() => []);
+    const thriftVendors = await db('thrift_vendors').orderBy('id', 'asc').catch(() => []);
+    const vendorApplications = await db('vendor_applications').orderBy('submitted_at', 'desc').catch(() => []);
+    const qConfig = await db('form_questions_config').where({ id: 'main_config' }).first().catch(() => undefined);
+    const users = await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc').catch(() => []);
 
     const parseJson = (val: any) => typeof val === 'string' ? JSON.parse(val) : val;
 
@@ -1338,8 +1333,7 @@ app.post('/api/competition-registrations', async (req: Request, res: Response): 
   const email = data.email ? String(data.email).toLowerCase().trim() : '';
 
   try {
-    await ensureCompetitionColumns();
-    await ensureCompetitionCategories();
+
 
     let categoryId = data.category_id || `${data.competition_type || 'BPC'} - ${data.education_category || 'Mahasiswa'}`;
     const compRow = await db('competitions').where({ id: categoryId }).first();
@@ -1409,7 +1403,7 @@ app.get('/api/competitions/my-team', async (req: Request, res: Response): Promis
   }
 
   try {
-    await ensureCompetitionColumns();
+
     let query = db('competition_registrations');
     if (userId) {
       query = query.where({ user_id: userId });
@@ -1483,7 +1477,7 @@ app.post('/api/competitions/submit-semifinal-payment', async (req: Request, res:
   }
 
   try {
-    await ensureCompetitionColumns();
+
     await db('competition_registrations')
       .where({ id: team_id })
       .update({
@@ -1510,7 +1504,7 @@ app.post('/api/competitions/submit-semifinal', async (req: Request, res: Respons
   }
 
   try {
-    await ensureCompetitionColumns();
+
     await db('competition_registrations')
       .where({ id: team_id })
       .update({
@@ -1532,7 +1526,7 @@ app.patch('/api/admin/competitions/:id/status', authenticateToken, async (req: R
   const { status_stage, status_preliminary, status_semifinal, status_final, payment_semifinal_status } = req.body;
 
   try {
-    await ensureCompetitionColumns();
+
     const updateData: any = {};
     if (status_stage !== undefined) updateData.status_stage = status_stage;
     if (status_preliminary !== undefined) updateData.status_preliminary = status_preliminary;

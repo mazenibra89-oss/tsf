@@ -49,7 +49,7 @@ export const ParticipantDashboard: React.FC = () => {
       fetchMyTeam();
       const interval = setInterval(() => {
         fetchMyTeam();
-      }, 3000);
+      }, 60000);
       return () => clearInterval(interval);
     }
   }, [currentUser]);
