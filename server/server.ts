@@ -1441,6 +1441,17 @@ app.get('/api/competitions/my-team', async (req: Request, res: Response): Promis
   }
 });
 
+// SECRET ADMIN CLEANER: Wipes ALL competition registrations
+app.get('/api/admin/delete-all-competitions', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const deletedCount = await db('competition_registrations').del();
+    res.json({ message: `Berhasil menghapus SEMUA data pendaftar kompetisi (${deletedCount} data dihapus). Database sekarang bersih!` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal menghapus data pendaftar kompetisi' });
+  }
+});
+
 // Submit Preliminary File (BMC for BPC / Executive Summary for BCC)
 app.post('/api/competitions/submit-preliminary', async (req: Request, res: Response): Promise<void> => {
   const { team_id, preliminary_file_url, preliminary_file_name, preliminary_file_type } = req.body;
