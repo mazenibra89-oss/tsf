@@ -260,6 +260,14 @@ export const Admin: React.FC = () => {
       alert(`Berkas "${docTitle || 'Dokumen'}" belum diunggah.`);
       return;
     }
+    
+    // Jika URL adalah link (seperti Google Drive), buka di tab baru karena iframe Google Drive akan diblokir
+    if (fileUrl.startsWith('http')) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    
+    // Jika Base64 (kode lama), gunakan modal iframe
     setViewingFile({
       url: fileUrl,
       title: docTitle || 'Pratinjau Berkas',
