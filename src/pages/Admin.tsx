@@ -946,69 +946,7 @@ export const Admin: React.FC = () => {
     }
     setIsVendorModalOpen(false);
     setVendorFormState({ id: '', vendor_name: '', booth_location: '', contact: '', status: 'active' });
-  };
-
-  if (!isAuthenticated) {
-    /* LOGIN SCREEN */
-    return (
-      <div className="asphalt-texture min-h-screen flex items-center justify-center p-4">
-        <div className="bg-blue-sail text-ballroom w-full max-w-sm border-4 border-decor p-8 rounded-none shadow-[8px_8px_0_0_#BD1B1F] relative overflow-hidden font-sans">
-          <div className="absolute inset-0 grid-pattern opacity-10" />
-          
-          <div className="relative z-10 text-center space-y-6">
-            <div className="flex justify-center">
-              <div className="bg-decor text-blue-sail p-3 rounded-none border-2 border-blue-sail font-display font-black text-2xl">
-                TSF
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <h1 className="font-display font-black text-xl uppercase tracking-wider text-decor">CMS CONTROL CENTER</h1>
-              <p className="text-xs text-ballroom/75 leading-relaxed">Masukkan kata sandi kepanitiaan untuk mengontrol status event dan mengunduh database.</p>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-1 text-left">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-decor">USERNAME ADMIN</label>
-                <input
-                  id="admin-username-input"
-                  type="text"
-                  value={usernameInput}
-                  onChange={e => setUsernameInput(e.target.value)}
-                  placeholder="Username"
-                  className="w-full px-4 py-2.5 text-sm bg-white border-2 border-decor text-blue-sail rounded-none outline-none font-mono focus:shadow-[2px_2px_0_0_#F6BB02]"
-                />
-              </div>
-
-              <div className="space-y-1 text-left">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-decor">KATA SANDI PANITIA</label>
-                <input
-                  id="admin-password-input"
-                  type="password"
-                  value={passwordInput}
-                  onChange={e => setPasswordInput(e.target.value)}
-                  placeholder="Kata Sandi"
-                  className="w-full px-4 py-2.5 text-sm bg-white border-2 border-decor text-blue-sail rounded-none outline-none font-mono focus:shadow-[2px_2px_0_0_#F6BB02]"
-                />
-              </div>
-
-              {loginError && <p className="text-red-inferno font-mono font-bold text-[10px] uppercase text-left">{loginError}</p>}
-
-              <button
-                id="admin-login-btn"
-                type="submit"
-                className="w-full bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase py-3 rounded-none border-2 border-blue-sail tracking-widest shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-              >
-                VERIFIKASI & MASUK
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // --- 1. AMBASSADOR APPLICATIONS ---
+  };  // --- 1. AMBASSADOR APPLICATIONS ---
   const filteredAmbassadors = useMemo(() => {
     const list = (ambassadorApplications || []).filter(app => {
       if (!app) return false;
@@ -1277,7 +1215,7 @@ export const Admin: React.FC = () => {
     return filteredVendorApplications.slice(start, start + vendorPageSize);
   }, [filteredVendorApplications, vendorPage, vendorPageSize]);
 
-  // --- 5. USER ACCOUNTS ---
+  // --- 6. USER ACCOUNTS ---
   const filteredAdminUsersList = useMemo(() => {
     const list = adminUsersList.filter(user => {
       if (!userSearchQuery) return true;
@@ -1319,7 +1257,7 @@ export const Admin: React.FC = () => {
     return filteredAdminUsersList.slice(start, start + userPageSize);
   }, [filteredAdminUsersList, userPage, userPageSize]);
 
-  // --- 6. ADMIN CMS ACCOUNTS ---
+  // --- 7. ADMIN CMS ACCOUNTS ---
   const filteredAdminAccounts = useMemo(() => {
     const list = adminAccounts.filter(acc => {
       if (!adminAccSearchQuery) return true;
@@ -1340,6 +1278,66 @@ export const Admin: React.FC = () => {
     const start = (adminAccPage - 1) * adminAccPageSize;
     return filteredAdminAccounts.slice(start, start + adminAccPageSize);
   }, [filteredAdminAccounts, adminAccPage, adminAccPageSize]);
+
+  if (!isAuthenticated) {
+    /* LOGIN SCREEN */
+    return (
+      <div className="asphalt-texture min-h-screen flex items-center justify-center p-4">
+        <div className="bg-blue-sail text-ballroom w-full max-w-sm border-4 border-decor p-8 rounded-none shadow-[8px_8px_0_0_#BD1B1F] relative overflow-hidden font-sans">
+          <div className="absolute inset-0 grid-pattern opacity-10" />
+          
+          <div className="relative z-10 text-center space-y-6">
+            <div className="flex justify-center">
+              <div className="bg-decor text-blue-sail p-3 rounded-none border-2 border-blue-sail font-display font-black text-2xl">
+                TSF
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <h1 className="font-display font-black text-xl uppercase tracking-wider text-decor">CMS CONTROL CENTER</h1>
+              <p className="text-xs text-ballroom/75 leading-relaxed">Masukkan kata sandi kepanitiaan untuk mengontrol status event dan mengunduh database.</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1 text-left">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-decor">USERNAME ADMIN</label>
+                <input
+                  id="admin-username-input"
+                  type="text"
+                  value={usernameInput}
+                  onChange={e => setUsernameInput(e.target.value)}
+                  placeholder="Username"
+                  className="w-full px-4 py-2.5 text-sm bg-white border-2 border-decor text-blue-sail rounded-none outline-none font-mono focus:shadow-[2px_2px_0_0_#F6BB02]"
+                />
+              </div>
+
+              <div className="space-y-1 text-left">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-decor">KATA SANDI PANITIA</label>
+                <input
+                  id="admin-password-input"
+                  type="password"
+                  value={passwordInput}
+                  onChange={e => setPasswordInput(e.target.value)}
+                  placeholder="Kata Sandi"
+                  className="w-full px-4 py-2.5 text-sm bg-white border-2 border-decor text-blue-sail rounded-none outline-none font-mono focus:shadow-[2px_2px_0_0_#F6BB02]"
+                />
+              </div>
+
+              {loginError && <p className="text-red-inferno font-mono font-bold text-[10px] uppercase text-left">{loginError}</p>}
+
+              <button
+                id="admin-login-btn"
+                type="submit"
+                className="w-full bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase py-3 rounded-none border-2 border-blue-sail tracking-widest shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                VERIFIKASI & MASUK
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-ballroom font-sans text-blue-sail flex flex-col lg:flex-row">
