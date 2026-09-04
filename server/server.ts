@@ -8,6 +8,8 @@ import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
 import db from './db';
 
+import os from 'os';
+
 const getDirname = () => {
   try {
     if (typeof __dirname !== 'undefined' && __dirname) return __dirname;
@@ -18,6 +20,75 @@ const getDirname = () => {
   return process.cwd();
 };
 const appDir = getDirname();
+
+// -------------------------------------------------------------
+// IN-MEMORY RING BUFFER LOGGER & DIAGNOSTIC TRACKER
+// -------------------------------------------------------------
+interface LogEntry {
+  id: string;
+  timestamp: string;
+  level: 'info' | 'warn' | 'error';
+  message: string;
+}
+
+const MAX_LOGS = 500;
+const serverLogs: LogEntry[] = [];
+
+const appendLog = (level: 'info' | 'warn' | 'error', ...args: any[]) => {
+  try {
+    const formatted = args
+      .map(arg => {
+        if (arg instanceof Error) return `${arg.name}: ${arg.message}\n${arg.stack || ''}`;
+        if (typeof arg === 'object') {
+          try { return JSON.stringify(arg); } catch (e) { return String(arg); }
+        }
+        return String(arg);
+      })
+      .join(' ');
+
+    const entry: LogEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      timestamp: new Date().toISOString(),
+      level,
+      message: formatted
+    };
+
+    serverLogs.push(entry);
+    if (serverLogs.length > MAX_LOGS) {
+      serverLogs.shift();
+    }
+  } catch (err) {
+    // Ignore internal logger failure
+  }
+};
+
+const originalLog = console.log;
+const originalWarn = console.warn;
+const originalError = console.error;
+
+console.log = (...args: any[]) => {
+  appendLog('info', ...args);
+  originalLog.apply(console, args);
+};
+
+console.warn = (...args: any[]) => {
+  appendLog('warn', ...args);
+  originalWarn.apply(console, args);
+};
+
+console.error = (...args: any[]) => {
+  appendLog('error', ...args);
+  originalError.apply(console, args);
+};
+
+// Global Crash Prevention & Diagnostic Capture
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL] Uncaught Exception trapped:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[CRITICAL] Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 // Load environment variables
 dotenv.config({ path: path.join(appDir, '..', '.env') });
@@ -31,6 +102,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'tsf_super_secret_key_2026';
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 
 // Authentication middleware
 interface AuthenticatedRequest extends Request {
@@ -526,7 +598,29 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
       return val;
     };
 
+    // Strip out heavy base64 strings in state payload to prevent memory spikes & OOM crashes
+    const sanitizeRowFiles = (row: any) => {
+      const sanitized = { ...row };
+      const fileFields = [
+        'payment_proof_url',
+        'file_url',
+        'ig_story_file_url',
+        'twibbon_file_url',
+        'ig_follow_file_url',
+        'preliminary_file_url',
+        'payment_semifinal_url',
+        'semifinal_file_url'
+      ];
+      fileFields.forEach(field => {
+        if (typeof sanitized[field] === 'string' && sanitized[field].startsWith('data:')) {
+          sanitized[field] = `[Uploaded File - Base64 (${Math.round(sanitized[field].length / 1024)} KB)]`;
+        }
+      });
+      return sanitized;
+    };
+
     res.json({
+
       phases,
       divisions: divisions.map(d => ({
         ...d,
@@ -548,18 +642,22 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
         terms: parseJson(c.terms),
         timeline: parseJson(c.timeline)
       })),
-      competitionRegistrations: competitionRegistrations.map(r => ({
-        ...r,
-        members: parseJson(r.members || '[]'),
-        leader_data: parseJson(r.leader_data || null),
-        members_data: parseJson(r.members_data || '[]')
-      })),
+      competitionRegistrations: competitionRegistrations.map(r => {
+        const cleanR = sanitizeRowFiles(r);
+        return {
+          ...cleanR,
+          members: parseJson(cleanR.members || '[]'),
+          leader_data: parseJson(cleanR.leader_data || null),
+          members_data: parseJson(cleanR.members_data || '[]')
+        };
+      }),
       thriftProducts: thriftProducts.map(p => ({ ...p, price: Number(p.price) })),
       thriftVendors,
       vendorApplications,
       users,
       formQuestions: qConfig ? parseJson(qConfig.config) : undefined
     });
+
   } catch (err) {
     console.error('State retrieval error:', err);
     res.status(500).json({ message: 'Failed to retrieve application state' });
@@ -1714,34 +1812,209 @@ app.put('/api/form-questions', authenticateToken, async (req: Request, res: Resp
 });
 
 // -------------------------------------------------------------
-// RESET DATABASE ENDPOINT (Admin)
+// SYSTEM HEALTH, DIAGNOSTICS & SERVER LOGS ENDPOINTS
 // -------------------------------------------------------------
-app.post('/api/reset', authenticateToken, async (req: Request, res: Response): Promise<void> => {
-  try {
-    console.log('Resetting database...');
-    
-    // Delete data from tables in correct dependency order
-    await db('staff_applications').del();
-    await db('vendor_applications').del();
-    await db('competition_registrations').del();
-    await db('thrift_products').del();
-    await db('thrift_vendors').del();
-    await db('competitions').del();
-    await db('sub_events').del();
-    await db('divisions').del();
-    await db('event_phases').del();
-    await db('admin_accounts').del();
-    await db('form_questions_config').del();
 
-    // Run seed forcing re-population since we deleted data
-    await db.seed.run();
-    
-    res.json({ message: 'Database reset to default successful' });
-  } catch (err) {
-    console.error('Failed to reset database:', err);
-    res.status(500).json({ message: 'Failed to reset database' });
+// Helper to authenticate either Admin JWT token or emergency query key
+const authenticateAdminOrKey = (req: Request, res: Response, next: NextFunction): void => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  const queryKey = req.query.key as string;
+
+  if (queryKey && queryKey === 'tsf_health_key_2026') {
+    return next();
+  }
+
+  if (token) {
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (!err && decoded) {
+        return next();
+      }
+      res.status(403).json({ message: 'Akses ditolak: Token admin tidak valid atau kedaluwarsa.' });
+    });
+    return;
+  }
+
+  res.status(401).json({ message: 'Akses ditolak: Diperlukan token admin atau query key darurat.' });
+};
+
+// 1. Comprehensive Server Health & Resource Metrics
+app.get('/api/system/health', authenticateAdminOrKey, async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const memory = process.memoryUsage();
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+
+    // Database ping and check
+    let dbStatus = 'ok';
+    let dbLatencyMs = 0;
+    const dbStart = Date.now();
+    try {
+      await db.raw('SELECT 1');
+      dbLatencyMs = Date.now() - dbStart;
+    } catch (e: any) {
+      dbStatus = `error: ${e.message}`;
+    }
+
+    // Check count and heavy blob size in competition_registrations
+    let totalTeams = 0;
+    let base64EntriesCount = 0;
+    let approximateBlobBytes = 0;
+    try {
+      const rows = await db('competition_registrations').select(
+        'id',
+        'payment_proof_url',
+        'file_url',
+        'ig_story_file_url',
+        'twibbon_file_url',
+        'ig_follow_file_url',
+        'preliminary_file_url',
+        'payment_semifinal_url',
+        'semifinal_file_url'
+      );
+      totalTeams = rows.length;
+      rows.forEach(r => {
+        ['payment_proof_url', 'file_url', 'ig_story_file_url', 'twibbon_file_url', 'ig_follow_file_url', 'preliminary_file_url', 'payment_semifinal_url', 'semifinal_file_url'].forEach(col => {
+          if (typeof (r as any)[col] === 'string' && (r as any)[col].startsWith('data:')) {
+            base64EntriesCount++;
+            approximateBlobBytes += (r as any)[col].length;
+          }
+        });
+      });
+    } catch (e) {}
+
+    // Check sqlite file size if sqlite is used
+    let sqliteSizeBytes: number | null = null;
+    try {
+      const sqlitePath = path.join(appDir, '..', 'server', 'db', 'tsf_local.sqlite');
+      if (fs.existsSync(sqlitePath)) {
+        sqliteSizeBytes = fs.statSync(sqlitePath).size;
+      }
+    } catch (e) {}
+
+    const errorCountInLogs = serverLogs.filter(l => l.level === 'error').length;
+    const warnCountInLogs = serverLogs.filter(l => l.level === 'warn').length;
+
+    let overallStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
+    if (dbStatus !== 'ok' || memory.rss > 800 * 1024 * 1024) {
+      overallStatus = 'critical';
+    } else if (errorCountInLogs > 15 || base64EntriesCount > 0) {
+      overallStatus = 'warning';
+    }
+
+    res.json({
+      status: overallStatus,
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.floor(process.uptime()),
+      nodeVersion: process.version,
+      platform: `${os.type()} ${os.release()} (${os.arch()})`,
+      cpuCount: os.cpus().length,
+      loadAverage: os.loadavg(),
+      processMemory: {
+        rssMB: +(memory.rss / (1024 * 1024)).toFixed(2),
+        heapTotalMB: +(memory.heapTotal / (1024 * 1024)).toFixed(2),
+        heapUsedMB: +(memory.heapUsed / (1024 * 1024)).toFixed(2),
+        externalMB: +(memory.external / (1024 * 1024)).toFixed(2)
+      },
+      systemMemory: {
+        totalMB: +(totalMem / (1024 * 1024)).toFixed(2),
+        freeMB: +(freeMem / (1024 * 1024)).toFixed(2),
+        usedPercent: +((usedMem / totalMem) * 100).toFixed(1)
+      },
+      database: {
+        status: dbStatus,
+        latencyMs: dbLatencyMs,
+        totalRegisteredTeams: totalTeams,
+        base64BlobsDetected: base64EntriesCount,
+        approximateBlobKBytes: +(approximateBlobBytes / 1024).toFixed(2),
+        sqliteSizeBytes
+      },
+      logsSummary: {
+        totalCaptured: serverLogs.length,
+        errors: errorCountInLogs,
+        warnings: warnCountInLogs
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', message: err.message });
   }
 });
+
+// 2. Real-time In-App Server Logs Endpoint
+app.get('/api/system/logs', authenticateAdminOrKey, (req: Request, res: Response): void => {
+  const level = req.query.level as string;
+  const search = (req.query.search as string || '').toLowerCase();
+  const limit = Math.min(parseInt(req.query.limit as string || '200'), MAX_LOGS);
+
+  let filtered = serverLogs;
+  if (level && ['info', 'warn', 'error'].includes(level)) {
+    filtered = filtered.filter(l => l.level === level);
+  }
+  if (search) {
+    filtered = filtered.filter(l => l.message.toLowerCase().includes(search));
+  }
+
+  const result = filtered.slice(-limit);
+  res.json({
+    total: filtered.length,
+    returned: result.length,
+    logs: result
+  });
+});
+
+// 3. Clear In-Memory Logs Endpoint
+app.post('/api/system/logs/clear', authenticateAdminOrKey, (_req: Request, res: Response): void => {
+  serverLogs.length = 0;
+  console.log('[SYSTEM] Server logs cleared by administrator.');
+  res.json({ message: 'Log sistem berhasil dibersihkan.' });
+});
+
+// 4. Sanitize & Purge Legacy Heavy Base64 Blobs From Database
+app.post('/api/system/clean-blobs', authenticateAdminOrKey, async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const rows = await db('competition_registrations').select('*');
+    let cleanedColumnsCount = 0;
+    let affectedRowsCount = 0;
+
+    for (const row of rows) {
+      const updates: any = {};
+      const fileColumns = [
+        'payment_proof_url',
+        'file_url',
+        'ig_story_file_url',
+        'twibbon_file_url',
+        'ig_follow_file_url',
+        'preliminary_file_url',
+        'payment_semifinal_url',
+        'semifinal_file_url'
+      ];
+
+      fileColumns.forEach(col => {
+        if (typeof (row as any)[col] === 'string' && (row as any)[col].startsWith('data:')) {
+          updates[col] = 'https://drive.google.com (Legacy file sanitized)';
+          cleanedColumnsCount++;
+        }
+      });
+
+      if (Object.keys(updates).length > 0) {
+        await db('competition_registrations').where({ id: row.id }).update(updates);
+        affectedRowsCount++;
+      }
+    }
+
+    console.log(`[SYSTEM] Sanitized ${cleanedColumnsCount} base64 blob fields across ${affectedRowsCount} rows.`);
+    res.json({
+      message: `Berhasil membersihkan ${cleanedColumnsCount} berkas base64 lama dari ${affectedRowsCount} pendaftaran. Beban memori berkurang drastis.`,
+      cleanedColumnsCount,
+      affectedRowsCount
+    });
+  } catch (err: any) {
+    console.error('[SYSTEM] Error cleaning legacy blobs:', err);
+    res.status(500).json({ message: 'Gagal membersihkan database: ' + err.message });
+  }
+});
+
 
 // Serve static frontend build files in production if dist exists
 // Check both possible dist locations (from project root or from dist/ itself)

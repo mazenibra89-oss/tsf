@@ -315,10 +315,21 @@ export const Admin: React.FC = () => {
   }, [isAuthenticated]);
 
   // Active sub-dashboard section tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'ambassadors' | 'pe1' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'ambassadors' | 'pe1' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control' | 'server-health'>('overview');
+
+  // Server Health & Logs State
+  const [serverHealth, setServerHealth] = useState<any>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [serverLogsList, setServerLogsList] = useState<any[]>([]);
+  const [logFilterLevel, setLogFilterLevel] = useState<string>('all');
+  const [logSearchText, setLogSearchText] = useState<string>('');
+  const [isCleaningBlobs, setIsCleaningBlobs] = useState(false);
+  const [cleanBlobResult, setCleanBlobResult] = useState<string>('');
+  const [autoRefreshHealth, setAutoRefreshHealth] = useState(false);
 
   // Staff Applications Filtering States
   const [filterDivision, setFilterDivision] = useState<string>('');
+
   const [filterPriority, setFilterPriority] = useState<string>('');
 
   // Ambassador Applications Filtering States
@@ -622,6 +633,100 @@ export const Admin: React.FC = () => {
     localStorage.removeItem('tsf_admin_username');
     setIsAuthenticated(false);
   };
+
+  // Server Health & Logs Fetchers
+  const fetchServerHealth = async () => {
+    setHealthLoading(true);
+    try {
+      const token = localStorage.getItem('tsf_admin_token');
+      const res = await fetch('/api/system/health', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setServerHealth(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch server health', e);
+    } finally {
+      setHealthLoading(false);
+    }
+  };
+
+  const fetchServerLogs = async (level = logFilterLevel, search = logSearchText) => {
+    try {
+      const token = localStorage.getItem('tsf_admin_token');
+      const params = new URLSearchParams();
+      if (level && level !== 'all') params.append('level', level);
+      if (search) params.append('search', search);
+      params.append('limit', '250');
+
+      const res = await fetch(`/api/system/logs?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setServerLogsList(data.logs || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch server logs', e);
+    }
+  };
+
+  const handleCleanBlobs = async () => {
+    if (!confirm('Peringatan: Aksi ini akan membersihkan berkas string base64 berat yang lama tersimpan di database dan menggantinya dengan penanda aman. Lanjutkan?')) return;
+    setIsCleaningBlobs(true);
+    setCleanBlobResult('');
+    try {
+      const token = localStorage.getItem('tsf_admin_token');
+      const res = await fetch('/api/system/clean-blobs', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setCleanBlobResult(data.message || 'Pembersihan selesai.');
+      await fetchServerHealth();
+    } catch (e: any) {
+      setCleanBlobResult('Gagal: ' + e.message);
+    } finally {
+      setIsCleaningBlobs(false);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    if (!confirm('Yakin ingin membersihkan tampilan riwayat log server?')) return;
+    try {
+      const token = localStorage.getItem('tsf_admin_token');
+      const res = await fetch('/api/system/logs/clear', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setServerLogsList([]);
+        await fetchServerHealth();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'server-health' && isAuthenticated) {
+      fetchServerHealth();
+      fetchServerLogs(logFilterLevel, logSearchText);
+    }
+  }, [activeTab, isAuthenticated]);
+
+  useEffect(() => {
+    if (activeTab === 'server-health' && autoRefreshHealth) {
+      const interval = setInterval(() => {
+        fetchServerHealth();
+        fetchServerLogs(logFilterLevel, logSearchText);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, autoRefreshHealth, logFilterLevel, logSearchText]);
+
   // CSV Exporter Helper
   const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
     const csvContent = "data:text/csv;charset=utf-8," 
@@ -1056,6 +1161,22 @@ export const Admin: React.FC = () => {
             <Icon name="Settings" size={16} />
             <span>Pengaturan Form</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('server-health')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
+              activeTab === 'server-health'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+            }`}
+          >
+            <Icon name="Radio" size={16} />
+            <div className="flex items-center justify-between w-full">
+              <span>Kesehatan & Log Server</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            </div>
+          </button>
+
 
           <div className="pt-6 border-t border-ballroom/10 mt-6">
             <button
@@ -3184,7 +3305,306 @@ export const Admin: React.FC = () => {
           </div>
         )}
 
+        {/* 9. SECTION TAB: SERVER HEALTH MONITOR & REAL-TIME LOGS */}
+        {activeTab === 'server-health' && (
+          <div className="space-y-8 animate-fadeIn">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-4 border-blue-sail/20 pb-4">
+              <div>
+                <span className="font-mono text-xs font-bold text-red-inferno uppercase tracking-widest block">
+                  SISTEM PEMANTAUAN & DIAGNOSIS
+                </span>
+                <h2 className="font-display font-black text-2xl uppercase tracking-tight text-blue-sail">
+                  KESEHATAN SERVER & LOG SISTEM
+                </h2>
+                <p className="text-xs text-blue-sail/70 mt-1">
+                  Diagnosa pemakaian RAM, status database, identifikasi penumpukan file base64, dan riwayat log error secara real-time.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAutoRefreshHealth(!autoRefreshHealth)}
+                  className={`px-3 py-2 text-xs font-display font-bold uppercase border-2 flex items-center gap-1.5 cursor-pointer transition-all ${
+                    autoRefreshHealth
+                      ? 'bg-emerald-600 text-white border-emerald-700 shadow-[2px_2px_0_0_#065f46]'
+                      : 'bg-white text-blue-sail border-blue-sail/30 hover:border-blue-sail'
+                  }`}
+                >
+                  <Icon name="RefreshCw" size={14} className={autoRefreshHealth ? 'animate-spin' : ''} />
+                  <span>Auto-Refresh (5s): {autoRefreshHealth ? 'ON' : 'OFF'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    fetchServerHealth();
+                    fetchServerLogs(logFilterLevel, logSearchText);
+                  }}
+                  disabled={healthLoading}
+                  className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Icon name="RefreshCw" size={14} className={healthLoading ? 'animate-spin' : ''} />
+                  <span>REFRESH SEKARANG</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Metric Cards Grid */}
+            {serverHealth ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Status Global */}
+                  <div className={`p-4 border-4 ${
+                    serverHealth.status === 'healthy'
+                      ? 'bg-emerald-50/80 border-emerald-600 text-emerald-950 shadow-[4px_4px_0_0_#059669]'
+                      : serverHealth.status === 'warning'
+                        ? 'bg-amber-50/80 border-amber-500 text-amber-950 shadow-[4px_4px_0_0_#d97706]'
+                        : 'bg-red-50/80 border-red-inferno text-red-950 shadow-[4px_4px_0_0_#BD1B1F]'
+                  }`}>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider block opacity-70">
+                      STATUS KESEHATAN
+                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`w-3 h-3 rounded-full ${
+                        serverHealth.status === 'healthy' ? 'bg-emerald-500' : serverHealth.status === 'warning' ? 'bg-amber-500' : 'bg-red-500 animate-ping'
+                      }`} />
+                      <span className="font-display font-black text-xl uppercase">
+                        {serverHealth.status === 'healthy' ? 'STABIL / SEHAT' : serverHealth.status === 'warning' ? 'WASPADA (WARNING)' : 'KRITIS (DOWN RISK)'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-sans mt-2 opacity-80">
+                      Uptime: {Math.floor(serverHealth.uptimeSeconds / 3600)} jam {Math.floor((serverHealth.uptimeSeconds % 3600) / 60)} menit
+                    </p>
+                  </div>
+
+                  {/* RAM Process */}
+                  <div className="bg-white p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E]">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-blue-sail/60 block">
+                      RAM NODE.JS (RSS)
+                    </span>
+                    <p className="font-display font-black text-2xl text-blue-sail mt-1">
+                      {serverHealth.processMemory.rssMB} MB
+                    </p>
+                    <div className="w-full bg-gray-200 h-2 mt-2 rounded-none overflow-hidden">
+                      <div
+                        className={`h-full ${serverHealth.processMemory.rssMB > 500 ? 'bg-red-500' : serverHealth.processMemory.rssMB > 250 ? 'bg-amber-500' : 'bg-blue-sail'}`}
+                        style={{ width: `${Math.min(100, (serverHealth.processMemory.rssMB / 1024) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] font-mono text-blue-sail/70 mt-1">
+                      Heap Digunakan: {serverHealth.processMemory.heapUsedMB} MB
+                    </p>
+                  </div>
+
+                  {/* Database & Latency */}
+                  <div className="bg-white p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#F6BB02]">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-blue-sail/60 block">
+                      DATABASE & KONEKSI
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className={`w-2.5 h-2.5 rounded-full ${serverHealth.database.status === 'ok' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                      <p className="font-display font-black text-xl text-blue-sail uppercase">
+                        {serverHealth.database.status === 'ok' ? 'TERHUBUNG' : 'ERROR'}
+                      </p>
+                    </div>
+                    <p className="text-[11px] font-mono text-blue-sail/80 mt-2">
+                      Latency: <span className="font-bold">{serverHealth.database.latencyMs} ms</span>
+                    </p>
+                    <p className="text-[10px] font-sans text-blue-sail/60">
+                      Total Tim Terdaftar: {serverHealth.database.totalRegisteredTeams}
+                    </p>
+                  </div>
+
+                  {/* Blob Base64 Detector */}
+                  <div className={`p-4 border-4 shadow-[4px_4px_0_0_#8B011A] ${
+                    serverHealth.database.base64BlobsDetected > 0
+                      ? 'bg-red-50 border-red-inferno text-red-950'
+                      : 'bg-emerald-50 border-emerald-600 text-emerald-950'
+                  }`}>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider block opacity-70">
+                      BERKAS BASE64 DI DATABASE
+                    </span>
+                    <p className="font-display font-black text-2xl mt-1">
+                      {serverHealth.database.base64BlobsDetected} File Terdeteksi
+                    </p>
+                    <p className="text-[11px] font-mono mt-1">
+                      Estimasi Ukuran: {serverHealth.database.approximateBlobKBytes} KB
+                    </p>
+                    {serverHealth.database.base64BlobsDetected > 0 && (
+                      <span className="inline-block text-[9px] font-bold bg-red-inferno text-white px-1.5 py-0.5 mt-1 uppercase">
+                        Pemicu Crash RAM
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Legacy Base64 Sanitizer Banner */}
+                {serverHealth.database.base64BlobsDetected > 0 && (
+                  <div className="bg-amber-50 border-3 border-amber-500 p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Icon name="AlertTriangle" size={18} className="text-amber-700 shrink-0" />
+                        <h4 className="font-display font-black text-sm uppercase text-amber-900">
+                          PERINGATAN: DITEMUKAN {serverHealth.database.base64BlobsDetected} FILE UPLOAD BERBENTUK BASE64
+                        </h4>
+                      </div>
+                      <p className="text-xs font-sans text-amber-800 leading-relaxed max-w-3xl">
+                        String Base64 yang tersimpan langsung di tabel database menyebabkan beban serialisasi JSON berukuran besar tiap kali klien memanggil state, yang memicu Out-Of-Memory (OOM) dan server down. Anda dapat membersihkan data base64 ini dengan aman.
+                      </p>
+                      {cleanBlobResult && (
+                        <p className="text-xs font-mono font-bold text-emerald-700 mt-2 bg-white px-2 py-1 border border-emerald-400 inline-block">
+                          {cleanBlobResult}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleCleanBlobs}
+                      disabled={isCleaningBlobs}
+                      className="bg-red-inferno hover:bg-red-700 text-white font-display font-black text-xs uppercase px-5 py-3 border-2 border-blue-sail shadow-[3px_3px_0_0_#2A4C9E] shrink-0 cursor-pointer flex items-center gap-2"
+                    >
+                      <Icon name="Trash2" size={16} />
+                      <span>{isCleaningBlobs ? 'MEMBERSIHKAN...' : 'BERSIHKAN BASE64 DI DB'}</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Server Info Details Table */}
+                <div className="bg-white border-4 border-blue-sail p-5 space-y-3 shadow-[6px_6px_0_0_#2A4C9E]">
+                  <h3 className="font-display font-black text-sm uppercase text-blue-sail border-b-2 border-blue-sail/20 pb-2">
+                    RINCIAN LINGKUNGAN RUNTIME SERVER
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
+                    <div>
+                      <span className="text-gray-500 block text-[10px]">VERSI NODE.JS</span>
+                      <strong className="text-blue-sail">{serverHealth.nodeVersion}</strong>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block text-[10px]">SISTEM OPERASI</span>
+                      <strong className="text-blue-sail">{serverHealth.platform}</strong>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block text-[10px]">CPU CORES</span>
+                      <strong className="text-blue-sail">{serverHealth.cpuCount} Core</strong>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block text-[10px]">RAM SERVER GLOBAL</span>
+                      <strong className="text-blue-sail">
+                        {serverHealth.systemMemory.usedPercent}% Digunakan ({serverHealth.systemMemory.freeMB} MB Free)
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Real-time Server Log Console */}
+                <div className="bg-gray-950 border-4 border-blue-sail shadow-[8px_8px_0_0_#BD1B1F] p-4 sm:p-6 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                      <span className="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+                      <span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                      <span className="font-mono text-xs text-gray-300 font-bold ml-2">
+                        TERMINAL LOG SERVER APLIKASI (LIVE)
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        value={logFilterLevel}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setLogFilterLevel(val);
+                          fetchServerLogs(val, logSearchText);
+                        }}
+                        className="bg-gray-900 border border-gray-700 text-xs font-mono text-gray-200 px-2 py-1 outline-none"
+                      >
+                        <option value="all">Semua Level</option>
+                        <option value="error">Hanya Error</option>
+                        <option value="warn">Hanya Warn</option>
+                        <option value="info">Hanya Info</option>
+                      </select>
+
+                      <input
+                        type="text"
+                        value={logSearchText}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setLogSearchText(val);
+                          fetchServerLogs(logFilterLevel, val);
+                        }}
+                        placeholder="Cari teks log..."
+                        className="bg-gray-900 border border-gray-700 text-xs font-mono text-gray-200 px-2.5 py-1 outline-none w-36 sm:w-48"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={handleClearLogs}
+                        className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-[11px] font-mono px-2.5 py-1 border border-gray-600 cursor-pointer"
+                      >
+                        Clear Log
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Terminal Screen */}
+                  <div className="font-mono text-xs text-green-400 bg-black/90 p-4 border border-gray-800 max-h-96 overflow-y-auto space-y-1.5 leading-relaxed selection:bg-emerald-800 selection:text-white">
+                    {serverLogsList.length === 0 ? (
+                      <p className="text-gray-500 italic py-4 text-center">
+                        Belum ada riwayat log yang tercatat atau log telah dibersihkan.
+                      </p>
+                    ) : (
+                      serverLogsList.map((log) => {
+                        const timeStr = new Date(log.timestamp).toLocaleTimeString('id-ID');
+                        const isErr = log.level === 'error';
+                        const isWarn = log.level === 'warn';
+
+                        return (
+                          <div
+                            key={log.id}
+                            className={`flex items-start gap-2 border-b border-gray-900/80 pb-1 ${
+                              isErr ? 'text-red-400 bg-red-950/20 px-1' : isWarn ? 'text-yellow-400' : 'text-emerald-300'
+                            }`}
+                          >
+                            <span className="text-gray-500 text-[10px] shrink-0 font-sans select-none">
+                              [{timeStr}]
+                            </span>
+                            <span
+                              className={`text-[9px] font-bold uppercase px-1 py-0.2 shrink-0 ${
+                                isErr ? 'bg-red-900 text-white' : isWarn ? 'bg-yellow-900 text-yellow-100' : 'bg-emerald-950 text-emerald-300'
+                              }`}
+                            >
+                              {log.level}
+                            </span>
+                            <span className="break-all whitespace-pre-wrap flex-1">
+                              {log.message}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-mono text-gray-400 pt-1">
+                    <span>Menampilkan {serverLogsList.length} entri log terakhir (Maksimal 500 di RAM buffer)</span>
+                    <span className="text-emerald-400">● Live Capture Active</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-white border-4 border-blue-sail">
+                <Icon name="Loader2" size={32} className="animate-spin text-blue-sail mx-auto mb-3" />
+                <p className="font-display font-bold text-sm uppercase text-blue-sail">
+                  Sedang mengambil data kesehatan server & log...
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
+
 
       {/* MODAL: DIVISIA ADD/EDIT */}
       {isDivModalOpen && (
