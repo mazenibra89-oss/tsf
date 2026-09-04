@@ -70,6 +70,10 @@ interface AppContextType extends AppState {
   logoutUser: () => void;
   fetchMyTeam: () => Promise<void>;
   fetchAdminUsers: () => Promise<import('../types').User[]>;
+  fetchStaffApplications: () => Promise<import('../types').StaffApplication[]>;
+  fetchAmbassadorApplications: () => Promise<import('../types').AmbassadorApplication[]>;
+  fetchPE1Registrations: () => Promise<import('../types').PE1Registration[]>;
+  fetchCompetitionRegistrations: () => Promise<import('../types').CompetitionRegistration[]>;
   submitPreliminaryFile: (team_id: string, preliminary_file_url: string, preliminary_file_name: string, preliminary_file_type: 'BMC' | 'Executive Summary') => Promise<void>;
   submitSemiFinalPayment: (team_id: string, payment_semifinal_url: string, payment_semifinal_file_name: string) => Promise<void>;
   submitSemiFinalFile: (team_id: string, semifinal_file_url: string, semifinal_file_name: string) => Promise<void>;
@@ -971,6 +975,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return [];
   };
 
+  const fetchStaffApplications = async (): Promise<import('../types').StaffApplication[]> => {
+    try {
+      const res = await authFetch('/api/admin/staff-applications');
+      if (res.ok) {
+        const apps = await res.json();
+        setState(prev => ({ ...prev, staffApplications: apps }));
+        return apps;
+      }
+    } catch (err) {
+      console.error('Failed to fetch staff applications:', err);
+    }
+    return [];
+  };
+
+  const fetchAmbassadorApplications = async (): Promise<import('../types').AmbassadorApplication[]> => {
+    try {
+      const res = await authFetch('/api/admin/ambassador-applications');
+      if (res.ok) {
+        const apps = await res.json();
+        setState(prev => ({ ...prev, ambassadorApplications: apps }));
+        return apps;
+      }
+    } catch (err) {
+      console.error('Failed to fetch ambassador applications:', err);
+    }
+    return [];
+  };
+
+  const fetchPE1Registrations = async (): Promise<import('../types').PE1Registration[]> => {
+    try {
+      const res = await authFetch('/api/admin/pe1-registrations');
+      if (res.ok) {
+        const regs = await res.json();
+        setState(prev => ({ ...prev, pe1Registrations: regs }));
+        return regs;
+      }
+    } catch (err) {
+      console.error('Failed to fetch PE1 registrations:', err);
+    }
+    return [];
+  };
+
+  const fetchCompetitionRegistrations = async (): Promise<import('../types').CompetitionRegistration[]> => {
+    try {
+      const res = await authFetch('/api/admin/competition-registrations');
+      if (res.ok) {
+        const regs = await res.json();
+        setState(prev => ({ ...prev, competitionRegistrations: regs }));
+        try { localStorage.setItem('tsf_cache_comp_regs', JSON.stringify(regs)); } catch (e) {}
+        return regs;
+      }
+    } catch (err) {
+      console.error('Failed to fetch competition registrations:', err);
+    }
+    return [];
+  };
+
   const submitPreliminaryFile = async (
     team_id: string,
     preliminary_file_url: string,
@@ -1070,18 +1131,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res.ok) {
         const data = await res.json();
         setState(prev => {
-          const compRegs = (Array.isArray(data.competitionRegistrations) && data.competitionRegistrations.length > 0)
-            ? data.competitionRegistrations
-            : (prev.competitionRegistrations && prev.competitionRegistrations.length > 0 ? prev.competitionRegistrations : []);
-          
-          if (compRegs.length > 0) {
-            try { localStorage.setItem('tsf_cache_comp_regs', JSON.stringify(compRegs)); } catch (e) {}
-          }
-
           return {
             ...prev,
-            ...data,
-            competitionRegistrations: compRegs.length > 0 ? compRegs : prev.competitionRegistrations || []
+            phases: data.phases || prev.phases,
+            divisions: data.divisions || prev.divisions,
+            subEvents: data.subEvents || prev.subEvents,
+            competitions: data.competitions || prev.competitions,
+            thriftProducts: data.thriftProducts || prev.thriftProducts,
+            thriftVendors: data.thriftVendors || prev.thriftVendors,
+            formQuestions: data.formQuestions || prev.formQuestions,
+            metrics: data.metrics || prev.metrics,
+            // Keep existing loaded applications in memory unless incoming data explicitly provides non-empty list
+            staffApplications: (Array.isArray(data.staffApplications) && data.staffApplications.length > 0) ? data.staffApplications : prev.staffApplications,
+            ambassadorApplications: (Array.isArray(data.ambassadorApplications) && data.ambassadorApplications.length > 0) ? data.ambassadorApplications : prev.ambassadorApplications,
+            pe1Registrations: (Array.isArray(data.pe1Registrations) && data.pe1Registrations.length > 0) ? data.pe1Registrations : prev.pe1Registrations,
+            competitionRegistrations: (Array.isArray(data.competitionRegistrations) && data.competitionRegistrations.length > 0) ? data.competitionRegistrations : prev.competitionRegistrations
           };
         });
 
@@ -1676,6 +1740,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       logoutUser,
       fetchMyTeam,
       fetchAdminUsers,
+      fetchStaffApplications,
+      fetchAmbassadorApplications,
+      fetchPE1Registrations,
+      fetchCompetitionRegistrations,
       submitPreliminaryFile,
       submitSemiFinalPayment,
       submitSemiFinalFile,

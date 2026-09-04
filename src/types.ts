@@ -282,5 +282,11 @@ export interface AppState {
   thriftVendors: ThriftVendor[];
   vendorApplications: VendorApplication[];
   formQuestions?: FormQuestionsConfig;
+  metrics?: {
+    staffCount: number;
+    compCount: number;
+    ambassadorCount: number;
+    pe1Count: number;
+  };
 }
 

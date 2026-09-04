@@ -184,10 +184,16 @@ export const Admin: React.FC = () => {
     resetToDefault,
     adminUsers,
     fetchAdminUsers,
+    fetchStaffApplications,
+    fetchAmbassadorApplications,
+    fetchPE1Registrations,
+    fetchCompetitionRegistrations,
     updateCompetitionRegistrationStatus,
+    metrics,
     loading
   } = useApp();
 
+  const [tabLoading, setTabLoading] = useState(false);
   const [adminUsersList, setAdminUsersList] = useState<import('../types').User[]>([]);
   const [isFetchingUsers, setIsFetchingUsers] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -320,7 +326,31 @@ export const Admin: React.FC = () => {
   }, [isAuthenticated]);
 
   // Active sub-dashboard section tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'ambassadors' | 'pe1' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control' | 'server-health'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'ambassadors' | 'pe1' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control' | 'server-health' | 'user-accounts'>('overview');
+
+  // ON-DEMAND (LAZY) DATA LOADING BY ACTIVE TAB
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    if (activeTab === 'staff' && staffApplications.length === 0) {
+      setTabLoading(true);
+      fetchStaffApplications().finally(() => setTabLoading(false));
+    } else if (activeTab === 'ambassadors' && (!ambassadorApplications || ambassadorApplications.length === 0)) {
+      setTabLoading(true);
+      fetchAmbassadorApplications().finally(() => setTabLoading(false));
+    } else if (activeTab === 'pe1' && (!pe1Registrations || pe1Registrations.length === 0)) {
+      setTabLoading(true);
+      fetchPE1Registrations().finally(() => setTabLoading(false));
+    } else if (activeTab === 'competitions' && competitionRegistrations.length === 0) {
+      setTabLoading(true);
+      fetchCompetitionRegistrations().finally(() => setTabLoading(false));
+    } else if (activeTab === 'user-accounts' && adminUsersList.length === 0) {
+      setIsFetchingUsers(true);
+      fetchAdminUsers()
+        .then(res => { if (res) setAdminUsersList(res); })
+        .finally(() => setIsFetchingUsers(false));
+    }
+  }, [activeTab, isAuthenticated]);
 
   // Server Health & Logs State
   const [serverHealth, setServerHealth] = useState<any>(null);
@@ -1064,14 +1094,7 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Award" size={16} />
-            <span className="flex items-center gap-1.5">
-              <span>Pendaftar Ambassador</span>
-              {loading ? (
-                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
-              ) : (
-                <span>({(ambassadorApplications || []).length})</span>
-              )}
-            </span>
+            <span>Pendaftar Ambassador</span>
           </button>
 
           <button
@@ -1083,14 +1106,7 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Briefcase" size={16} />
-            <span className="flex items-center gap-1.5">
-              <span>Pendaftar PE1 CEO For A Day</span>
-              {loading ? (
-                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
-              ) : (
-                <span>({(pe1Registrations || []).length})</span>
-              )}
-            </span>
+            <span>Pendaftar PE1 CEO For A Day</span>
           </button>
 
           <button
@@ -1102,14 +1118,7 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Users" size={16} />
-            <span className="flex items-center gap-1.5">
-              <span>Pendaftar Staff</span>
-              {loading ? (
-                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
-              ) : (
-                <span>({staffApplications.length})</span>
-              )}
-            </span>
+            <span>Pendaftar Staff</span>
           </button>
 
           <button
@@ -1121,37 +1130,19 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Trophy" size={16} />
-            <span className="flex items-center gap-1.5">
-              <span>Pendaftar Competition</span>
-              {loading ? (
-                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
-              ) : (
-                <span>({competitionRegistrations.length})</span>
-              )}
-            </span>
+            <span>Pendaftar Competition</span>
           </button>
 
           <button
-            onClick={() => {
-              setActiveTab('user-accounts' as any);
-              setIsFetchingUsers(true);
-              fetchAdminUsers().then(res => { if (res) setAdminUsersList(res); }).finally(() => setIsFetchingUsers(false));
-            }}
+            onClick={() => setActiveTab('user-accounts')}
             className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              (activeTab as string) === 'user-accounts'
+              activeTab === 'user-accounts'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
             }`}
           >
             <Icon name="Users" size={16} />
-            <span className="flex items-center gap-1.5">
-              <span>Akun Pendaftar</span>
-              {isFetchingUsers ? (
-                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
-              ) : (
-                <span>({adminUsersList.length})</span>
-              )}
-            </span>
+            <span>Akun Pendaftar</span>
           </button>
 
           <button
@@ -1163,7 +1154,7 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="UserPlus" size={16} />
-            <span>Tambahkan Akun ({adminAccounts.length})</span>
+            <span>Tambahkan Akun</span>
           </button>
 
           <button
@@ -1175,14 +1166,7 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="CalendarRange" size={16} />
-            <span className="flex items-center gap-1.5">
-              <span>Manajemen Divisi</span>
-              {loading ? (
-                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
-              ) : (
-                <span>({divisions.length})</span>
-              )}
-            </span>
+            <span>Manajemen Divisi</span>
           </button>
 
           <button
@@ -1211,7 +1195,6 @@ export const Admin: React.FC = () => {
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             </div>
           </button>
-
 
           <div className="pt-6 border-t border-ballroom/10 mt-6">
             <button
@@ -1247,7 +1230,9 @@ export const Admin: React.FC = () => {
                   {loading ? (
                     <div className="h-7 w-20 bg-blue-sail/20 rounded animate-pulse mt-1" />
                   ) : (
-                    <span className="block font-display font-black text-2xl text-blue-sail">{staffApplications.length} Orang</span>
+                    <span className="block font-display font-black text-2xl text-blue-sail">
+                      {metrics?.staffCount ?? staffApplications.length} Orang
+                    </span>
                   )}
                 </div>
               </div>
@@ -1261,7 +1246,9 @@ export const Admin: React.FC = () => {
                   {loading ? (
                     <div className="h-7 w-20 bg-blue-sail/20 rounded animate-pulse mt-1" />
                   ) : (
-                    <span className="block font-display font-black text-2xl text-blue-sail">{competitionRegistrations.length} Tim</span>
+                    <span className="block font-display font-black text-2xl text-blue-sail">
+                      {metrics?.compCount ?? competitionRegistrations.length} Tim
+                    </span>
                   )}
                 </div>
               </div>
@@ -1425,17 +1412,25 @@ export const Admin: React.FC = () => {
               {/* Refresh Sync Button */}
               <button
                 type="button"
-                onClick={() => refreshState()}
+                onClick={() => {
+                  setTabLoading(true);
+                  fetchAmbassadorApplications().finally(() => setTabLoading(false));
+                }}
                 className="bg-blue-sail hover:bg-decor hover:text-blue-sail text-white font-mono font-bold text-xs px-3 py-2 border-2 border-blue-sail flex items-center space-x-1.5 cursor-pointer transition-all shrink-0"
               >
-                <Icon name="RefreshCw" size={14} />
-                <span>Sinkronkan Data Server</span>
+                <Icon name="RefreshCw" size={14} className={tabLoading ? "animate-spin" : ""} />
+                <span>{tabLoading ? 'Memuat Data...' : 'Sinkronkan Data Server'}</span>
               </button>
             </div>
 
             {/* Table Data */}
             <div className="bg-white border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
-              {filteredAmbassadors.length === 0 ? (
+              {tabLoading ? (
+                <div className="p-12 text-center text-blue-sail space-y-3">
+                  <div className="w-8 h-8 border-4 border-blue-sail border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-sm font-semibold">Memuat data pendaftar ambassador...</p>
+                </div>
+              ) : filteredAmbassadors.length === 0 ? (
                 <div className="p-12 text-center text-blue-sail">
                   <Icon name="Award" size={40} className="text-blue-sail/30 mx-auto mb-2" />
                   <p className="text-sm font-semibold">Belum Ada Data Pendaftar Ambassador / Influencer</p>
@@ -1540,15 +1535,28 @@ export const Admin: React.FC = () => {
                   Manajemen data peserta webinar CEO For A Day: "Brand Yourself, Lead the Future".
                 </p>
               </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTabLoading(true);
+                    fetchPE1Registrations().finally(() => setTabLoading(false));
+                  }}
+                  className="bg-blue-sail hover:bg-decor hover:text-blue-sail text-white font-mono font-bold text-xs px-4 py-3 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] flex items-center space-x-1.5 cursor-pointer transition-all shrink-0"
+                >
+                  <Icon name="RefreshCw" size={14} className={tabLoading ? "animate-spin" : ""} />
+                  <span>{tabLoading ? 'Memuat Data...' : 'Sinkronkan'}</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={exportPE1CSV}
-                className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-5 py-3 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center space-x-2 cursor-pointer"
-              >
-                <Icon name="Download" size={16} />
-                <span>EKSPOR CSV (EXCEL)</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={exportPE1CSV}
+                  className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-5 py-3 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center space-x-2 cursor-pointer"
+                >
+                  <Icon name="Download" size={16} />
+                  <span>EKSPOR CSV (EXCEL)</span>
+                </button>
+              </div>
             </div>
 
             {/* Stats Summary Cards */}
@@ -1584,9 +1592,9 @@ export const Admin: React.FC = () => {
             </div>
 
             {/* Filter Controls Bar */}
-            <div className="bg-ballroom p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-col md:flex-row md:items-center gap-4">
+            <div className="bg-white p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-wrap items-center gap-4">
               <div className="w-full md:w-48 space-y-1">
-                <label className="block text-[10px] font-mono font-bold uppercase text-blue-sail/70">PILIH PAKET</label>
+                <label className="block text-[10px] font-mono font-bold uppercase text-blue-sail/70">FILTER PAKET</label>
                 <select
                   value={filterPE1Package}
                   onChange={(e) => setFilterPE1Package(e.target.value)}
@@ -1631,7 +1639,12 @@ export const Admin: React.FC = () => {
 
             {/* Applications Table */}
             <div className="bg-ballroom border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
-              {filteredPE1Regs.length === 0 ? (
+              {tabLoading ? (
+                <div className="p-12 text-center text-blue-sail space-y-3">
+                  <div className="w-8 h-8 border-4 border-blue-sail border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-sm font-semibold">Memuat data pendaftar PE1 CEO For A Day...</p>
+                </div>
+              ) : filteredPE1Regs.length === 0 ? (
                 <div className="p-12 text-center text-blue-sail/60">
                   <Icon name="Inbox" size={40} className="mx-auto mb-3 text-blue-sail/30" />
                   <p className="text-sm font-semibold">Belum Ada Data Pendaftar PE1</p>
@@ -1733,14 +1746,28 @@ export const Admin: React.FC = () => {
                 <p className="text-xs text-blue-sail/60">Tinjau seluruh pengajuan rekrutmen staff, ganti status penyeleksian, dan ekspor spreadsheets.</p>
               </div>
 
-              <button
-                id="staff-export-csv"
-                onClick={exportStaffCSV}
-                className="bg-green-600 hover:bg-green-700 text-white font-display font-bold text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#2A4C9E] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
-              >
-                <Icon name="Download" size={14} className="stroke-[2.5px]" />
-                <span>EKSPOR CSV (EXCEL)</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTabLoading(true);
+                    fetchStaffApplications().finally(() => setTabLoading(false));
+                  }}
+                  className="bg-blue-sail hover:bg-decor hover:text-blue-sail text-white font-mono font-bold text-xs px-4 py-2.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] flex items-center space-x-1.5 cursor-pointer transition-all shrink-0"
+                >
+                  <Icon name="RefreshCw" size={14} className={tabLoading ? "animate-spin" : ""} />
+                  <span>{tabLoading ? 'Memuat...' : 'Sinkronkan'}</span>
+                </button>
+
+                <button
+                  id="staff-export-csv"
+                  onClick={exportStaffCSV}
+                  className="bg-green-600 hover:bg-green-700 text-white font-display font-bold text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#2A4C9E] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  <Icon name="Download" size={14} className="stroke-[2.5px]" />
+                  <span>EKSPOR CSV (EXCEL)</span>
+                </button>
+              </div>
             </div>
 
             {/* Filter Bar */}
@@ -1821,7 +1848,12 @@ export const Admin: React.FC = () => {
 
             {/* Table data */}
             <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
-              {staffApplications.length === 0 ? (
+              {tabLoading ? (
+                <div className="p-12 text-center text-blue-sail space-y-3">
+                  <div className="w-8 h-8 border-4 border-blue-sail border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-sm font-semibold">Memuat data pelamar staff...</p>
+                </div>
+              ) : staffApplications.length === 0 ? (
                 <div className="p-12 text-center">
                   <Icon name="Users" size={40} className="text-blue-sail/30 mx-auto mb-2" />
                   <p className="text-sm font-semibold">Belum Ada Pelamar Staff Terdaftar</p>
@@ -1939,14 +1971,28 @@ export const Admin: React.FC = () => {
                   <p className="text-xs text-blue-sail/60">Daftar seluruh tim yang mendaftar Business Plan Competition (BPC) dan Business Case Competition (BCC) TSF 2026.</p>
                 </div>
 
-                <button
-                  id="comp-export-csv"
-                  onClick={exportCompCSV}
-                  className="bg-green-600 hover:bg-green-700 text-white font-display font-bold text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#2A4C9E] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
-                >
-                  <Icon name="Download" size={14} className="stroke-[2.5px]" />
-                  <span>EKSPOR CSV LOMBA</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTabLoading(true);
+                      fetchCompetitionRegistrations().finally(() => setTabLoading(false));
+                    }}
+                    className="bg-blue-sail hover:bg-decor hover:text-blue-sail text-white font-mono font-bold text-xs px-4 py-2.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] flex items-center space-x-1.5 cursor-pointer transition-all shrink-0"
+                  >
+                    <Icon name="RefreshCw" size={14} className={tabLoading ? "animate-spin" : ""} />
+                    <span>{tabLoading ? 'Memuat...' : 'Sinkronkan'}</span>
+                  </button>
+
+                  <button
+                    id="comp-export-csv"
+                    onClick={exportCompCSV}
+                    className="bg-green-600 hover:bg-green-700 text-white font-display font-bold text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#2A4C9E] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                  >
+                    <Icon name="Download" size={14} className="stroke-[2.5px]" />
+                    <span>EKSPOR CSV LOMBA</span>
+                  </button>
+                </div>
               </div>
 
               {/* Filter & Search Panel for Competition */}
@@ -2089,7 +2135,12 @@ export const Admin: React.FC = () => {
 
               {/* Table Data */}
               <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
-                {filteredCompetitionRegistrations.length === 0 ? (
+                {tabLoading ? (
+                  <div className="p-12 text-center text-blue-sail space-y-3">
+                    <div className="w-8 h-8 border-4 border-blue-sail border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-sm font-semibold">Memuat data pendaftar kompetisi...</p>
+                  </div>
+                ) : filteredCompetitionRegistrations.length === 0 ? (
                   <div className="p-12 text-center space-y-3">
                     <Icon name="Trophy" size={40} className="text-blue-sail/30 mx-auto" />
                     <div>

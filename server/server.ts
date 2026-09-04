@@ -571,54 +571,41 @@ app.get('/api/auth/admins', authenticateToken, async (req: Request, res: Respons
   }
 });
 
+// Helper JSON parser
+const parseJson = (val: any) => {
+  if (val == null) return val;
+  if (typeof val === 'string') {
+    try { return JSON.parse(val); } catch { return val; }
+  }
+  return val;
+};
+
+// Helper: Strip out heavy base64 strings to prevent memory spikes & OOM crashes
+const sanitizeRowFiles = (row: any) => {
+  const sanitized = { ...row };
+  const fileFields = [
+    'payment_proof_url',
+    'file_url',
+    'ig_story_file_url',
+    'twibbon_file_url',
+    'ig_follow_file_url',
+    'preliminary_file_url',
+    'payment_semifinal_url',
+    'semifinal_file_url'
+  ];
+  fileFields.forEach(field => {
+    if (typeof sanitized[field] === 'string' && sanitized[field].startsWith('data:')) {
+      sanitized[field] = `[Uploaded File - Base64 (${Math.round(sanitized[field].length / 1024)} KB)]`;
+    }
+  });
+  return sanitized;
+};
+
 // -------------------------------------------------------------
-// APPLICATION STATE ENDPOINT (LOADS APPLICATION DATA)
+// APPLICATION STATE ENDPOINT (LIGHTWEIGHT PUBLIC DATA ONLY)
 // -------------------------------------------------------------
 app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
   try {
-    // Check if requester has a valid admin JWT
-    let isAdmin = false;
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (token) {
-      try {
-        jwt.verify(token, JWT_SECRET);
-        isAdmin = true;
-      } catch {
-        isAdmin = false;
-      }
-    }
-
-    const parseJson = (val: any) => {
-      if (val == null) return val;
-      if (typeof val === 'string') {
-        try { return JSON.parse(val); } catch { return val; }
-      }
-      return val;
-    };
-
-    // Strip out heavy base64 strings in state payload to prevent memory spikes & OOM crashes
-    const sanitizeRowFiles = (row: any) => {
-      const sanitized = { ...row };
-      const fileFields = [
-        'payment_proof_url',
-        'file_url',
-        'ig_story_file_url',
-        'twibbon_file_url',
-        'ig_follow_file_url',
-        'preliminary_file_url',
-        'payment_semifinal_url',
-        'semifinal_file_url'
-      ];
-      fileFields.forEach(field => {
-        if (typeof sanitized[field] === 'string' && sanitized[field].startsWith('data:')) {
-          sanitized[field] = `[Uploaded File - Base64 (${Math.round(sanitized[field].length / 1024)} KB)]`;
-        }
-      });
-      return sanitized;
-    };
-
-    // Essential public data needed by every visitor
     const phases = await db('event_phases').orderBy('id', 'asc').catch(() => []);
     const divisions = await db('divisions').orderBy('id', 'asc').catch(() => []);
     const subEvents = await db('sub_events').orderBy('id', 'asc').catch(() => []);
@@ -627,33 +614,11 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
     const thriftVendors = await db('thrift_vendors').orderBy('id', 'asc').catch(() => []);
     const qConfig = await db('form_questions_config').where({ id: 'main_config' }).first().catch(() => undefined);
 
-    // If requester is not admin, only fetch lightweight summaries or empty arrays to save RAM & payload size
-    let staffApplications: any[] = [];
-    let ambassadorApplications: any[] = [];
-    let pe1Registrations: any[] = [];
-    let competitionRegistrations: any[] = [];
-    let vendorApplications: any[] = [];
-    let users: any[] = [];
-
-    if (isAdmin) {
-      // Full data for authenticated admin dashboard
-      staffApplications = await db('staff_applications').orderBy('submitted_at', 'desc').catch(() => []);
-      ambassadorApplications = await db('ambassador_applications').orderBy('submitted_at', 'desc').catch(() => []);
-      pe1Registrations = await db('pe1_registrations').orderBy('submitted_at', 'desc').catch(() => []);
-      competitionRegistrations = await db('competition_registrations').orderBy('submitted_at', 'desc').catch(() => []);
-      vendorApplications = await db('vendor_applications').orderBy('submitted_at', 'desc').catch(() => []);
-      users = await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc').catch(() => []);
-    } else {
-      // For public users, only provide minimal fields if needed, without heavy answer/file blobs
-      // Note: Normal visitors only use phases, divisions, competitions, subEvents, thrift
-      // Providing empty arrays for internal admin tables saves >90% bandwidth and RAM!
-      staffApplications = [];
-      ambassadorApplications = [];
-      pe1Registrations = [];
-      competitionRegistrations = [];
-      vendorApplications = [];
-      users = [];
-    }
+    // Fast lightweight counts for admin overview (nearly 0 KB, pure integer queries)
+    const [staffCount] = await db('staff_applications').count('id as count').catch(() => [{ count: 0 }]);
+    const [compCount] = await db('competition_registrations').count('id as count').catch(() => [{ count: 0 }]);
+    const [ambassadorCount] = await db('ambassador_applications').count('id as count').catch(() => [{ count: 0 }]);
+    const [pe1Count] = await db('pe1_registrations').count('id as count').catch(() => [{ count: 0 }]);
 
     res.json({
       phases,
@@ -663,9 +628,9 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
         jobdesk: parseJson(d.jobdesk || '[]'),
         skills: d.skills || ''
       })),
-      staffApplications: staffApplications.map(a => ({ ...sanitizeRowFiles(a), custom_form_answers: parseJson(a.custom_form_answers) })),
-      ambassadorApplications: ambassadorApplications.map(a => sanitizeRowFiles(a)),
-      pe1Registrations: pe1Registrations.map(r => sanitizeRowFiles(r)),
+      staffApplications: [],
+      ambassadorApplications: [],
+      pe1Registrations: [],
       subEvents: subEvents.map(e => ({
         ...e,
         lineup: parseJson(e.lineup),
@@ -677,25 +642,90 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
         terms: parseJson(c.terms),
         timeline: parseJson(c.timeline)
       })),
-      competitionRegistrations: competitionRegistrations.map(r => {
-        const cleanR = sanitizeRowFiles(r);
-        return {
-          ...cleanR,
-          members: parseJson(cleanR.members || '[]'),
-          leader_data: parseJson(cleanR.leader_data || null),
-          members_data: parseJson(cleanR.members_data || '[]')
-        };
-      }),
+      competitionRegistrations: [],
       thriftProducts: thriftProducts.map(p => ({ ...p, price: Number(p.price) })),
       thriftVendors,
-      vendorApplications: vendorApplications.map(v => sanitizeRowFiles(v)),
-      users,
-      formQuestions: qConfig ? parseJson(qConfig.config) : undefined
+      vendorApplications: [],
+      users: [],
+      formQuestions: qConfig ? parseJson(qConfig.config) : undefined,
+      metrics: {
+        staffCount: Number(staffCount?.count || 0),
+        compCount: Number(compCount?.count || 0),
+        ambassadorCount: Number(ambassadorCount?.count || 0),
+        pe1Count: Number(pe1Count?.count || 0)
+      }
     });
 
   } catch (err) {
     console.error('State retrieval error:', err);
     res.status(500).json({ message: 'Failed to retrieve application state' });
+  }
+});
+
+// -------------------------------------------------------------
+// DEDICATED ADMIN ON-DEMAND ENDPOINTS (LAZY LOADED BY TAB)
+// -------------------------------------------------------------
+
+// 1. Staff Applications (Only loaded when Admin opens Staff tab)
+app.get('/api/admin/staff-applications', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const apps = await db('staff_applications').orderBy('submitted_at', 'desc').catch(() => []);
+    res.json(apps.map(a => ({ ...sanitizeRowFiles(a), custom_form_answers: parseJson(a.custom_form_answers) })));
+  } catch (err) {
+    console.error('Failed to fetch staff applications:', err);
+    res.status(500).json({ message: 'Failed to fetch staff applications' });
+  }
+});
+
+// 2. Ambassador Applications (Only loaded when Admin opens Ambassador tab)
+app.get('/api/admin/ambassador-applications', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const apps = await db('ambassador_applications').orderBy('submitted_at', 'desc').catch(() => []);
+    res.json(apps.map(a => sanitizeRowFiles(a)));
+  } catch (err) {
+    console.error('Failed to fetch ambassador applications:', err);
+    res.status(500).json({ message: 'Failed to fetch ambassador applications' });
+  }
+});
+
+// 3. PE1 Registrations (Only loaded when Admin opens PE1 tab)
+app.get('/api/admin/pe1-registrations', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const regs = await db('pe1_registrations').orderBy('submitted_at', 'desc').catch(() => []);
+    res.json(regs.map(r => sanitizeRowFiles(r)));
+  } catch (err) {
+    console.error('Failed to fetch PE1 registrations:', err);
+    res.status(500).json({ message: 'Failed to fetch PE1 registrations' });
+  }
+});
+
+// 4. Competition Registrations (Only loaded when Admin opens Competition tab)
+app.get('/api/admin/competition-registrations', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const regs = await db('competition_registrations').orderBy('submitted_at', 'desc').catch(() => []);
+    res.json(regs.map(r => {
+      const cleanR = sanitizeRowFiles(r);
+      return {
+        ...cleanR,
+        members: parseJson(cleanR.members || '[]'),
+        leader_data: parseJson(cleanR.leader_data || null),
+        members_data: parseJson(cleanR.members_data || '[]')
+      };
+    }));
+  } catch (err) {
+    console.error('Failed to fetch competition registrations:', err);
+    res.status(500).json({ message: 'Failed to fetch competition registrations' });
+  }
+});
+
+// 5. Vendor Applications
+app.get('/api/admin/vendor-applications', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const apps = await db('vendor_applications').orderBy('submitted_at', 'desc').catch(() => []);
+    res.json(apps.map(v => sanitizeRowFiles(v)));
+  } catch (err) {
+    console.error('Failed to fetch vendor applications:', err);
+    res.status(500).json({ message: 'Failed to fetch vendor applications' });
   }
 });
 
