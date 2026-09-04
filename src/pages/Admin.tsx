@@ -119,7 +119,7 @@ const FormattedQuestionPreview: React.FC<{ text: string }> = ({ text }) => {
       <div className="font-bold text-red-inferno uppercase font-mono tracking-wider flex items-center gap-1">
         <span>🚨 PREVIEW TAMPILAN STUDY CASE (DI FORM)</span>
       </div>
-      
+
       {parsed.background && (
         <div className="bg-white p-2 border border-blue-sail/10">
           <span className="font-mono text-[8px] font-bold text-blue-sail/45 block uppercase mb-1">Konteks / Skenario:</span>
@@ -201,7 +201,7 @@ export const Admin: React.FC = () => {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [adminAccounts, setAdminAccounts] = useState<{username: string}[]>([]);
+  const [adminAccounts, setAdminAccounts] = useState<{ username: string }[]>([]);
   const [selectedCompDetail, setSelectedCompDetail] = useState<import('../types').CompetitionRegistration | null>(null);
   const [viewingFile, setViewingFile] = useState<{ url: string; title: string; fileName?: string } | null>(null);
 
@@ -237,13 +237,13 @@ export const Admin: React.FC = () => {
       alert(`Berkas "${docTitle || 'Dokumen'}" belum diunggah.`);
       return;
     }
-    
+
     // Jika URL adalah link (seperti Google Drive), buka di tab baru karena iframe Google Drive akan diblokir
     if (fileUrl.startsWith('http')) {
       window.open(fileUrl, '_blank', 'noopener,noreferrer');
       return;
     }
-    
+
     // Jika Base64 (kode lama), gunakan modal iframe
     setViewingFile({
       url: fileUrl,
@@ -668,8 +668,8 @@ export const Admin: React.FC = () => {
       await fetch('/api/auth/logout', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
-      }).catch(() => {});
-    } catch (err) {}
+      }).catch(() => { });
+    } catch (err) { }
 
     localStorage.removeItem('tsf_admin_token');
     localStorage.removeItem('tsf_admin_username');
@@ -758,9 +758,9 @@ export const Admin: React.FC = () => {
 
   // CSV Exporter Helper
   const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + [headers.join(','), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(','))].join('\n');
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -946,7 +946,8 @@ export const Admin: React.FC = () => {
     }
     setIsVendorModalOpen(false);
     setVendorFormState({ id: '', vendor_name: '', booth_location: '', contact: '', status: 'active' });
-  };  // --- 1. AMBASSADOR APPLICATIONS ---
+  };
+  // --- 1. AMBASSADOR APPLICATIONS ---
   const filteredAmbassadors = useMemo(() => {
     const list = (ambassadorApplications || []).filter(app => {
       if (!app) return false;
@@ -1114,7 +1115,7 @@ export const Admin: React.FC = () => {
 
       if (compFilterType !== 'all' && compType !== compFilterType) return false;
       if (compFilterCategory !== 'all' && eduCat !== compFilterCategory) return false;
-      
+
       const prelimStatus = reg.status_preliminary || 'pending';
       if (compFilterPreliminary !== 'all' && prelimStatus !== compFilterPreliminary) return false;
 
@@ -1285,7 +1286,7 @@ export const Admin: React.FC = () => {
       <div className="asphalt-texture min-h-screen flex items-center justify-center p-4">
         <div className="bg-blue-sail text-ballroom w-full max-w-sm border-4 border-decor p-8 rounded-none shadow-[8px_8px_0_0_#BD1B1F] relative overflow-hidden font-sans">
           <div className="absolute inset-0 grid-pattern opacity-10" />
-          
+
           <div className="relative z-10 text-center space-y-6">
             <div className="flex justify-center">
               <div className="bg-decor text-blue-sail p-3 rounded-none border-2 border-blue-sail font-display font-black text-2xl">
@@ -1341,7 +1342,7 @@ export const Admin: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-ballroom font-sans text-blue-sail flex flex-col lg:flex-row">
-      
+
       {/* SIDE NAV FOR CMS */}
       <aside className="w-full lg:w-64 bg-blue-sail text-ballroom border-b-4 lg:border-b-0 lg:border-r-4 border-decor shrink-0">
         <div className="p-6 border-b border-ballroom/10 relative">
@@ -1357,11 +1358,10 @@ export const Admin: React.FC = () => {
         <nav className="p-4 space-y-2 font-sans font-bold text-xs uppercase tracking-wider">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'overview'
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'overview'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
-            }`}
+              }`}
           >
             <Icon name="Sliders" size={16} />
             <span>Kontrol Utama / Fase</span>
@@ -1369,11 +1369,10 @@ export const Admin: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('ambassadors')}
-            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'ambassadors'
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'ambassadors'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
-            }`}
+              }`}
           >
             <Icon name="Award" size={16} />
             <span>Pendaftar Ambassador</span>
@@ -1381,11 +1380,10 @@ export const Admin: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('pe1')}
-            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'pe1'
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'pe1'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
-            }`}
+              }`}
           >
             <Icon name="Briefcase" size={16} />
             <span>Pendaftar PE1 CEO For A Day</span>
@@ -1393,11 +1391,10 @@ export const Admin: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('staff')}
-            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'staff'
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'staff'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
-            }`}
+              }`}
           >
             <Icon name="Users" size={16} />
             <span>Pendaftar Staff</span>
@@ -1405,11 +1402,10 @@ export const Admin: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('competitions')}
-            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'competitions'
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'competitions'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
-            }`}
+              }`}
           >
             <Icon name="Trophy" size={16} />
             <span>Pendaftar Competition</span>
@@ -1417,11 +1413,10 @@ export const Admin: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('user-accounts')}
-            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'user-accounts'
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'user-accounts'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
-            }`}
+              }`}
           >
             <Icon name="Users" size={16} />
             <span>Akun Pendaftar</span>
@@ -1429,11 +1424,10 @@ export const Admin: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('accounts')}
-            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'accounts'
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'accounts'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
-            }`}
+              }`}
           >
             <Icon name="UserPlus" size={16} />
             <span>Tambahkan Akun</span>
@@ -1441,11 +1435,10 @@ export const Admin: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('divisions')}
-            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'divisions'
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'divisions'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
-            }`}
+              }`}
           >
             <Icon name="CalendarRange" size={16} />
             <span>Manajemen Divisi</span>
@@ -1453,17 +1446,16 @@ export const Admin: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('form-control')}
-            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
-              activeTab === 'form-control'
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'form-control'
                 ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
                 : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
-            }`}
+              }`}
           >
             <Icon name="Settings" size={16} />
             <span>Pengaturan Form</span>
           </button>
 
-          <button
+          {/* <button
             onClick={() => setActiveTab('server-health')}
             className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
               activeTab === 'server-health'
@@ -1476,7 +1468,7 @@ export const Admin: React.FC = () => {
               <span>Kesehatan & Log Server</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             </div>
-          </button>
+          </button> */}
 
           <div className="pt-6 border-t border-ballroom/10 mt-6">
             <button
@@ -1492,7 +1484,7 @@ export const Admin: React.FC = () => {
 
       {/* DASHBOARD AREA */}
       <main className="flex-1 p-6 lg:p-8 space-y-8 overflow-x-hidden">
-        
+
         {/* 1. SECTION TAB: OVERVIEW / ACTIVE PHASE CONTROLLER */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
@@ -1565,11 +1557,10 @@ export const Admin: React.FC = () => {
                     <div
                       key={phase.id}
                       onClick={() => setActivePhase(phase.name)}
-                      className={`cursor-pointer p-4 rounded-none border-2 border-blue-sail flex flex-col justify-between h-36 transition-all ${
-                        isActive 
-                          ? 'bg-blue-sail border-decor text-ballroom shadow-[4px_4px_0_0_#F6BB02]' 
+                      className={`cursor-pointer p-4 rounded-none border-2 border-blue-sail flex flex-col justify-between h-36 transition-all ${isActive
+                          ? 'bg-blue-sail border-decor text-ballroom shadow-[4px_4px_0_0_#F6BB02]'
                           : 'bg-white border-blue-sail/30 hover:border-blue-sail hover:shadow-[3px_3px_0_0_#2A4C9E] text-blue-sail'
-                      }`}
+                        }`}
                     >
                       <div className="space-y-1">
                         <div className="flex justify-between items-center">
@@ -1797,11 +1788,10 @@ export const Admin: React.FC = () => {
                               <span className="inline-block text-[10px] font-mono text-blue-sail/40">Tgl: {new Date(app.submitted_at).toLocaleDateString('id-ID')}</span>
                             </td>
                             <td className="p-4 space-y-1">
-                              <span className={`inline-block font-mono text-[10px] font-bold px-2 py-0.5 border ${
-                                app.role_choice === 'Campus Influencer'
+                              <span className={`inline-block font-mono text-[10px] font-bold px-2 py-0.5 border ${app.role_choice === 'Campus Influencer'
                                   ? 'bg-red-inferno text-white border-blue-sail'
                                   : 'bg-decor text-blue-sail border-blue-sail'
-                              }`}>
+                                }`}>
                                 {app.role_choice}
                               </span>
                               {app.role_choice === 'Campus Influencer' ? (
@@ -1832,13 +1822,12 @@ export const Admin: React.FC = () => {
                               </a>
                             </td>
                             <td className="p-4">
-                              <span className={`inline-block font-mono text-[10px] font-bold px-2.5 py-1 uppercase tracking-wider border ${
-                                app.status === 'accepted'
+                              <span className={`inline-block font-mono text-[10px] font-bold px-2.5 py-1 uppercase tracking-wider border ${app.status === 'accepted'
                                   ? 'bg-emerald-100 text-emerald-800 border-emerald-500'
                                   : app.status === 'rejected'
-                                  ? 'bg-red-100 text-red-800 border-red-500'
-                                  : 'bg-amber-100 text-amber-800 border-amber-500'
-                              }`}>
+                                    ? 'bg-red-100 text-red-800 border-red-500'
+                                    : 'bg-amber-100 text-amber-800 border-amber-500'
+                                }`}>
                                 {app.status === 'accepted' ? 'DITERIMA' : app.status === 'rejected' ? 'DITOLAK' : 'PENDING'}
                               </span>
                             </td>
@@ -2091,15 +2080,14 @@ export const Admin: React.FC = () => {
                               <p className="text-[10px] text-blue-sail/50">📍 {reg.city}</p>
                             </td>
                             <td className="p-3">
-                              <span className={`inline-block font-mono text-[10px] font-bold px-2 py-1 border border-blue-sail uppercase ${
-                                reg.package_choice === 'Aspiring CEO'
+                              <span className={`inline-block font-mono text-[10px] font-bold px-2 py-1 border border-blue-sail uppercase ${reg.package_choice === 'Aspiring CEO'
                                   ? 'bg-emerald-100 text-emerald-800'
                                   : reg.package_choice === 'Rising CEO'
                                     ? 'bg-blue-100 text-blue-800'
                                     : reg.package_choice === 'Strategic CEO'
                                       ? 'bg-purple-100 text-purple-800'
                                       : 'bg-amber-100 text-amber-800'
-                              }`}>
+                                }`}>
                                 {reg.package_choice}
                               </span>
                             </td>
@@ -2114,13 +2102,12 @@ export const Admin: React.FC = () => {
                               <select
                                 value={reg.status}
                                 onChange={(e) => updatePE1RegistrationStatus(reg.id, e.target.value as any)}
-                                className={`font-mono text-[11px] font-bold px-2 py-1 border border-blue-sail outline-none uppercase cursor-pointer ${
-                                  reg.status === 'confirmed'
+                                className={`font-mono text-[11px] font-bold px-2 py-1 border border-blue-sail outline-none uppercase cursor-pointer ${reg.status === 'confirmed'
                                     ? 'bg-emerald-500 text-white'
                                     : reg.status === 'rejected'
                                       ? 'bg-red-600 text-white'
                                       : 'bg-amber-400 text-blue-sail'
-                                }`}
+                                  }`}
                               >
                                 <option value="pending">Pending</option>
                                 <option value="confirmed">Confirmed</option>
@@ -2427,13 +2414,12 @@ export const Admin: React.FC = () => {
                               <select
                                 value={app.status}
                                 onChange={e => updateStaffApplicationStatus(app.id, e.target.value as any)}
-                                className={`px-2.5 py-1.5 font-bold uppercase rounded-none border-2 text-[10px] outline-none font-mono ${
-                                  app.status === 'accepted' 
-                                    ? 'bg-green-50 border-green-400 text-green-700 focus:shadow-[2px_2px_0_0_#15803d]' 
+                                className={`px-2.5 py-1.5 font-bold uppercase rounded-none border-2 text-[10px] outline-none font-mono ${app.status === 'accepted'
+                                    ? 'bg-green-50 border-green-400 text-green-700 focus:shadow-[2px_2px_0_0_#15803d]'
                                     : app.status === 'rejected'
                                       ? 'bg-red-50 border-red-400 text-red-600 focus:shadow-[2px_2px_0_0_#b91c1c]'
                                       : 'bg-yellow-50 border-yellow-400 text-yellow-700 focus:shadow-[2px_2px_0_0_#ca8a04]'
-                                }`}
+                                  }`}
                               >
                                 <option value="pending">PENDING / WAITLIST</option>
                                 <option value="accepted">ACCEPTED / LOLOS</option>
@@ -2463,7 +2449,7 @@ export const Admin: React.FC = () => {
         {/* 3. SECTION TAB: COMPETITIONS REGISTRATIONS & VENDOR SEWA BOOTH */}
         {activeTab === 'competitions' && (
           <div className="space-y-8">
-            
+
             {/* LOMBA DATABASE */}
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -2814,31 +2800,28 @@ export const Admin: React.FC = () => {
                                       <div className="flex flex-col gap-1">
                                         <button
                                           onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'pending', status_stage: 'preliminary' })}
-                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                            (!reg.status_preliminary || reg.status_preliminary === 'pending')
+                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${(!reg.status_preliminary || reg.status_preliminary === 'pending')
                                               ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
                                               : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                                          }`}
+                                            }`}
                                         >
                                           ↺ Kondisi Awal (Pending)
                                         </button>
                                         <button
                                           onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'passed', status_stage: 'semifinal' })}
-                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                            reg.status_preliminary === 'passed'
+                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${reg.status_preliminary === 'passed'
                                               ? 'bg-emerald-600 text-white border-emerald-700 font-black'
                                               : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
-                                          }`}
+                                            }`}
                                         >
                                           ✓ Lolos Preliminary
                                         </button>
                                         <button
                                           onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'rejected', status_stage: 'preliminary' })}
-                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                            reg.status_preliminary === 'rejected'
+                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${reg.status_preliminary === 'rejected'
                                               ? 'bg-red-inferno text-white border-red-700 font-black'
                                               : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
-                                          }`}
+                                            }`}
                                         >
                                           ✕ Tidak Lolos Preliminary
                                         </button>
@@ -2852,31 +2835,28 @@ export const Admin: React.FC = () => {
                                         <div className="flex flex-col gap-1">
                                           <button
                                             onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'pending', status_stage: 'semifinal' })}
-                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                              (!reg.status_semifinal || reg.status_semifinal === 'pending')
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${(!reg.status_semifinal || reg.status_semifinal === 'pending')
                                                 ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
                                                 : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                                            }`}
+                                              }`}
                                           >
                                             ↺ Kondisi Awal Semi Final
                                           </button>
                                           <button
                                             onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'passed', status_stage: 'final' })}
-                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                              reg.status_semifinal === 'passed'
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${reg.status_semifinal === 'passed'
                                                 ? 'bg-emerald-600 text-white border-emerald-700 font-black'
                                                 : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
-                                            }`}
+                                              }`}
                                           >
                                             ✓ Lolos Semi Final
                                           </button>
                                           <button
                                             onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'rejected', status_stage: 'semifinal' })}
-                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                              reg.status_semifinal === 'rejected'
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${reg.status_semifinal === 'rejected'
                                                 ? 'bg-red-inferno text-white border-red-700 font-black'
                                                 : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
-                                            }`}
+                                              }`}
                                           >
                                             ✕ Tidak Lolos Semi Final
                                           </button>
@@ -2891,31 +2871,28 @@ export const Admin: React.FC = () => {
                                         <div className="flex flex-col gap-1">
                                           <button
                                             onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'pending', status_stage: 'final' })}
-                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                              (!reg.status_final || reg.status_final === 'pending')
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${(!reg.status_final || reg.status_final === 'pending')
                                                 ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
                                                 : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                                            }`}
+                                              }`}
                                           >
                                             ↺ Kondisi Awal Final
                                           </button>
                                           <button
                                             onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'passed', status_stage: 'final' })}
-                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                              reg.status_final === 'passed'
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${reg.status_final === 'passed'
                                                 ? 'bg-purple-700 text-white border-purple-800 font-black'
                                                 : 'bg-white text-purple-700 border-purple-400 hover:bg-purple-50'
-                                            }`}
+                                              }`}
                                           >
                                             🏆 Lolos Final (Juara)
                                           </button>
                                           <button
                                             onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'rejected', status_stage: 'final' })}
-                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                              reg.status_final === 'rejected'
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${reg.status_final === 'rejected'
                                                 ? 'bg-red-inferno text-white border-red-700 font-black'
                                                 : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
-                                            }`}
+                                              }`}
                                           >
                                             ✕ Tidak Lolos Final
                                           </button>
@@ -3281,11 +3258,10 @@ export const Admin: React.FC = () => {
                                 {user.email}
                               </td>
                               <td className="p-4">
-                                <span className={`px-2.5 py-1 text-[10px] font-display font-black uppercase border ${
-                                  user.auth_provider === 'google'
+                                <span className={`px-2.5 py-1 text-[10px] font-display font-black uppercase border ${user.auth_provider === 'google'
                                     ? 'bg-blue-50 text-blue-600 border-blue-300'
                                     : 'bg-amber-50 text-amber-700 border-amber-300'
-                                }`}>
+                                  }`}>
                                   {user.auth_provider === 'google' ? 'Gmail / Google' : 'Email Manual'}
                                 </span>
                               </td>
@@ -3328,7 +3304,7 @@ export const Admin: React.FC = () => {
                   <Icon name="UserPlus" size={16} />
                   <span>Tambah Akun Baru</span>
                 </h3>
-                
+
                 <form
                   onSubmit={async (e) => {
                     e.preventDefault();
@@ -3570,7 +3546,7 @@ export const Admin: React.FC = () => {
                       <h4 className="font-display font-bold text-sm uppercase text-blue-sail truncate">{div.name}</h4>
                     </div>
                     <p className="line-clamp-3 leading-relaxed text-blue-sail/80 font-sans">{div.description}</p>
-                    
+
                     {div.sub_divisions && div.sub_divisions.length > 0 && (
                       <div className="pt-2 space-y-1">
                         <p className="text-[10px] font-bold uppercase text-blue-sail/60 font-mono">Sub-Divisi:</p>
@@ -3647,11 +3623,10 @@ export const Admin: React.FC = () => {
                 <button
                   key={tab}
                   onClick={() => setFormSubTab(tab)}
-                  className={`px-4 py-2 border-2 text-xs uppercase font-mono font-bold transition-all cursor-pointer ${
-                    formSubTab === tab
+                  className={`px-4 py-2 border-2 text-xs uppercase font-mono font-bold transition-all cursor-pointer ${formSubTab === tab
                       ? 'bg-blue-sail text-white border-blue-sail shadow-[2px_2px_0_0_#BD1B1F]'
                       : 'bg-white text-blue-sail border-blue-sail/20 hover:border-blue-sail'
-                  }`}
+                    }`}
                 >
                   {tab === 'dataDiri' && 'Data Diri'}
                   {tab === 'generalTask' && 'General Task'}
@@ -3663,7 +3638,7 @@ export const Admin: React.FC = () => {
 
             {/* Form Fields container */}
             <div className="bg-white border-4 border-blue-sail p-6 shadow-[4px_4px_0_0_#2A4C9E] font-sans text-xs text-blue-sail">
-              
+
               {/* DATA DIRI SUB-TAB */}
               {formSubTab === 'dataDiri' && (
                 <div className="space-y-6">
@@ -3698,7 +3673,7 @@ export const Admin: React.FC = () => {
                             </button>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-1">
                           <label className="block font-bold uppercase tracking-wide text-blue-sail/70">Label Pertanyaan</label>
                           <input
@@ -4260,11 +4235,10 @@ export const Admin: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setAutoRefreshHealth(!autoRefreshHealth)}
-                  className={`px-3 py-2 text-xs font-display font-bold uppercase border-2 flex items-center gap-1.5 cursor-pointer transition-all ${
-                    autoRefreshHealth
+                  className={`px-3 py-2 text-xs font-display font-bold uppercase border-2 flex items-center gap-1.5 cursor-pointer transition-all ${autoRefreshHealth
                       ? 'bg-emerald-600 text-white border-emerald-700 shadow-[2px_2px_0_0_#065f46]'
                       : 'bg-white text-blue-sail border-blue-sail/30 hover:border-blue-sail'
-                  }`}
+                    }`}
                 >
                   <Icon name="RefreshCw" size={14} className={autoRefreshHealth ? 'animate-spin' : ''} />
                   <span>Auto-Refresh (5s): {autoRefreshHealth ? 'ON' : 'OFF'}</span>
@@ -4290,20 +4264,18 @@ export const Admin: React.FC = () => {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Status Global */}
-                  <div className={`p-4 border-4 ${
-                    serverHealth.status === 'healthy'
+                  <div className={`p-4 border-4 ${serverHealth.status === 'healthy'
                       ? 'bg-emerald-50/80 border-emerald-600 text-emerald-950 shadow-[4px_4px_0_0_#059669]'
                       : serverHealth.status === 'warning'
                         ? 'bg-amber-50/80 border-amber-500 text-amber-950 shadow-[4px_4px_0_0_#d97706]'
                         : 'bg-red-50/80 border-red-inferno text-red-950 shadow-[4px_4px_0_0_#BD1B1F]'
-                  }`}>
+                    }`}>
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider block opacity-70">
                       STATUS KESEHATAN
                     </span>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`w-3 h-3 rounded-full ${
-                        serverHealth.status === 'healthy' ? 'bg-emerald-500' : serverHealth.status === 'warning' ? 'bg-amber-500' : 'bg-red-500 animate-ping'
-                      }`} />
+                      <span className={`w-3 h-3 rounded-full ${serverHealth.status === 'healthy' ? 'bg-emerald-500' : serverHealth.status === 'warning' ? 'bg-amber-500' : 'bg-red-500 animate-ping'
+                        }`} />
                       <span className="font-display font-black text-xl uppercase">
                         {serverHealth.status === 'healthy' ? 'STABIL / SEHAT' : serverHealth.status === 'warning' ? 'WASPADA (WARNING)' : 'KRITIS (DOWN RISK)'}
                       </span>
@@ -4352,11 +4324,10 @@ export const Admin: React.FC = () => {
                   </div>
 
                   {/* Blob Base64 Detector */}
-                  <div className={`p-4 border-4 shadow-[4px_4px_0_0_#8B011A] ${
-                    serverHealth.database.base64BlobsDetected > 0
+                  <div className={`p-4 border-4 shadow-[4px_4px_0_0_#8B011A] ${serverHealth.database.base64BlobsDetected > 0
                       ? 'bg-red-50 border-red-inferno text-red-950'
                       : 'bg-emerald-50 border-emerald-600 text-emerald-950'
-                  }`}>
+                    }`}>
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider block opacity-70">
                       BERKAS BASE64 DI DATABASE
                     </span>
@@ -4498,17 +4469,15 @@ export const Admin: React.FC = () => {
                         return (
                           <div
                             key={log.id}
-                            className={`flex items-start gap-2 border-b border-gray-900/80 pb-1 ${
-                              isErr ? 'text-red-400 bg-red-950/20 px-1' : isWarn ? 'text-yellow-400' : 'text-emerald-300'
-                            }`}
+                            className={`flex items-start gap-2 border-b border-gray-900/80 pb-1 ${isErr ? 'text-red-400 bg-red-950/20 px-1' : isWarn ? 'text-yellow-400' : 'text-emerald-300'
+                              }`}
                           >
                             <span className="text-gray-500 text-[10px] shrink-0 font-sans select-none">
                               [{timeStr}]
                             </span>
                             <span
-                              className={`text-[9px] font-bold uppercase px-1 py-0.2 shrink-0 ${
-                                isErr ? 'bg-red-900 text-white' : isWarn ? 'bg-yellow-900 text-yellow-100' : 'bg-emerald-950 text-emerald-300'
-                              }`}
+                              className={`text-[9px] font-bold uppercase px-1 py-0.2 shrink-0 ${isErr ? 'bg-red-900 text-white' : isWarn ? 'bg-yellow-900 text-yellow-100' : 'bg-emerald-950 text-emerald-300'
+                                }`}
                             >
                               {log.level}
                             </span>
@@ -4643,7 +4612,7 @@ export const Admin: React.FC = () => {
                 ) : (
                   <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
                     {divForm.sub_divisions.map((sub: any, idx: number) => {
-                      const subObj = typeof sub === 'string' 
+                      const subObj = typeof sub === 'string'
                         ? { name: sub, description: '', jobdesk: [], skills: '' }
                         : sub;
 
@@ -4963,8 +4932,8 @@ export const Admin: React.FC = () => {
                   {selectedApplicant.full_name}
                 </h3>
               </div>
-              <button 
-                onClick={() => setSelectedApplicant(null)} 
+              <button
+                onClick={() => setSelectedApplicant(null)}
                 className="text-ballroom hover:text-decor p-1 cursor-pointer bg-blue-sail/20 hover:bg-blue-sail/40 transition-all rounded-none border border-transparent hover:border-ballroom"
               >
                 <Icon name="X" size={22} />
@@ -4973,7 +4942,7 @@ export const Admin: React.FC = () => {
 
             {/* Modal Scrollable Body */}
             <div className="p-6 overflow-y-auto space-y-6 text-sm">
-              
+
               {/* Section 1: Data Diri */}
               <div className="space-y-3">
                 <h4 className="font-display font-extrabold text-xs text-red-inferno uppercase tracking-wider border-b border-blue-sail/10 pb-1 flex items-center space-x-1.5">
@@ -5031,13 +5000,12 @@ export const Admin: React.FC = () => {
                         );
                         setSelectedApplicant(prev => prev ? ({ ...prev, status_berkas: newStatus }) : null);
                       }}
-                      className={`w-full px-3 py-1.5 text-xs font-bold uppercase rounded-none border-2 outline-none font-mono ${
-                        selectedApplicant.status_berkas === 'lolos'
+                      className={`w-full px-3 py-1.5 text-xs font-bold uppercase rounded-none border-2 outline-none font-mono ${selectedApplicant.status_berkas === 'lolos'
                           ? 'bg-green-50 border-green-400 text-green-700'
                           : selectedApplicant.status_berkas === 'gagal'
                             ? 'bg-red-50 border-red-400 text-red-600'
                             : 'bg-yellow-50 border-yellow-400 text-yellow-700'
-                      }`}
+                        }`}
                     >
                       <option value="pending">PENDING</option>
                       <option value="lolos">LOLOS SELEKSI</option>
@@ -5314,13 +5282,12 @@ export const Admin: React.FC = () => {
                     updateStaffApplicationStatus(selectedApplicant.id, e.target.value as any);
                     setSelectedApplicant(prev => ({ ...prev, status: e.target.value }));
                   }}
-                  className={`px-3 py-1 text-xs font-bold uppercase rounded-none border-2 outline-none font-mono ${
-                    selectedApplicant.status === 'accepted' 
-                      ? 'bg-green-50 border-green-400 text-green-700 focus:shadow-[2px_2px_0_0_#15803d]' 
+                  className={`px-3 py-1 text-xs font-bold uppercase rounded-none border-2 outline-none font-mono ${selectedApplicant.status === 'accepted'
+                      ? 'bg-green-50 border-green-400 text-green-700 focus:shadow-[2px_2px_0_0_#15803d]'
                       : selectedApplicant.status === 'rejected'
                         ? 'bg-red-50 border-red-400 text-red-600 focus:shadow-[2px_2px_0_0_#b91c1c]'
                         : 'bg-yellow-50 border-yellow-400 text-yellow-700 focus:shadow-[2px_2px_0_0_#ca8a04]'
-                  }`}
+                    }`}
                 >
                   <option value="pending">PENDING</option>
                   <option value="accepted">ACCEPTED</option>
@@ -5751,138 +5718,136 @@ export const Admin: React.FC = () => {
               );
             })()}
 
-              {/* Berkas Syarat Umum & Task Preliminary */}
-              <div className="bg-blue-sail/5 border-2 border-blue-sail p-4 space-y-3">
-                <h4 className="font-display font-black text-xs uppercase text-blue-sail">BERKAS PERSYARATAN &amp; TASK PRELIMINARY</h4>
-                <div className="flex flex-wrap gap-4 text-xs font-mono">
-                  {selectedCompDetail.ig_story_file_url && (
-                    <button
-                      type="button"
-                      onClick={() => openDoc(selectedCompDetail.ig_story_file_url, 'Bukti IG Story')}
-                      className="text-red-inferno font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <Icon name="ExternalLink" size={14} /> Bukti IG Story (PDF)
-                    </button>
-                  )}
-                  {selectedCompDetail.twibbon_file_url && (
-                    <button
-                      type="button"
-                      onClick={() => openDoc(selectedCompDetail.twibbon_file_url, 'Bukti Twibbon Feeds')}
-                      className="text-red-inferno font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <Icon name="ExternalLink" size={14} /> Bukti Twibbon Feeds (PDF)
-                    </button>
-                  )}
-                  {selectedCompDetail.ig_follow_file_url && (
-                    <button
-                      type="button"
-                      onClick={() => openDoc(selectedCompDetail.ig_follow_file_url, 'Bukti Follow IG')}
-                      className="text-red-inferno font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <Icon name="ExternalLink" size={14} /> Bukti Follow IG (PDF)
-                    </button>
-                  )}
-                </div>
-
-                {selectedCompDetail.preliminary_file_url ? (
-                  <div className="bg-white p-3 border border-blue-sail/30 flex items-center justify-between gap-3 mt-2">
-                    <div>
-                      <span className="font-display font-bold text-xs text-blue-sail uppercase block">
-                        BERKAS PRELIMINARY ({selectedCompDetail.preliminary_file_type || 'BMC / Executive Summary'})
-                      </span>
-                      <span className="text-[11px] font-sans text-emerald-700 font-bold">
-                        {selectedCompDetail.preliminary_file_name || 'Berkas_Preliminary.pdf'}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => openDoc(selectedCompDetail.preliminary_file_url, selectedCompDetail.preliminary_file_name || 'Berkas Preliminary')}
-                      className="bg-decor text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] flex items-center gap-1 shrink-0 cursor-pointer"
-                    >
-                      <Icon name="FileCheck" size={14} />
-                      <span>BUKA BERKAS PDF</span>
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-xs font-sans text-gray-500 font-bold">Tim belum mengumpulkan berkas Preliminary (BMC / Executive Summary).</p>
+            {/* Berkas Syarat Umum & Task Preliminary */}
+            <div className="bg-blue-sail/5 border-2 border-blue-sail p-4 space-y-3">
+              <h4 className="font-display font-black text-xs uppercase text-blue-sail">BERKAS PERSYARATAN &amp; TASK PRELIMINARY</h4>
+              <div className="flex flex-wrap gap-4 text-xs font-mono">
+                {selectedCompDetail.ig_story_file_url && (
+                  <button
+                    type="button"
+                    onClick={() => openDoc(selectedCompDetail.ig_story_file_url, 'Bukti IG Story')}
+                    className="text-red-inferno font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Icon name="ExternalLink" size={14} /> Bukti IG Story (PDF)
+                  </button>
                 )}
+                {selectedCompDetail.twibbon_file_url && (
+                  <button
+                    type="button"
+                    onClick={() => openDoc(selectedCompDetail.twibbon_file_url, 'Bukti Twibbon Feeds')}
+                    className="text-red-inferno font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Icon name="ExternalLink" size={14} /> Bukti Twibbon Feeds (PDF)
+                  </button>
+                )}
+                {selectedCompDetail.ig_follow_file_url && (
+                  <button
+                    type="button"
+                    onClick={() => openDoc(selectedCompDetail.ig_follow_file_url, 'Bukti Follow IG')}
+                    className="text-red-inferno font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Icon name="ExternalLink" size={14} /> Bukti Follow IG (PDF)
+                  </button>
+                )}
+              </div>
 
-                {/* Semi Final Payment Proof Section */}
-                {selectedCompDetail.payment_semifinal_url ? (
-                  <div className="bg-emerald-50 p-3 border border-emerald-600 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-2">
-                    <div>
-                      <span className="font-display font-bold text-xs text-emerald-900 uppercase block">
-                        BUKTI PEMBAYARAN REGISTRASI SEMI FINAL
-                      </span>
-                      <span className="text-[11px] font-mono text-emerald-800 font-bold">
-                        Berkas: {selectedCompDetail.payment_semifinal_file_name || 'Bukti_Transfer.pdf'}
-                      </span>
-                      <span className={`text-[10px] font-display font-bold uppercase px-2 py-0.5 border ml-2 ${
-                        selectedCompDetail.payment_semifinal_status === 'verified'
-                          ? 'bg-emerald-600 text-white border-emerald-700'
-                          : 'bg-amber-500 text-white border-amber-600'
-                      }`}>
-                        {selectedCompDetail.payment_semifinal_status === 'verified' ? '✓ DIVERIFIKASI' : 'MENUNGGU VERIFIKASI'}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openDoc(selectedCompDetail.payment_semifinal_url, `Bukti Pembayaran Semi Final - ${selectedCompDetail.team_name}`, selectedCompDetail.payment_semifinal_file_name || 'bukti_transfer')}
-                        className="bg-blue-sail text-decor font-display font-black text-xs uppercase px-3 py-1.5 border border-blue-sail flex items-center gap-1 cursor-pointer"
-                      >
-                        <Icon name="FileText" size={12} />
-                        <span>PRATINJAU BUKTI</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { payment_semifinal_status: 'verified' });
-                          setSelectedCompDetail(prev => prev ? { ...prev, payment_semifinal_status: 'verified' } : null);
-                        }}
-                        className={`font-display font-bold text-xs uppercase px-3 py-1.5 border cursor-pointer ${
-                          selectedCompDetail.payment_semifinal_status === 'verified'
-                            ? 'bg-emerald-700 text-white border-emerald-800'
-                            : 'bg-white text-emerald-700 border-emerald-600 hover:bg-emerald-100'
-                        }`}
-                      >
-                        ✓ Setujui Pembayaran
-                      </button>
-                    </div>
+              {selectedCompDetail.preliminary_file_url ? (
+                <div className="bg-white p-3 border border-blue-sail/30 flex items-center justify-between gap-3 mt-2">
+                  <div>
+                    <span className="font-display font-bold text-xs text-blue-sail uppercase block">
+                      BERKAS PRELIMINARY ({selectedCompDetail.preliminary_file_type || 'BMC / Executive Summary'})
+                    </span>
+                    <span className="text-[11px] font-sans text-emerald-700 font-bold">
+                      {selectedCompDetail.preliminary_file_name || 'Berkas_Preliminary.pdf'}
+                    </span>
                   </div>
-                ) : selectedCompDetail.status_preliminary === 'passed' ? (
-                  <p className="text-xs font-sans text-amber-800 bg-amber-50 border border-amber-300 p-2 font-bold mt-2">
-                    Tim Lolos Preliminary tapi belum mengunggah bukti pembayaran Semi Final.
-                  </p>
-                ) : null}
+                  <button
+                    type="button"
+                    onClick={() => openDoc(selectedCompDetail.preliminary_file_url, selectedCompDetail.preliminary_file_name || 'Berkas Preliminary')}
+                    className="bg-decor text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] flex items-center gap-1 shrink-0 cursor-pointer"
+                  >
+                    <Icon name="FileCheck" size={14} />
+                    <span>BUKA BERKAS PDF</span>
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs font-sans text-gray-500 font-bold">Tim belum mengumpulkan berkas Preliminary (BMC / Executive Summary).</p>
+              )}
 
-                {/* Semi Final Task Submission File Section for Admin */}
-                {selectedCompDetail.semifinal_file_url ? (
-                  <div className="bg-purple-50 p-3 border border-purple-600 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-2">
-                    <div>
-                      <span className="font-display font-bold text-xs text-purple-900 uppercase block">
-                        BERKAS SUBMISSION SEMI FINAL (PROPOSAL / SOLUSI STUDI KASUS)
-                      </span>
-                      <span className="text-[11px] font-mono text-purple-800 font-bold">
-                        Berkas: {selectedCompDetail.semifinal_file_name || 'Berkas_SemiFinal.pdf'}
-                      </span>
-                    </div>
+              {/* Semi Final Payment Proof Section */}
+              {selectedCompDetail.payment_semifinal_url ? (
+                <div className="bg-emerald-50 p-3 border border-emerald-600 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-2">
+                  <div>
+                    <span className="font-display font-bold text-xs text-emerald-900 uppercase block">
+                      BUKTI PEMBAYARAN REGISTRASI SEMI FINAL
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-800 font-bold">
+                      Berkas: {selectedCompDetail.payment_semifinal_file_name || 'Bukti_Transfer.pdf'}
+                    </span>
+                    <span className={`text-[10px] font-display font-bold uppercase px-2 py-0.5 border ml-2 ${selectedCompDetail.payment_semifinal_status === 'verified'
+                        ? 'bg-emerald-600 text-white border-emerald-700'
+                        : 'bg-amber-500 text-white border-amber-600'
+                      }`}>
+                      {selectedCompDetail.payment_semifinal_status === 'verified' ? '✓ DIVERIFIKASI' : 'MENUNGGU VERIFIKASI'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => openDoc(selectedCompDetail.semifinal_file_url, `Berkas Semi Final - ${selectedCompDetail.team_name}`)}
-                      className="bg-purple-700 hover:bg-purple-800 text-white font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail flex items-center gap-1.5 cursor-pointer shrink-0"
+                      onClick={() => openDoc(selectedCompDetail.payment_semifinal_url, `Bukti Pembayaran Semi Final - ${selectedCompDetail.team_name}`, selectedCompDetail.payment_semifinal_file_name || 'bukti_transfer')}
+                      className="bg-blue-sail text-decor font-display font-black text-xs uppercase px-3 py-1.5 border border-blue-sail flex items-center gap-1 cursor-pointer"
                     >
-                      <Icon name="FileCheck" size={14} />
-                      <span>BUKA BERKAS SEMI FINAL PDF</span>
+                      <Icon name="FileText" size={12} />
+                      <span>PRATINJAU BUKTI</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await updateCompetitionRegistrationStatus(selectedCompDetail.id, { payment_semifinal_status: 'verified' });
+                        setSelectedCompDetail(prev => prev ? { ...prev, payment_semifinal_status: 'verified' } : null);
+                      }}
+                      className={`font-display font-bold text-xs uppercase px-3 py-1.5 border cursor-pointer ${selectedCompDetail.payment_semifinal_status === 'verified'
+                          ? 'bg-emerald-700 text-white border-emerald-800'
+                          : 'bg-white text-emerald-700 border-emerald-600 hover:bg-emerald-100'
+                        }`}
+                    >
+                      ✓ Setujui Pembayaran
                     </button>
                   </div>
-                ) : selectedCompDetail.payment_semifinal_status === 'verified' ? (
-                  <p className="text-xs font-sans text-purple-800 bg-purple-50 border border-purple-300 p-2 font-bold mt-2">
-                    Pembayaran Semi Final sudah terverifikasi. Tim belum mengunggah berkas submission Semi Final.
-                  </p>
-                ) : null}
+                </div>
+              ) : selectedCompDetail.status_preliminary === 'passed' ? (
+                <p className="text-xs font-sans text-amber-800 bg-amber-50 border border-amber-300 p-2 font-bold mt-2">
+                  Tim Lolos Preliminary tapi belum mengunggah bukti pembayaran Semi Final.
+                </p>
+              ) : null}
+
+              {/* Semi Final Task Submission File Section for Admin */}
+              {selectedCompDetail.semifinal_file_url ? (
+                <div className="bg-purple-50 p-3 border border-purple-600 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-2">
+                  <div>
+                    <span className="font-display font-bold text-xs text-purple-900 uppercase block">
+                      BERKAS SUBMISSION SEMI FINAL (PROPOSAL / SOLUSI STUDI KASUS)
+                    </span>
+                    <span className="text-[11px] font-mono text-purple-800 font-bold">
+                      Berkas: {selectedCompDetail.semifinal_file_name || 'Berkas_SemiFinal.pdf'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openDoc(selectedCompDetail.semifinal_file_url, `Berkas Semi Final - ${selectedCompDetail.team_name}`)}
+                    className="bg-purple-700 hover:bg-purple-800 text-white font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Icon name="FileCheck" size={14} />
+                    <span>BUKA BERKAS SEMI FINAL PDF</span>
+                  </button>
+                </div>
+              ) : selectedCompDetail.payment_semifinal_status === 'verified' ? (
+                <p className="text-xs font-sans text-purple-800 bg-purple-50 border border-purple-300 p-2 font-bold mt-2">
+                  Pembayaran Semi Final sudah terverifikasi. Tim belum mengunggah berkas submission Semi Final.
+                </p>
+              ) : null}
             </div>
 
             {/* Stage Progression Controller inside Modal */}
@@ -5891,7 +5856,7 @@ export const Admin: React.FC = () => {
             <div className="bg-decor/20 border-2 border-blue-sail p-4 space-y-3">
               <h4 className="font-display font-black text-xs uppercase text-blue-sail">KONTROL STATUS KELOLOSAN TAHAP LOMBA</h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-sans">
-                
+
                 {/* Preliminary */}
                 <div className="bg-white p-3 border border-blue-sail space-y-1.5">
                   <span className="font-display font-bold text-[10px] text-blue-sail uppercase block">1. Preliminary Stage</span>
@@ -5901,11 +5866,10 @@ export const Admin: React.FC = () => {
                         await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_preliminary: 'pending', status_stage: 'preliminary' });
                         setSelectedCompDetail(prev => prev ? { ...prev, status_preliminary: 'pending', status_stage: 'preliminary' } : null);
                       }}
-                      className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                        (!selectedCompDetail.status_preliminary || selectedCompDetail.status_preliminary === 'pending')
+                      className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${(!selectedCompDetail.status_preliminary || selectedCompDetail.status_preliminary === 'pending')
                           ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
                           : 'bg-white text-gray-600 border-gray-300'
-                      }`}
+                        }`}
                     >
                       ↺ Kondisi Awal
                     </button>
@@ -5914,11 +5878,10 @@ export const Admin: React.FC = () => {
                         await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_preliminary: 'passed', status_stage: 'semifinal' });
                         setSelectedCompDetail(prev => prev ? { ...prev, status_preliminary: 'passed', status_stage: 'semifinal' } : null);
                       }}
-                      className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                        selectedCompDetail.status_preliminary === 'passed'
+                      className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${selectedCompDetail.status_preliminary === 'passed'
                           ? 'bg-emerald-600 text-white border-emerald-700 font-black'
                           : 'bg-white text-emerald-700 border-emerald-400'
-                      }`}
+                        }`}
                     >
                       ✓ Lolos Preliminary
                     </button>
@@ -5927,11 +5890,10 @@ export const Admin: React.FC = () => {
                         await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_preliminary: 'rejected', status_stage: 'preliminary' });
                         setSelectedCompDetail(prev => prev ? { ...prev, status_preliminary: 'rejected', status_stage: 'preliminary' } : null);
                       }}
-                      className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                        selectedCompDetail.status_preliminary === 'rejected'
+                      className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${selectedCompDetail.status_preliminary === 'rejected'
                           ? 'bg-red-inferno text-white border-red-700 font-black'
                           : 'bg-white text-red-600 border-red-300'
-                      }`}
+                        }`}
                     >
                       ✕ Tidak Lolos
                     </button>
@@ -5948,11 +5910,10 @@ export const Admin: React.FC = () => {
                           await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_semifinal: 'pending', status_stage: 'semifinal' });
                           setSelectedCompDetail(prev => prev ? { ...prev, status_semifinal: 'pending', status_stage: 'semifinal' } : null);
                         }}
-                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                          (!selectedCompDetail.status_semifinal || selectedCompDetail.status_semifinal === 'pending')
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${(!selectedCompDetail.status_semifinal || selectedCompDetail.status_semifinal === 'pending')
                             ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
                             : 'bg-white text-gray-600 border-gray-300'
-                        }`}
+                          }`}
                       >
                         ↺ Kondisi Awal Semi Final
                       </button>
@@ -5961,11 +5922,10 @@ export const Admin: React.FC = () => {
                           await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_semifinal: 'passed', status_stage: 'final' });
                           setSelectedCompDetail(prev => prev ? { ...prev, status_semifinal: 'passed', status_stage: 'final' } : null);
                         }}
-                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                          selectedCompDetail.status_semifinal === 'passed'
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${selectedCompDetail.status_semifinal === 'passed'
                             ? 'bg-emerald-600 text-white border-emerald-700 font-black'
                             : 'bg-white text-emerald-700 border-emerald-400'
-                        }`}
+                          }`}
                       >
                         ✓ Lolos Semi Final
                       </button>
@@ -5974,11 +5934,10 @@ export const Admin: React.FC = () => {
                           await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_semifinal: 'rejected', status_stage: 'semifinal' });
                           setSelectedCompDetail(prev => prev ? { ...prev, status_semifinal: 'rejected', status_stage: 'semifinal' } : null);
                         }}
-                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                          selectedCompDetail.status_semifinal === 'rejected'
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${selectedCompDetail.status_semifinal === 'rejected'
                             ? 'bg-red-inferno text-white border-red-700 font-black'
                             : 'bg-white text-red-600 border-red-300'
-                        }`}
+                          }`}
                       >
                         ✕ Tidak Lolos Semi Final
                       </button>
@@ -5998,11 +5957,10 @@ export const Admin: React.FC = () => {
                           await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_final: 'pending', status_stage: 'final' });
                           setSelectedCompDetail(prev => prev ? { ...prev, status_final: 'pending', status_stage: 'final' } : null);
                         }}
-                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                          (!selectedCompDetail.status_final || selectedCompDetail.status_final === 'pending')
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${(!selectedCompDetail.status_final || selectedCompDetail.status_final === 'pending')
                             ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
                             : 'bg-white text-gray-600 border-gray-300'
-                        }`}
+                          }`}
                       >
                         ↺ Kondisi Awal Final
                       </button>
@@ -6011,11 +5969,10 @@ export const Admin: React.FC = () => {
                           await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_final: 'passed', status_stage: 'final' });
                           setSelectedCompDetail(prev => prev ? { ...prev, status_final: 'passed', status_stage: 'final' } : null);
                         }}
-                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                          selectedCompDetail.status_final === 'passed'
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${selectedCompDetail.status_final === 'passed'
                             ? 'bg-purple-700 text-white border-purple-800 font-black'
                             : 'bg-white text-purple-700 border-purple-400'
-                        }`}
+                          }`}
                       >
                         ✓ Lolos Final (Juara)
                       </button>
@@ -6024,11 +5981,10 @@ export const Admin: React.FC = () => {
                           await updateCompetitionRegistrationStatus(selectedCompDetail.id, { status_final: 'rejected', status_stage: 'final' });
                           setSelectedCompDetail(prev => prev ? { ...prev, status_final: 'rejected', status_stage: 'final' } : null);
                         }}
-                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                          selectedCompDetail.status_final === 'rejected'
+                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${selectedCompDetail.status_final === 'rejected'
                             ? 'bg-red-inferno text-white border-red-700 font-black'
                             : 'bg-white text-red-600 border-red-300'
-                        }`}
+                          }`}
                       >
                         ✕ Tidak Lolos Final
                       </button>
