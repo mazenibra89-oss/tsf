@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
+import { TablePagination } from '../components/TablePagination';
 import { Division, ThriftProduct, ThriftVendor, FormQuestionsConfig, QuestionConfig } from '../types';
 
 const SerializedAnswersViewer: React.FC<{ serializedText: string }> = ({ serializedText }) => {
@@ -213,38 +214,6 @@ export const Admin: React.FC = () => {
   const [compFilterFinal, setCompFilterFinal] = useState<'all' | 'pending' | 'passed' | 'rejected'>('all');
   const [compSearchQuery, setCompSearchQuery] = useState('');
 
-  const filteredCompetitionRegistrations = competitionRegistrations.filter(reg => {
-    const compType = reg.competition_type || (reg.category_id?.includes('BCC') ? 'BCC' : 'BPC');
-    const eduCat = reg.education_category || (reg.category_id?.includes('SMA') ? 'SMA/Sederajat' : 'Mahasiswa');
-
-    if (compFilterType !== 'all' && compType !== compFilterType) return false;
-    if (compFilterCategory !== 'all' && eduCat !== compFilterCategory) return false;
-    
-    const prelimStatus = reg.status_preliminary || 'pending';
-    if (compFilterPreliminary !== 'all' && prelimStatus !== compFilterPreliminary) return false;
-
-    const payStatus = reg.payment_semifinal_status || 'none';
-    if (compFilterPayment !== 'all' && payStatus !== compFilterPayment) return false;
-
-    const semiStatus = reg.status_semifinal || 'pending';
-    if (compFilterSemifinal !== 'all' && semiStatus !== compFilterSemifinal) return false;
-
-    const finalStatus = reg.status_final || 'pending';
-    if (compFilterFinal !== 'all' && finalStatus !== compFilterFinal) return false;
-
-    if (compSearchQuery.trim() !== '') {
-      const q = compSearchQuery.toLowerCase();
-      const matchName = reg.team_name?.toLowerCase().includes(q);
-      const matchLeader = reg.leader_name?.toLowerCase().includes(q);
-      const matchInst = reg.institution?.toLowerCase().includes(q);
-      const matchEmail = reg.email?.toLowerCase().includes(q);
-      const matchContact = reg.contact?.toLowerCase().includes(q);
-      if (!matchName && !matchLeader && !matchInst && !matchEmail && !matchContact) return false;
-    }
-
-    return true;
-  });
-
   const SAMPLE_DOC_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="100%" height="100%" fill="%232A4C9E"/><rect x="20" y="20" width="560" height="360" fill="%23FFF" stroke="%23F6BB02" stroke-width="4"/><text x="50%" y="80" font-family="sans-serif" font-size="22" font-weight="bold" fill="%232A4C9E" text-anchor="middle">TDC SUMMIT FEST 2026</text><text x="50%" y="120" font-family="sans-serif" font-size="16" font-weight="bold" fill="%23BD1B1F" text-anchor="middle">BERKAS PRATINJAU PENDAFTARAN KOMPETISI</text><line x1="50" y1="140" x2="550" y2="140" stroke="%232A4C9E" stroke-width="2"/><text x="60" y="180" font-family="sans-serif" font-size="14" fill="%23333">Status Berkas: Terverifikasi Sistem</text><text x="60" y="220" font-family="sans-serif" font-size="14" fill="%23333">Tipe Berkas: Kartu Identitas / KTM / Persyaratan Lomba</text><text x="60" y="260" font-family="sans-serif" font-size="14" fill="%23333">Status Validasi: Sesuai Ketentuan Pedoman</text><rect x="60" y="300" width="480" height="40" fill="%23F6BB02"/><text x="50%" y="325" font-family="sans-serif" font-size="14" font-weight="bold" fill="%232A4C9E" text-anchor="middle">DOC VERIFIED BY TDC COMMITTEE 2026</text></svg>`;
 
   const getParsedLeader = (reg: any) => {
@@ -362,22 +331,60 @@ export const Admin: React.FC = () => {
   const [cleanBlobResult, setCleanBlobResult] = useState<string>('');
   const [autoRefreshHealth, setAutoRefreshHealth] = useState(false);
 
-  // Staff Applications Filtering States
+  // Staff Applications Filtering, Sorting & Pagination States
   const [filterDivision, setFilterDivision] = useState<string>('');
-
   const [filterPriority, setFilterPriority] = useState<string>('');
+  const [searchStaffQuery, setSearchStaffQuery] = useState<string>('');
+  const [staffSortField, setStaffSortField] = useState<'name' | 'date' | 'status' | 'nim'>('date');
+  const [staffSortOrder, setStaffSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [staffPage, setStaffPage] = useState<number>(1);
+  const [staffPageSize, setStaffPageSize] = useState<number>(10);
 
-  // Ambassador Applications Filtering States
+  // Ambassador Applications Filtering, Sorting & Pagination States
   const [filterAmbassadorRole, setFilterAmbassadorRole] = useState<string>('');
   const [filterAmbassadorStatus, setFilterAmbassadorStatus] = useState<string>('');
   const [searchAmbassadorQuery, setSearchAmbassadorQuery] = useState<string>('');
+  const [ambassadorSortField, setAmbassadorSortField] = useState<'name' | 'date' | 'status' | 'role'>('date');
+  const [ambassadorSortOrder, setAmbassadorSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [ambassadorPage, setAmbassadorPage] = useState<number>(1);
+  const [ambassadorPageSize, setAmbassadorPageSize] = useState<number>(10);
   const [selectedAmbassadorApp, setSelectedAmbassadorApp] = useState<any>(null);
 
-  // PE1 Registrations Filtering States
+  // PE1 Registrations Filtering, Sorting & Pagination States
   const [filterPE1Package, setFilterPE1Package] = useState<string>('');
   const [filterPE1Status, setFilterPE1Status] = useState<string>('');
   const [searchPE1Query, setSearchPE1Query] = useState<string>('');
+  const [pe1SortField, setPE1SortField] = useState<'name' | 'date' | 'status' | 'package'>('date');
+  const [pe1SortOrder, setPE1SortOrder] = useState<'asc' | 'desc'>('desc');
+  const [pe1Page, setPE1Page] = useState<number>(1);
+  const [pe1PageSize, setPE1PageSize] = useState<number>(10);
   const [selectedPE1Reg, setSelectedPE1Reg] = useState<any>(null);
+
+  // Competition Registrations Sorting & Pagination States
+  const [compSortField, setCompSortField] = useState<'date' | 'team_name' | 'leader_name' | 'institution' | 'type' | 'status'>('date');
+  const [compSortOrder, setCompSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [compPage, setCompPage] = useState<number>(1);
+  const [compPageSize, setCompPageSize] = useState<number>(10);
+
+  // Vendor Applications Search, Sorting & Pagination States
+  const [vendorSearchQuery, setVendorSearchQuery] = useState<string>('');
+  const [vendorSortField, setVendorSortField] = useState<'name' | 'date' | 'category'>('date');
+  const [vendorSortOrder, setVendorSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [vendorPage, setVendorPage] = useState<number>(1);
+  const [vendorPageSize, setVendorPageSize] = useState<number>(10);
+
+  // User Accounts Search, Sorting & Pagination States
+  const [userSearchQuery, setUserSearchQuery] = useState<string>('');
+  const [userSortField, setUserSortField] = useState<'name' | 'email' | 'date' | 'provider' | 'created_at'>('date');
+  const [userSortOrder, setUserSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [userPage, setUserPage] = useState<number>(1);
+  const [userPageSize, setUserPageSize] = useState<number>(10);
+
+  // Admin CMS Accounts Search, Sorting & Pagination States
+  const [adminAccSearchQuery, setAdminAccSearchQuery] = useState<string>('');
+  const [adminAccSortOrder, setAdminAccSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [adminAccPage, setAdminAccPage] = useState<number>(1);
+  const [adminAccPageSize, setAdminAccPageSize] = useState<number>(10);
 
   // Form Questions Config states
   const [formSubTab, setFormSubTab] = useState<'dataDiri' | 'generalTask' | 'berkas' | 'divisionTasks'>('dataDiri');
@@ -1001,61 +1008,338 @@ export const Admin: React.FC = () => {
     );
   }
 
-  const filteredAmbassadors = (ambassadorApplications || []).filter(app => {
-    if (!app) return false;
-    if (filterAmbassadorRole && app.role_choice !== filterAmbassadorRole) return false;
-    if (filterAmbassadorStatus && app.status !== filterAmbassadorStatus) return false;
-    if (searchAmbassadorQuery) {
-      const q = searchAmbassadorQuery.toLowerCase();
-      const matchName = app.full_name ? app.full_name.toLowerCase().includes(q) : false;
-      const matchEmail = app.email ? app.email.toLowerCase().includes(q) : false;
-      const matchNrp = app.nrp ? app.nrp.toLowerCase().includes(q) : false;
-      const matchSchool = app.school ? app.school.toLowerCase().includes(q) : false;
-      const matchWa = app.whatsapp ? app.whatsapp.toLowerCase().includes(q) : false;
-      if (!matchName && !matchEmail && !matchNrp && !matchSchool && !matchWa) return false;
-    }
-    return true;
-  });
-
-  const filteredPE1Regs = (pe1Registrations || []).filter(reg => {
-    if (!reg) return false;
-    if (filterPE1Package && reg.package_choice !== filterPE1Package) return false;
-    if (filterPE1Status && reg.status !== filterPE1Status) return false;
-    if (searchPE1Query) {
-      const q = searchPE1Query.toLowerCase();
-      const matchName = reg.full_name ? reg.full_name.toLowerCase().includes(q) : false;
-      const matchEmail = reg.email ? reg.email.toLowerCase().includes(q) : false;
-      const matchInst = reg.institution ? reg.institution.toLowerCase().includes(q) : false;
-      const matchCity = reg.city ? reg.city.toLowerCase().includes(q) : false;
-      const matchWa = reg.whatsapp ? reg.whatsapp.toLowerCase().includes(q) : false;
-      if (!matchName && !matchEmail && !matchInst && !matchCity && !matchWa) return false;
-    }
-    return true;
-  });
-
-  const filteredStaffApplications = staffApplications.filter(app => {
-    if (filterDivision) {
-      if (filterPriority === 'p1') {
-        return app.division_priority_1 === filterDivision;
-      } else if (filterPriority === 'p2') {
-        return app.division_priority_2 === filterDivision;
-      } else {
-        return app.division_priority_1 === filterDivision || app.division_priority_2 === filterDivision;
+  // --- 1. AMBASSADOR APPLICATIONS ---
+  const filteredAmbassadors = useMemo(() => {
+    const list = (ambassadorApplications || []).filter(app => {
+      if (!app) return false;
+      if (filterAmbassadorRole && app.role_choice !== filterAmbassadorRole) return false;
+      if (filterAmbassadorStatus && app.status !== filterAmbassadorStatus) return false;
+      if (searchAmbassadorQuery) {
+        const q = searchAmbassadorQuery.toLowerCase();
+        const matchName = app.full_name ? app.full_name.toLowerCase().includes(q) : false;
+        const matchEmail = app.email ? app.email.toLowerCase().includes(q) : false;
+        const matchNrp = app.nrp ? app.nrp.toLowerCase().includes(q) : false;
+        const matchSchool = app.school ? app.school.toLowerCase().includes(q) : false;
+        const matchWa = app.whatsapp ? app.whatsapp.toLowerCase().includes(q) : false;
+        if (!matchName && !matchEmail && !matchNrp && !matchSchool && !matchWa) return false;
       }
-    }
-    return true;
-  });
+      return true;
+    });
 
-  // Sort: Priority 1 matches first, Priority 2 matches second (when viewing all priorities under a division filter)
-  if (filterDivision && !filterPriority) {
-    filteredStaffApplications.sort((a, b) => {
-      const aIsP1 = a.division_priority_1 === filterDivision;
-      const bIsP1 = b.division_priority_1 === filterDivision;
-      if (aIsP1 && !bIsP1) return -1;
-      if (!aIsP1 && bIsP1) return 1;
+    list.sort((a, b) => {
+      let valA: any = '';
+      let valB: any = '';
+      if (ambassadorSortField === 'name') {
+        valA = a.full_name || '';
+        valB = b.full_name || '';
+      } else if (ambassadorSortField === 'role') {
+        valA = a.role_choice || '';
+        valB = b.role_choice || '';
+      } else if (ambassadorSortField === 'status') {
+        valA = a.status || '';
+        valB = b.status || '';
+      } else {
+        valA = new Date(a.submitted_at || 0).getTime();
+        valB = new Date(b.submitted_at || 0).getTime();
+      }
+
+      if (valA < valB) return ambassadorSortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return ambassadorSortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-  }
+
+    return list;
+  }, [ambassadorApplications, filterAmbassadorRole, filterAmbassadorStatus, searchAmbassadorQuery, ambassadorSortField, ambassadorSortOrder]);
+
+  const paginatedAmbassadors = useMemo(() => {
+    const start = (ambassadorPage - 1) * ambassadorPageSize;
+    return filteredAmbassadors.slice(start, start + ambassadorPageSize);
+  }, [filteredAmbassadors, ambassadorPage, ambassadorPageSize]);
+
+  // --- 2. PE1 REGISTRATIONS ---
+  const filteredPE1Regs = useMemo(() => {
+    const list = (pe1Registrations || []).filter(reg => {
+      if (!reg) return false;
+      if (filterPE1Package && reg.package_choice !== filterPE1Package) return false;
+      if (filterPE1Status && reg.status !== filterPE1Status) return false;
+      if (searchPE1Query) {
+        const q = searchPE1Query.toLowerCase();
+        const matchName = reg.full_name ? reg.full_name.toLowerCase().includes(q) : false;
+        const matchEmail = reg.email ? reg.email.toLowerCase().includes(q) : false;
+        const matchInst = reg.institution ? reg.institution.toLowerCase().includes(q) : false;
+        const matchCity = reg.city ? reg.city.toLowerCase().includes(q) : false;
+        const matchWa = reg.whatsapp ? reg.whatsapp.toLowerCase().includes(q) : false;
+        if (!matchName && !matchEmail && !matchInst && !matchCity && !matchWa) return false;
+      }
+      return true;
+    });
+
+    list.sort((a, b) => {
+      let valA: any = '';
+      let valB: any = '';
+      if (pe1SortField === 'name') {
+        valA = a.full_name || '';
+        valB = b.full_name || '';
+      } else if (pe1SortField === 'package') {
+        valA = a.package_choice || '';
+        valB = b.package_choice || '';
+      } else if (pe1SortField === 'status') {
+        valA = a.status || '';
+        valB = b.status || '';
+      } else {
+        valA = new Date(a.submitted_at || 0).getTime();
+        valB = new Date(b.submitted_at || 0).getTime();
+      }
+
+      if (valA < valB) return pe1SortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return pe1SortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [pe1Registrations, filterPE1Package, filterPE1Status, searchPE1Query, pe1SortField, pe1SortOrder]);
+
+  const paginatedPE1Regs = useMemo(() => {
+    const start = (pe1Page - 1) * pe1PageSize;
+    return filteredPE1Regs.slice(start, start + pe1PageSize);
+  }, [filteredPE1Regs, pe1Page, pe1PageSize]);
+
+  // --- 3. STAFF APPLICATIONS ---
+  const filteredStaffApplications = useMemo(() => {
+    const list = staffApplications.filter(app => {
+      if (filterDivision) {
+        if (filterPriority === 'p1') {
+          if (app.division_priority_1 !== filterDivision) return false;
+        } else if (filterPriority === 'p2') {
+          if (app.division_priority_2 !== filterDivision) return false;
+        } else {
+          if (app.division_priority_1 !== filterDivision && app.division_priority_2 !== filterDivision) return false;
+        }
+      }
+
+      if (searchStaffQuery) {
+        const q = searchStaffQuery.toLowerCase();
+        const matchName = app.full_name?.toLowerCase().includes(q);
+        const matchNim = app.nim?.toLowerCase().includes(q);
+        const matchEmail = app.email?.toLowerCase().includes(q);
+        const matchPhone = app.phone?.toLowerCase().includes(q);
+        const matchDept = app.department?.toLowerCase().includes(q) || app.major?.toLowerCase().includes(q);
+        if (!matchName && !matchNim && !matchEmail && !matchPhone && !matchDept) return false;
+      }
+
+      return true;
+    });
+
+    list.sort((a, b) => {
+      // If filtering by division without specific priority, prioritize p1 over p2
+      if (filterDivision && !filterPriority && staffSortField === 'date') {
+        const aIsP1 = a.division_priority_1 === filterDivision;
+        const bIsP1 = b.division_priority_1 === filterDivision;
+        if (aIsP1 && !bIsP1) return -1;
+        if (!aIsP1 && bIsP1) return 1;
+      }
+
+      let valA: any = '';
+      let valB: any = '';
+      if (staffSortField === 'name') {
+        valA = a.full_name || '';
+        valB = b.full_name || '';
+      } else if (staffSortField === 'nim') {
+        valA = a.nim || '';
+        valB = b.nim || '';
+      } else if (staffSortField === 'status') {
+        valA = a.status || '';
+        valB = b.status || '';
+      } else {
+        valA = new Date(a.submitted_at || 0).getTime();
+        valB = new Date(b.submitted_at || 0).getTime();
+      }
+
+      if (valA < valB) return staffSortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return staffSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [staffApplications, filterDivision, filterPriority, searchStaffQuery, staffSortField, staffSortOrder]);
+
+  const paginatedStaffApplications = useMemo(() => {
+    const start = (staffPage - 1) * staffPageSize;
+    return filteredStaffApplications.slice(start, start + staffPageSize);
+  }, [filteredStaffApplications, staffPage, staffPageSize]);
+
+  // --- 4. COMPETITION REGISTRATIONS ---
+  const filteredCompetitionRegistrations = useMemo(() => {
+    const list = competitionRegistrations.filter(reg => {
+      const compType = reg.competition_type || (reg.category_id?.includes('BCC') ? 'BCC' : 'BPC');
+      const eduCat = reg.education_category || (reg.category_id?.includes('SMA') ? 'SMA/Sederajat' : 'Mahasiswa');
+
+      if (compFilterType !== 'all' && compType !== compFilterType) return false;
+      if (compFilterCategory !== 'all' && eduCat !== compFilterCategory) return false;
+      
+      const prelimStatus = reg.status_preliminary || 'pending';
+      if (compFilterPreliminary !== 'all' && prelimStatus !== compFilterPreliminary) return false;
+
+      const payStatus = reg.payment_semifinal_status || 'none';
+      if (compFilterPayment !== 'all' && payStatus !== compFilterPayment) return false;
+
+      const semiStatus = reg.status_semifinal || 'pending';
+      if (compFilterSemifinal !== 'all' && semiStatus !== compFilterSemifinal) return false;
+
+      const finalStatus = reg.status_final || 'pending';
+      if (compFilterFinal !== 'all' && finalStatus !== compFilterFinal) return false;
+
+      if (compSearchQuery.trim() !== '') {
+        const q = compSearchQuery.toLowerCase();
+        const matchName = reg.team_name?.toLowerCase().includes(q);
+        const matchLeader = reg.leader_name?.toLowerCase().includes(q);
+        const matchInst = reg.institution?.toLowerCase().includes(q);
+        const matchEmail = reg.email?.toLowerCase().includes(q);
+        const matchContact = reg.contact?.toLowerCase().includes(q);
+        if (!matchName && !matchLeader && !matchInst && !matchEmail && !matchContact) return false;
+      }
+
+      return true;
+    });
+
+    list.sort((a, b) => {
+      let valA: any = '';
+      let valB: any = '';
+      if (compSortField === 'team_name') {
+        valA = a.team_name || '';
+        valB = b.team_name || '';
+      } else if (compSortField === 'leader_name') {
+        valA = a.leader_name || '';
+        valB = b.leader_name || '';
+      } else if (compSortField === 'institution') {
+        valA = a.institution || '';
+        valB = b.institution || '';
+      } else if (compSortField === 'type') {
+        valA = a.competition_type || '';
+        valB = b.competition_type || '';
+      } else if (compSortField === 'status') {
+        valA = a.status_stage || a.status_preliminary || '';
+        valB = b.status_stage || b.status_preliminary || '';
+      } else {
+        valA = new Date(a.submitted_at || 0).getTime();
+        valB = new Date(b.submitted_at || 0).getTime();
+      }
+
+      if (valA < valB) return compSortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return compSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [competitionRegistrations, compFilterType, compFilterCategory, compFilterPreliminary, compFilterPayment, compFilterSemifinal, compFilterFinal, compSearchQuery, compSortField, compSortOrder]);
+
+  const paginatedCompetitionRegistrations = useMemo(() => {
+    const start = (compPage - 1) * compPageSize;
+    return filteredCompetitionRegistrations.slice(start, start + compPageSize);
+  }, [filteredCompetitionRegistrations, compPage, compPageSize]);
+
+  // --- 5. VENDOR BOOTH APPLICATIONS ---
+  const filteredVendorApplications = useMemo(() => {
+    const list = vendorApplications.filter(app => {
+      if (!vendorSearchQuery) return true;
+      const q = vendorSearchQuery.toLowerCase();
+      const matchBrand = app.vendor_name?.toLowerCase().includes(q);
+      const matchContact = app.contact?.toLowerCase().includes(q);
+      const matchCat = app.product_category?.toLowerCase().includes(q);
+      const matchDesc = app.description?.toLowerCase().includes(q);
+      return matchBrand || matchContact || matchCat || matchDesc;
+    });
+
+    list.sort((a, b) => {
+      let valA: any = '';
+      let valB: any = '';
+      if (vendorSortField === 'name') {
+        valA = a.vendor_name || '';
+        valB = b.vendor_name || '';
+      } else if (vendorSortField === 'category') {
+        valA = a.product_category || '';
+        valB = b.product_category || '';
+      } else {
+        valA = new Date(a.submitted_at || 0).getTime();
+        valB = new Date(b.submitted_at || 0).getTime();
+      }
+
+      if (valA < valB) return vendorSortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return vendorSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [vendorApplications, vendorSearchQuery, vendorSortField, vendorSortOrder]);
+
+  const paginatedVendorApplications = useMemo(() => {
+    const start = (vendorPage - 1) * vendorPageSize;
+    return filteredVendorApplications.slice(start, start + vendorPageSize);
+  }, [filteredVendorApplications, vendorPage, vendorPageSize]);
+
+  // --- 5. USER ACCOUNTS ---
+  const filteredAdminUsersList = useMemo(() => {
+    const list = adminUsersList.filter(user => {
+      if (!userSearchQuery) return true;
+      const q = userSearchQuery.toLowerCase();
+      const matchId = user.id?.toLowerCase().includes(q);
+      const matchName = user.name?.toLowerCase().includes(q);
+      const matchEmail = user.email?.toLowerCase().includes(q);
+      const matchProv = user.auth_provider?.toLowerCase().includes(q);
+      return matchId || matchName || matchEmail || matchProv;
+    });
+
+    list.sort((a, b) => {
+      let valA: any = '';
+      let valB: any = '';
+      if (userSortField === 'name') {
+        valA = a.name || '';
+        valB = b.name || '';
+      } else if (userSortField === 'email') {
+        valA = a.email || '';
+        valB = b.email || '';
+      } else if (userSortField === 'provider') {
+        valA = a.auth_provider || '';
+        valB = b.auth_provider || '';
+      } else {
+        valA = new Date(a.created_at || 0).getTime();
+        valB = new Date(b.created_at || 0).getTime();
+      }
+
+      if (valA < valB) return userSortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return userSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [adminUsersList, userSearchQuery, userSortField, userSortOrder]);
+
+  const paginatedAdminUsersList = useMemo(() => {
+    const start = (userPage - 1) * userPageSize;
+    return filteredAdminUsersList.slice(start, start + userPageSize);
+  }, [filteredAdminUsersList, userPage, userPageSize]);
+
+  // --- 6. ADMIN CMS ACCOUNTS ---
+  const filteredAdminAccounts = useMemo(() => {
+    const list = adminAccounts.filter(acc => {
+      if (!adminAccSearchQuery) return true;
+      return acc.username.toLowerCase().includes(adminAccSearchQuery.toLowerCase());
+    });
+
+    list.sort((a, b) => {
+      if (a.username.toLowerCase() === 'admin') return -1;
+      if (b.username.toLowerCase() === 'admin') return 1;
+      const res = a.username.localeCompare(b.username);
+      return adminAccSortOrder === 'asc' ? res : -res;
+    });
+
+    return list;
+  }, [adminAccounts, adminAccSearchQuery, adminAccSortOrder]);
+
+  const paginatedAdminAccounts = useMemo(() => {
+    const start = (adminAccPage - 1) * adminAccPageSize;
+    return filteredAdminAccounts.slice(start, start + adminAccPageSize);
+  }, [filteredAdminAccounts, adminAccPage, adminAccPageSize]);
 
   return (
     <div className="min-h-screen bg-ballroom font-sans text-blue-sail flex flex-col lg:flex-row">
@@ -1368,13 +1652,16 @@ export const Admin: React.FC = () => {
             </div>
 
             {/* Filter Controls */}
-            <div className="bg-white p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-wrap items-center gap-4">
+            <div className="bg-white p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-wrap items-center gap-3">
               {/* Role filter */}
               <div className="flex items-center space-x-2">
                 <label className="text-xs font-mono font-bold uppercase text-blue-sail">Peran:</label>
                 <select
                   value={filterAmbassadorRole}
-                  onChange={(e) => setFilterAmbassadorRole(e.target.value)}
+                  onChange={(e) => {
+                    setFilterAmbassadorRole(e.target.value);
+                    setAmbassadorPage(1);
+                  }}
                   className="p-2 border-2 border-blue-sail text-xs font-bold outline-none cursor-pointer"
                 >
                   <option value="">Semua Peran</option>
@@ -1388,7 +1675,10 @@ export const Admin: React.FC = () => {
                 <label className="text-xs font-mono font-bold uppercase text-blue-sail">Status:</label>
                 <select
                   value={filterAmbassadorStatus}
-                  onChange={(e) => setFilterAmbassadorStatus(e.target.value)}
+                  onChange={(e) => {
+                    setFilterAmbassadorStatus(e.target.value);
+                    setAmbassadorPage(1);
+                  }}
                   className="p-2 border-2 border-blue-sail text-xs font-bold outline-none cursor-pointer"
                 >
                   <option value="">Semua Status</option>
@@ -1398,12 +1688,38 @@ export const Admin: React.FC = () => {
                 </select>
               </div>
 
+              {/* Sort By */}
+              <div className="flex items-center space-x-2">
+                <label className="text-xs font-mono font-bold uppercase text-blue-sail">Urutkan:</label>
+                <select
+                  value={ambassadorSortField}
+                  onChange={(e) => setAmbassadorSortField(e.target.value as any)}
+                  className="p-2 border-2 border-blue-sail text-xs font-bold outline-none cursor-pointer"
+                >
+                  <option value="date">Tanggal Daftar</option>
+                  <option value="name">Nama Lengkap</option>
+                  <option value="role">Peran Pilihan</option>
+                  <option value="status">Status</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setAmbassadorSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="p-2 bg-ballroom border-2 border-blue-sail text-xs font-mono font-bold hover:bg-decor transition-all cursor-pointer"
+                  title={`Urutan: ${ambassadorSortOrder === 'asc' ? 'A-Z / Lama ke Baru' : 'Z-A / Terbaru'}`}
+                >
+                  {ambassadorSortOrder === 'asc' ? '▲ ASC' : '▼ DESC'}
+                </button>
+              </div>
+
               {/* Search */}
               <div className="flex-1 min-w-[200px]">
                 <input
                   type="text"
                   value={searchAmbassadorQuery}
-                  onChange={(e) => setSearchAmbassadorQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchAmbassadorQuery(e.target.value);
+                    setAmbassadorPage(1);
+                  }}
                   placeholder="Cari nama, email, NRP/sekolah, WA..."
                   className="w-full p-2 border-2 border-blue-sail text-xs outline-none"
                 />
@@ -1419,7 +1735,7 @@ export const Admin: React.FC = () => {
                 className="bg-blue-sail hover:bg-decor hover:text-blue-sail text-white font-mono font-bold text-xs px-3 py-2 border-2 border-blue-sail flex items-center space-x-1.5 cursor-pointer transition-all shrink-0"
               >
                 <Icon name="RefreshCw" size={14} className={tabLoading ? "animate-spin" : ""} />
-                <span>{tabLoading ? 'Memuat Data...' : 'Sinkronkan Data Server'}</span>
+                <span>{tabLoading ? 'Memuat...' : 'Sinkronkan'}</span>
               </button>
             </div>
 
@@ -1434,89 +1750,125 @@ export const Admin: React.FC = () => {
                 <div className="p-12 text-center text-blue-sail">
                   <Icon name="Award" size={40} className="text-blue-sail/30 mx-auto mb-2" />
                   <p className="text-sm font-semibold">Belum Ada Data Pendaftar Ambassador / Influencer</p>
+                  <p className="text-xs text-blue-sail/60 mt-1">Data tidak ditemukan atau tidak cocok dengan filter pencarian.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs font-sans border-collapse">
-                    <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
-                      <tr>
-                        <th className="p-4">Identitas Pendaftar</th>
-                        <th className="p-4">Peran & Akademik</th>
-                        <th className="p-4">Kontak & Sosmed</th>
-                        <th className="p-4">Berkas & Video</th>
-                        <th className="p-4">Status</th>
-                        <th className="p-4">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y-2 divide-blue-sail/15">
-                      {filteredAmbassadors.map((app) => (
-                        <tr key={app.id} className="hover:bg-gray-50/60">
-                          <td className="p-4 space-y-1">
-                            <p className="font-bold text-blue-sail text-sm">{app.full_name}</p>
-                            <p className="font-mono text-[10px] text-blue-sail/60">{app.email}</p>
-                            <span className="inline-block text-[10px] font-mono text-blue-sail/40">Tgl: {new Date(app.submitted_at).toLocaleDateString('id-ID')}</span>
-                          </td>
-                          <td className="p-4 space-y-1">
-                            <span className={`inline-block font-mono text-[10px] font-bold px-2 py-0.5 border ${
-                              app.role_choice === 'Campus Influencer'
-                                ? 'bg-red-inferno text-white border-blue-sail'
-                                : 'bg-decor text-blue-sail border-blue-sail'
-                            }`}>
-                              {app.role_choice}
-                            </span>
-                            {app.role_choice === 'Campus Influencer' ? (
-                              <p className="text-[11px] font-mono text-blue-sail/80">
-                                NRP: {app.nrp} ({app.department} / {app.faculty})
-                              </p>
-                            ) : (
-                              <p className="text-[11px] font-mono text-blue-sail/80">
-                                {app.grade_class} — {app.school}
-                              </p>
-                            )}
-                          </td>
-                          <td className="p-4 space-y-1">
-                            <a href={`https://${app.whatsapp}`} target="_blank" rel="noreferrer" className="text-emerald-600 hover:underline font-mono text-xs font-bold block">
-                              WA: {app.whatsapp}
-                            </a>
-                            {app.instagram && <p className="text-[10px] text-blue-sail/70">IG: {app.instagram}</p>}
-                            {app.tiktok && <p className="text-[10px] text-blue-sail/70">TT: {app.tiktok}</p>}
-                          </td>
-                          <td className="p-4 space-y-1">
-                            <a href={app.drive_folder_url} target="_blank" rel="noreferrer" className="text-blue-sail hover:underline font-bold text-[11px] flex items-center space-x-1">
-                              <Icon name="ExternalLink" size={12} />
-                              <span>Folder Drive</span>
-                            </a>
-                            <a href={app.reels_video_url} target="_blank" rel="noreferrer" className="text-red-inferno hover:underline font-bold text-[11px] flex items-center space-x-1">
-                              <Icon name="Video" size={12} />
-                              <span>Reels Video</span>
-                            </a>
-                          </td>
-                          <td className="p-4">
-                            <span className={`inline-block font-mono text-[10px] font-bold px-2.5 py-1 uppercase tracking-wider border ${
-                              app.status === 'accepted'
-                                ? 'bg-emerald-100 text-emerald-800 border-emerald-500'
-                                : app.status === 'rejected'
-                                ? 'bg-red-100 text-red-800 border-red-500'
-                                : 'bg-amber-100 text-amber-800 border-amber-500'
-                            }`}>
-                              {app.status === 'accepted' ? 'DITERIMA' : app.status === 'rejected' ? 'DITOLAK' : 'PENDING'}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedAmbassadorApp(app)}
-                              className="bg-blue-sail hover:bg-decor hover:text-blue-sail text-ballroom font-mono text-xs font-bold px-3 py-1.5 border border-blue-sail transition-all flex items-center space-x-1 cursor-pointer"
-                            >
-                              <Icon name="Eye" size={12} />
-                              <span>Detail</span>
-                            </button>
-                          </td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-sans border-collapse">
+                      <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                        <tr>
+                          <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (ambassadorSortField === 'name') setAmbassadorSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setAmbassadorSortField('name'); setAmbassadorSortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Identitas Pendaftar</span>
+                              {ambassadorSortField === 'name' && (ambassadorSortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                          <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (ambassadorSortField === 'role') setAmbassadorSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setAmbassadorSortField('role'); setAmbassadorSortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Peran & Akademik</span>
+                              {ambassadorSortField === 'role' && (ambassadorSortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                          <th className="p-4">Kontak & Sosmed</th>
+                          <th className="p-4">Berkas & Video</th>
+                          <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (ambassadorSortField === 'status') setAmbassadorSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setAmbassadorSortField('status'); setAmbassadorSortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Status</span>
+                              {ambassadorSortField === 'status' && (ambassadorSortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                          <th className="p-4">Aksi</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y-2 divide-blue-sail/15">
+                        {paginatedAmbassadors.map((app) => (
+                          <tr key={app.id} className="hover:bg-gray-50/60">
+                            <td className="p-4 space-y-1">
+                              <p className="font-bold text-blue-sail text-sm">{app.full_name}</p>
+                              <p className="font-mono text-[10px] text-blue-sail/60">{app.email}</p>
+                              <span className="inline-block text-[10px] font-mono text-blue-sail/40">Tgl: {new Date(app.submitted_at).toLocaleDateString('id-ID')}</span>
+                            </td>
+                            <td className="p-4 space-y-1">
+                              <span className={`inline-block font-mono text-[10px] font-bold px-2 py-0.5 border ${
+                                app.role_choice === 'Campus Influencer'
+                                  ? 'bg-red-inferno text-white border-blue-sail'
+                                  : 'bg-decor text-blue-sail border-blue-sail'
+                              }`}>
+                                {app.role_choice}
+                              </span>
+                              {app.role_choice === 'Campus Influencer' ? (
+                                <p className="text-[11px] font-mono text-blue-sail/80">
+                                  NRP: {app.nrp} ({app.department} / {app.faculty})
+                                </p>
+                              ) : (
+                                <p className="text-[11px] font-mono text-blue-sail/80">
+                                  {app.grade_class} — {app.school}
+                                </p>
+                              )}
+                            </td>
+                            <td className="p-4 space-y-1">
+                              <a href={`https://${app.whatsapp}`} target="_blank" rel="noreferrer" className="text-emerald-600 hover:underline font-mono text-xs font-bold block">
+                                WA: {app.whatsapp}
+                              </a>
+                              {app.instagram && <p className="text-[10px] text-blue-sail/70">IG: {app.instagram}</p>}
+                              {app.tiktok && <p className="text-[10px] text-blue-sail/70">TT: {app.tiktok}</p>}
+                            </td>
+                            <td className="p-4 space-y-1">
+                              <a href={app.drive_folder_url} target="_blank" rel="noreferrer" className="text-blue-sail hover:underline font-bold text-[11px] flex items-center space-x-1">
+                                <Icon name="ExternalLink" size={12} />
+                                <span>Folder Drive</span>
+                              </a>
+                              <a href={app.reels_video_url} target="_blank" rel="noreferrer" className="text-red-inferno hover:underline font-bold text-[11px] flex items-center space-x-1">
+                                <Icon name="Video" size={12} />
+                                <span>Reels Video</span>
+                              </a>
+                            </td>
+                            <td className="p-4">
+                              <span className={`inline-block font-mono text-[10px] font-bold px-2.5 py-1 uppercase tracking-wider border ${
+                                app.status === 'accepted'
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-500'
+                                  : app.status === 'rejected'
+                                  ? 'bg-red-100 text-red-800 border-red-500'
+                                  : 'bg-amber-100 text-amber-800 border-amber-500'
+                              }`}>
+                                {app.status === 'accepted' ? 'DITERIMA' : app.status === 'rejected' ? 'DITOLAK' : 'PENDING'}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedAmbassadorApp(app)}
+                                className="bg-blue-sail hover:bg-decor hover:text-blue-sail text-ballroom font-mono text-xs font-bold px-3 py-1.5 border border-blue-sail transition-all flex items-center space-x-1 cursor-pointer"
+                              >
+                                <Icon name="Eye" size={12} />
+                                <span>Detail</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <TablePagination
+                    currentPage={ambassadorPage}
+                    totalPages={Math.ceil(filteredAmbassadors.length / ambassadorPageSize) || 1}
+                    totalItems={filteredAmbassadors.length}
+                    pageSize={ambassadorPageSize}
+                    onPageChange={setAmbassadorPage}
+                    onPageSizeChange={setAmbassadorPageSize}
+                  />
+                </>
               )}
             </div>
           </div>
@@ -1592,12 +1944,15 @@ export const Admin: React.FC = () => {
             </div>
 
             {/* Filter Controls Bar */}
-            <div className="bg-white p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-wrap items-center gap-4">
-              <div className="w-full md:w-48 space-y-1">
+            <div className="bg-white p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-wrap items-center gap-3">
+              <div className="w-full md:w-44 space-y-1">
                 <label className="block text-[10px] font-mono font-bold uppercase text-blue-sail/70">FILTER PAKET</label>
                 <select
                   value={filterPE1Package}
-                  onChange={(e) => setFilterPE1Package(e.target.value)}
+                  onChange={(e) => {
+                    setFilterPE1Package(e.target.value);
+                    setPE1Page(1);
+                  }}
                   className="w-full bg-white border-2 border-blue-sail text-xs font-sans p-2 outline-none"
                 >
                   <option value="">Semua Paket</option>
@@ -1608,11 +1963,14 @@ export const Admin: React.FC = () => {
                 </select>
               </div>
 
-              <div className="w-full md:w-48 space-y-1">
+              <div className="w-full md:w-44 space-y-1">
                 <label className="block text-[10px] font-mono font-bold uppercase text-blue-sail/70">STATUS VERIFIKASI</label>
                 <select
                   value={filterPE1Status}
-                  onChange={(e) => setFilterPE1Status(e.target.value)}
+                  onChange={(e) => {
+                    setFilterPE1Status(e.target.value);
+                    setPE1Page(1);
+                  }}
                   className="w-full bg-white border-2 border-blue-sail text-xs font-sans p-2 outline-none"
                 >
                   <option value="">Semua Status</option>
@@ -1622,14 +1980,42 @@ export const Admin: React.FC = () => {
                 </select>
               </div>
 
-              <div className="flex-1 space-y-1">
+              {/* Sort By */}
+              <div className="w-full md:w-56 space-y-1">
+                <label className="block text-[10px] font-mono font-bold uppercase text-blue-sail/70">URUTKAN DATA</label>
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={pe1SortField}
+                    onChange={(e) => setPE1SortField(e.target.value as any)}
+                    className="flex-1 bg-white border-2 border-blue-sail text-xs font-sans p-2 outline-none"
+                  >
+                    <option value="date">Tanggal Daftar</option>
+                    <option value="name">Nama Pendaftar</option>
+                    <option value="package">Pilihan Paket</option>
+                    <option value="status">Status Verifikasi</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setPE1SortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    className="p-2 bg-ballroom border-2 border-blue-sail text-xs font-mono font-bold hover:bg-decor transition-all cursor-pointer shrink-0"
+                    title={`Urutan: ${pe1SortOrder === 'asc' ? 'A-Z / Terlama' : 'Z-A / Terbaru'}`}
+                  >
+                    {pe1SortOrder === 'asc' ? '▲ ASC' : '▼ DESC'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-[200px] space-y-1">
                 <label className="block text-[10px] font-mono font-bold uppercase text-blue-sail/70">CARI PENDAFTAR</label>
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Cari nama, email, instansi, kota..."
                     value={searchPE1Query}
-                    onChange={(e) => setSearchPE1Query(e.target.value)}
+                    onChange={(e) => {
+                      setSearchPE1Query(e.target.value);
+                      setPE1Page(1);
+                    }}
                     className="w-full bg-white border-2 border-blue-sail text-xs font-sans p-2 pl-8 outline-none"
                   />
                   <Icon name="Search" size={14} className="absolute left-2.5 top-2.5 text-blue-sail/50" />
@@ -1648,90 +2034,125 @@ export const Admin: React.FC = () => {
                 <div className="p-12 text-center text-blue-sail/60">
                   <Icon name="Inbox" size={40} className="mx-auto mb-3 text-blue-sail/30" />
                   <p className="text-sm font-semibold">Belum Ada Data Pendaftar PE1</p>
-                  <p className="text-xs text-blue-sail/40 mt-1">Data pendaftar webinar CEO For A Day akan muncul di sini.</p>
+                  <p className="text-xs text-blue-sail/40 mt-1">Data tidak ditemukan atau tidak sesuai filter pencarian.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-blue-sail text-ballroom font-mono text-[10px] uppercase tracking-wider border-b-2 border-blue-sail">
-                        <th className="p-3">No</th>
-                        <th className="p-3">Pendaftar</th>
-                        <th className="p-3">Status / Instansi</th>
-                        <th className="p-3">Paket</th>
-                        <th className="p-3">Metode Bayar</th>
-                        <th className="p-3">Status Verifikasi</th>
-                        <th className="p-3 text-right">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-blue-sail/10 font-sans text-xs">
-                      {filteredPE1Regs.map((reg, idx) => (
-                        <tr key={reg.id} className="hover:bg-blue-sail/5 transition-colors">
-                          <td className="p-3 font-mono font-bold">{idx + 1}</td>
-                          <td className="p-3">
-                            <p className="font-bold text-blue-sail">{reg.full_name}</p>
-                            <p className="text-[11px] text-blue-sail/60">{reg.email}</p>
-                            <p className="text-[11px] text-blue-sail/60 font-mono">WA: {reg.whatsapp}</p>
-                          </td>
-                          <td className="p-3">
-                            <span className="inline-block bg-blue-sail/10 text-blue-sail font-mono text-[10px] font-bold px-2 py-0.5 uppercase mb-1">
-                              {reg.status_current}
-                            </span>
-                            <p className="text-xs font-semibold">{reg.institution}</p>
-                            {reg.major && <p className="text-[11px] text-blue-sail/60">{reg.major}</p>}
-                            <p className="text-[10px] text-blue-sail/50">📍 {reg.city}</p>
-                          </td>
-                          <td className="p-3">
-                            <span className={`inline-block font-mono text-[10px] font-bold px-2 py-1 border border-blue-sail uppercase ${
-                              reg.package_choice === 'Aspiring CEO'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : reg.package_choice === 'Rising CEO'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : reg.package_choice === 'Strategic CEO'
-                                    ? 'bg-purple-100 text-purple-800'
-                                    : 'bg-amber-100 text-amber-800'
-                            }`}>
-                              {reg.package_choice}
-                            </span>
-                          </td>
-                          <td className="p-3 font-mono">
-                            {reg.payment_method ? (
-                              <span className="font-bold">{reg.payment_method}</span>
-                            ) : (
-                              <span className="text-blue-sail/40 italic">Free Task</span>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            <select
-                              value={reg.status}
-                              onChange={(e) => updatePE1RegistrationStatus(reg.id, e.target.value as any)}
-                              className={`font-mono text-[11px] font-bold px-2 py-1 border border-blue-sail outline-none uppercase cursor-pointer ${
-                                reg.status === 'confirmed'
-                                  ? 'bg-emerald-500 text-white'
-                                  : reg.status === 'rejected'
-                                    ? 'bg-red-600 text-white'
-                                    : 'bg-amber-400 text-blue-sail'
-                              }`}
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="confirmed">Confirmed</option>
-                              <option value="rejected">Rejected</option>
-                            </select>
-                          </td>
-                          <td className="p-3 text-right">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedPE1Reg(reg)}
-                              className="bg-blue-sail hover:bg-barbera text-ballroom font-mono text-[10px] font-bold px-3 py-1.5 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] uppercase tracking-wider cursor-pointer"
-                            >
-                              Detail
-                            </button>
-                          </td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-blue-sail text-ballroom font-mono text-[10px] uppercase tracking-wider border-b-2 border-blue-sail">
+                          <th className="p-3">No</th>
+                          <th className="p-3 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (pe1SortField === 'name') setPE1SortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setPE1SortField('name'); setPE1SortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Pendaftar</span>
+                              {pe1SortField === 'name' && (pe1SortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                          <th className="p-3">Status / Instansi</th>
+                          <th className="p-3 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (pe1SortField === 'package') setPE1SortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setPE1SortField('package'); setPE1SortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Paket</span>
+                              {pe1SortField === 'package' && (pe1SortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                          <th className="p-3">Metode Bayar</th>
+                          <th className="p-3 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (pe1SortField === 'status') setPE1SortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setPE1SortField('status'); setPE1SortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Status Verifikasi</span>
+                              {pe1SortField === 'status' && (pe1SortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                          <th className="p-3 text-right">Aksi</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-blue-sail/10 font-sans text-xs">
+                        {paginatedPE1Regs.map((reg, idx) => (
+                          <tr key={reg.id} className="hover:bg-blue-sail/5 transition-colors">
+                            <td className="p-3 font-mono font-bold">{(pe1Page - 1) * pe1PageSize + idx + 1}</td>
+                            <td className="p-3">
+                              <p className="font-bold text-blue-sail">{reg.full_name}</p>
+                              <p className="text-[11px] text-blue-sail/60">{reg.email}</p>
+                              <p className="text-[11px] text-blue-sail/60 font-mono">WA: {reg.whatsapp}</p>
+                            </td>
+                            <td className="p-3">
+                              <span className="inline-block bg-blue-sail/10 text-blue-sail font-mono text-[10px] font-bold px-2 py-0.5 uppercase mb-1">
+                                {reg.status_current}
+                              </span>
+                              <p className="text-xs font-semibold">{reg.institution}</p>
+                              {reg.major && <p className="text-[11px] text-blue-sail/60">{reg.major}</p>}
+                              <p className="text-[10px] text-blue-sail/50">📍 {reg.city}</p>
+                            </td>
+                            <td className="p-3">
+                              <span className={`inline-block font-mono text-[10px] font-bold px-2 py-1 border border-blue-sail uppercase ${
+                                reg.package_choice === 'Aspiring CEO'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : reg.package_choice === 'Rising CEO'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : reg.package_choice === 'Strategic CEO'
+                                      ? 'bg-purple-100 text-purple-800'
+                                      : 'bg-amber-100 text-amber-800'
+                              }`}>
+                                {reg.package_choice}
+                              </span>
+                            </td>
+                            <td className="p-3 font-mono">
+                              {reg.payment_method ? (
+                                <span className="font-bold">{reg.payment_method}</span>
+                              ) : (
+                                <span className="text-blue-sail/40 italic">Free Task</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <select
+                                value={reg.status}
+                                onChange={(e) => updatePE1RegistrationStatus(reg.id, e.target.value as any)}
+                                className={`font-mono text-[11px] font-bold px-2 py-1 border border-blue-sail outline-none uppercase cursor-pointer ${
+                                  reg.status === 'confirmed'
+                                    ? 'bg-emerald-500 text-white'
+                                    : reg.status === 'rejected'
+                                      ? 'bg-red-600 text-white'
+                                      : 'bg-amber-400 text-blue-sail'
+                                }`}
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="rejected">Rejected</option>
+                              </select>
+                            </td>
+                            <td className="p-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedPE1Reg(reg)}
+                                className="bg-blue-sail hover:bg-barbera text-ballroom font-mono text-[10px] font-bold px-3 py-1.5 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] uppercase tracking-wider cursor-pointer"
+                              >
+                                Detail
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <TablePagination
+                    currentPage={pe1Page}
+                    totalPages={Math.ceil(filteredPE1Regs.length / pe1PageSize) || 1}
+                    totalItems={filteredPE1Regs.length}
+                    pageSize={pe1PageSize}
+                    onPageChange={setPE1Page}
+                    onPageSizeChange={setPE1PageSize}
+                  />
+                </>
               )}
             </div>
           </div>
@@ -1772,8 +2193,8 @@ export const Admin: React.FC = () => {
 
             {/* Filter Bar */}
             {staffApplications.length > 0 && (
-              <div className="bg-ballroom p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-col md:flex-row md:items-end gap-4 text-blue-sail">
-                <div className="flex-1 space-y-1.5">
+              <div className="bg-ballroom p-4 border-4 border-blue-sail shadow-[4px_4px_0_0_#2A4C9E] flex flex-col md:flex-row md:items-end gap-3 text-blue-sail">
+                <div className="flex-1 space-y-1.5 min-w-[200px]">
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-sail/70">
                     Filter Divisi / Subdivisi:
                   </label>
@@ -1784,8 +2205,9 @@ export const Admin: React.FC = () => {
                       if (!e.target.value) {
                         setFilterPriority('');
                       }
+                      setStaffPage(1);
                     }}
-                    className="w-full px-3 py-2.5 text-xs bg-white border-2 border-blue-sail rounded-none font-semibold outline-none focus:shadow-[2px_2px_0_0_#2A4C9E] cursor-pointer"
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none font-semibold outline-none focus:shadow-[2px_2px_0_0_#2A4C9E] cursor-pointer"
                   >
                     <option value="">-- Tampilkan Semua Divisi / Subdivisi --</option>
                     {divisions.map(d => {
@@ -1813,34 +2235,86 @@ export const Admin: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="w-full md:w-64 space-y-1.5">
+                <div className="w-full md:w-52 space-y-1.5">
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-sail/70">
                     Prioritas Pilihan:
                   </label>
                   <select
                     value={filterPriority}
-                    onChange={e => setFilterPriority(e.target.value)}
+                    onChange={e => {
+                      setFilterPriority(e.target.value);
+                      setStaffPage(1);
+                    }}
                     disabled={!filterDivision}
-                    className="w-full px-3 py-2.5 text-xs bg-white border-2 border-blue-sail rounded-none font-semibold outline-none focus:shadow-[2px_2px_0_0_#2A4C9E] cursor-pointer disabled:bg-gray-100 disabled:border-blue-sail/20 disabled:text-blue-sail/30 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none font-semibold outline-none focus:shadow-[2px_2px_0_0_#2A4C9E] cursor-pointer disabled:bg-gray-100 disabled:border-blue-sail/20 disabled:text-blue-sail/30 disabled:cursor-not-allowed"
                   >
-                    <option value="">Tampilkan Semua (Pilihan 1 & 2)</option>
+                    <option value="">Semua (Pilihan 1 & 2)</option>
                     <option value="p1">Hanya Pilihan 1</option>
                     <option value="p2">Hanya Pilihan 2</option>
                   </select>
                 </div>
 
+                {/* Sort By */}
+                <div className="w-full md:w-56 space-y-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-sail/70">
+                    Urutkan Pelamar:
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value={staffSortField}
+                      onChange={e => setStaffSortField(e.target.value as any)}
+                      className="flex-1 px-3 py-2 text-xs bg-white border-2 border-blue-sail rounded-none font-semibold outline-none cursor-pointer"
+                    >
+                      <option value="date">Tanggal Submit</option>
+                      <option value="name">Nama Pelamar</option>
+                      <option value="nim">NRP Pelamar</option>
+                      <option value="status">Status Seleksi</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setStaffSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                      className="p-2 bg-ballroom border-2 border-blue-sail text-xs font-mono font-bold hover:bg-decor transition-all cursor-pointer shrink-0"
+                      title={`Urutan: ${staffSortOrder === 'asc' ? 'A-Z / Terlama' : 'Z-A / Terbaru'}`}
+                    >
+                      {staffSortOrder === 'asc' ? '▲ ASC' : '▼ DESC'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Search */}
+                <div className="flex-1 min-w-[200px] space-y-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-sail/70">
+                    Cari Pelamar:
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Cari nama, NRP, jurusan, email..."
+                      value={searchStaffQuery}
+                      onChange={e => {
+                        setSearchStaffQuery(e.target.value);
+                        setStaffPage(1);
+                      }}
+                      className="w-full px-3 py-2 pl-8 text-xs bg-white border-2 border-blue-sail rounded-none outline-none"
+                    />
+                    <Icon name="Search" size={14} className="absolute left-2.5 top-2.5 text-blue-sail/50" />
+                  </div>
+                </div>
+
                 {/* Reset Button */}
-                {(filterDivision || filterPriority) && (
+                {(filterDivision || filterPriority || searchStaffQuery) && (
                   <button
                     type="button"
                     onClick={() => {
                       setFilterDivision('');
                       setFilterPriority('');
+                      setSearchStaffQuery('');
+                      setStaffPage(1);
                     }}
-                    className="bg-red-inferno hover:bg-barbera text-white font-mono font-bold text-[10px] uppercase px-4 py-2.5 rounded-none border border-red-inferno tracking-wide flex items-center justify-center space-x-1.5 transition-all shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer h-[38px] shrink-0"
+                    className="bg-red-inferno hover:bg-barbera text-white font-mono font-bold text-[10px] uppercase px-4 py-2 rounded-none border border-red-inferno tracking-wide flex items-center justify-center space-x-1.5 transition-all shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer h-[38px] shrink-0"
                   >
                     <Icon name="XCircle" size={14} />
-                    <span>Reset Filter</span>
+                    <span>Reset</span>
                   </button>
                 )}
               </div>
@@ -1869,6 +2343,8 @@ export const Admin: React.FC = () => {
                     onClick={() => {
                       setFilterDivision('');
                       setFilterPriority('');
+                      setSearchStaffQuery('');
+                      setStaffPage(1);
                     }}
                     className="mt-4 bg-blue-sail hover:bg-red-inferno text-white font-mono font-bold text-[10px] uppercase px-4 py-2 rounded-none border border-blue-sail transition-all shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer inline-flex items-center space-x-1"
                   >
@@ -1877,83 +2353,110 @@ export const Admin: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs font-sans border-collapse">
-                    <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
-                      <tr>
-                        <th className="p-4">Pelamar</th>
-                        <th className="p-4">Akademik & Fakultas</th>
-                        <th className="p-4">Prioritas 1 & 2</th>
-                        <th className="p-4">Alasan / Motivasi</th>
-                        <th className="p-4">CV File</th>
-                        <th className="p-4">Status Seleksi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y-2 divide-blue-sail/15">
-                      {filteredStaffApplications.map(app => (
-                        <tr key={app.id} className="hover:bg-gray-50/50">
-                          <td className="p-4 space-y-1 max-w-[180px]">
-                            <p className="font-bold text-blue-sail uppercase">{app.full_name}</p>
-                            <p className="font-mono text-[10px] text-blue-sail/50 font-semibold">NRP: {app.nim}</p>
-                            <p className="font-mono text-[10px] text-blue-sail/50">WA: {app.phone}</p>
-                            <p className="font-mono text-[10px] text-blue-sail/50">{app.email}</p>
-                            <button
-                              onClick={() => setSelectedApplicant(app)}
-                              className="mt-2 w-full bg-blue-sail hover:bg-red-inferno text-white font-mono font-bold text-[10px] uppercase py-1 px-2 border border-blue-sail hover:border-red-inferno transition-all flex items-center justify-center space-x-1 cursor-pointer"
-                            >
-                              <Icon name="Eye" size={12} />
-                              <span>Lihat Jawaban</span>
-                            </button>
-                          </td>
-                          <td className="p-4 space-y-0.5">
-                            <p className="font-bold text-red-inferno text-xs uppercase">{app.faculty || 'FSAD'}</p>
-                            <p className="font-semibold text-blue-sail">{app.department || app.major}</p>
-                          </td>
-                          <td className="p-4 space-y-1">
-                            <p className="text-red-inferno font-semibold">P1: {app.division_priority_1}</p>
-                            <p className="text-blue-sail/60 font-semibold">P2: {app.division_priority_2}</p>
-                          </td>
-                          <td className="p-4 max-w-[240px]">
-                            <p className="line-clamp-3 leading-relaxed text-blue-sail/80 italic font-medium">"{app.motivation}"</p>
-                          </td>
-                          <td className="p-4">
-                            {(app.cv_link || app.file_url) ? (
-                              <a
-                                href={app.cv_link || app.file_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-red-inferno hover:text-barbera font-mono font-bold flex items-center space-x-1"
-                              >
-                                <Icon name="FileText" size={14} />
-                                <span>CV / Link</span>
-                              </a>
-                            ) : (
-                              <span className="text-blue-sail/40 font-mono">None</span>
-                            )}
-                          </td>
-                          <td className="p-4 space-y-2">
-                            {/* Dropdown status changer */}
-                            <select
-                              value={app.status}
-                              onChange={e => updateStaffApplicationStatus(app.id, e.target.value as any)}
-                              className={`px-2.5 py-1.5 font-bold uppercase rounded-none border-2 text-[10px] outline-none font-mono ${
-                                app.status === 'accepted' 
-                                  ? 'bg-green-50 border-green-400 text-green-700 focus:shadow-[2px_2px_0_0_#15803d]' 
-                                  : app.status === 'rejected'
-                                    ? 'bg-red-50 border-red-400 text-red-600 focus:shadow-[2px_2px_0_0_#b91c1c]'
-                                    : 'bg-yellow-50 border-yellow-400 text-yellow-700 focus:shadow-[2px_2px_0_0_#ca8a04]'
-                              }`}
-                            >
-                              <option value="pending">PENDING / WAITLIST</option>
-                              <option value="accepted">ACCEPTED / LOLOS</option>
-                              <option value="rejected">REJECTED / GAGAL</option>
-                            </select>
-                          </td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-sans border-collapse">
+                      <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                        <tr>
+                          <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (staffSortField === 'name') setStaffSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setStaffSortField('name'); setStaffSortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Pelamar</span>
+                              {staffSortField === 'name' && (staffSortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                          <th className="p-4">Akademik & Fakultas</th>
+                          <th className="p-4">Prioritas 1 & 2</th>
+                          <th className="p-4">Alasan / Motivasi</th>
+                          <th className="p-4">CV File</th>
+                          <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (staffSortField === 'status') setStaffSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setStaffSortField('status'); setStaffSortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Status Seleksi</span>
+                              {staffSortField === 'status' && (staffSortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y-2 divide-blue-sail/15">
+                        {paginatedStaffApplications.map(app => (
+                          <tr key={app.id} className="hover:bg-gray-50/50">
+                            <td className="p-4 space-y-1 max-w-[180px]">
+                              <p className="font-bold text-blue-sail uppercase">{app.full_name}</p>
+                              <p className="font-mono text-[10px] text-blue-sail/50 font-semibold">NRP: {app.nim}</p>
+                              <p className="font-mono text-[10px] text-blue-sail/50">WA: {app.phone}</p>
+                              <p className="font-mono text-[10px] text-blue-sail/50">{app.email}</p>
+                              <button
+                                onClick={() => setSelectedApplicant(app)}
+                                className="mt-2 w-full bg-blue-sail hover:bg-red-inferno text-white font-mono font-bold text-[10px] uppercase py-1 px-2 border border-blue-sail hover:border-red-inferno transition-all flex items-center justify-center space-x-1 cursor-pointer"
+                              >
+                                <Icon name="Eye" size={12} />
+                                <span>Lihat Jawaban</span>
+                              </button>
+                            </td>
+                            <td className="p-4 space-y-0.5">
+                              <p className="font-bold text-red-inferno text-xs uppercase">{app.faculty || 'FSAD'}</p>
+                              <p className="font-semibold text-blue-sail">{app.department || app.major}</p>
+                            </td>
+                            <td className="p-4 space-y-1">
+                              <p className="text-red-inferno font-semibold">P1: {app.division_priority_1}</p>
+                              <p className="text-blue-sail/60 font-semibold">P2: {app.division_priority_2}</p>
+                            </td>
+                            <td className="p-4 max-w-[240px]">
+                              <p className="line-clamp-3 leading-relaxed text-blue-sail/80 italic font-medium">"{app.motivation}"</p>
+                            </td>
+                            <td className="p-4">
+                              {(app.cv_link || app.file_url) ? (
+                                <a
+                                  href={app.cv_link || app.file_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-red-inferno hover:text-barbera font-mono font-bold flex items-center space-x-1"
+                                >
+                                  <Icon name="FileText" size={14} />
+                                  <span>CV / Link</span>
+                                </a>
+                              ) : (
+                                <span className="text-blue-sail/40 font-mono">None</span>
+                              )}
+                            </td>
+                            <td className="p-4 space-y-2">
+                              {/* Dropdown status changer */}
+                              <select
+                                value={app.status}
+                                onChange={e => updateStaffApplicationStatus(app.id, e.target.value as any)}
+                                className={`px-2.5 py-1.5 font-bold uppercase rounded-none border-2 text-[10px] outline-none font-mono ${
+                                  app.status === 'accepted' 
+                                    ? 'bg-green-50 border-green-400 text-green-700 focus:shadow-[2px_2px_0_0_#15803d]' 
+                                    : app.status === 'rejected'
+                                      ? 'bg-red-50 border-red-400 text-red-600 focus:shadow-[2px_2px_0_0_#b91c1c]'
+                                      : 'bg-yellow-50 border-yellow-400 text-yellow-700 focus:shadow-[2px_2px_0_0_#ca8a04]'
+                                }`}
+                              >
+                                <option value="pending">PENDING / WAITLIST</option>
+                                <option value="accepted">ACCEPTED / LOLOS</option>
+                                <option value="rejected">REJECTED / GAGAL</option>
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <TablePagination
+                    currentPage={staffPage}
+                    totalPages={Math.ceil(filteredStaffApplications.length / staffPageSize) || 1}
+                    totalItems={filteredStaffApplications.length}
+                    pageSize={staffPageSize}
+                    onPageChange={setStaffPage}
+                    onPageSizeChange={setStaffPageSize}
+                  />
+                </>
               )}
             </div>
           </div>
@@ -2042,13 +2545,16 @@ export const Admin: React.FC = () => {
                 </div>
 
                 {/* Dropdown Filters Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-2.5 text-xs">
                   {/* Cabang Lomba */}
                   <div className="space-y-1">
                     <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Cabang Lomba</label>
                     <select
                       value={compFilterType}
-                      onChange={e => setCompFilterType(e.target.value as any)}
+                      onChange={e => {
+                        setCompFilterType(e.target.value as any);
+                        setCompPage(1);
+                      }}
                       className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
                     >
                       <option value="all">Semua Cabang</option>
@@ -2062,7 +2568,10 @@ export const Admin: React.FC = () => {
                     <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Jenjang Pendidikan</label>
                     <select
                       value={compFilterCategory}
-                      onChange={e => setCompFilterCategory(e.target.value as any)}
+                      onChange={e => {
+                        setCompFilterCategory(e.target.value as any);
+                        setCompPage(1);
+                      }}
                       className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
                     >
                       <option value="all">Semua Jenjang</option>
@@ -2076,7 +2585,10 @@ export const Admin: React.FC = () => {
                     <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Status Preliminary</label>
                     <select
                       value={compFilterPreliminary}
-                      onChange={e => setCompFilterPreliminary(e.target.value as any)}
+                      onChange={e => {
+                        setCompFilterPreliminary(e.target.value as any);
+                        setCompPage(1);
+                      }}
                       className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
                     >
                       <option value="all">Semua Preliminary</option>
@@ -2091,7 +2603,10 @@ export const Admin: React.FC = () => {
                     <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Bayar Semi Final</label>
                     <select
                       value={compFilterPayment}
-                      onChange={e => setCompFilterPayment(e.target.value as any)}
+                      onChange={e => {
+                        setCompFilterPayment(e.target.value as any);
+                        setCompPage(1);
+                      }}
                       className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
                     >
                       <option value="all">Semua Bayar</option>
@@ -2106,7 +2621,10 @@ export const Admin: React.FC = () => {
                     <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Status Semi Final</label>
                     <select
                       value={compFilterSemifinal}
-                      onChange={e => setCompFilterSemifinal(e.target.value as any)}
+                      onChange={e => {
+                        setCompFilterSemifinal(e.target.value as any);
+                        setCompPage(1);
+                      }}
                       className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
                     >
                       <option value="all">Semua Semi Final</option>
@@ -2121,7 +2639,10 @@ export const Admin: React.FC = () => {
                     <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Status Grand Final</label>
                     <select
                       value={compFilterFinal}
-                      onChange={e => setCompFilterFinal(e.target.value as any)}
+                      onChange={e => {
+                        setCompFilterFinal(e.target.value as any);
+                        setCompPage(1);
+                      }}
                       className="w-full bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
                     >
                       <option value="all">Semua Grand Final</option>
@@ -2129,6 +2650,33 @@ export const Admin: React.FC = () => {
                       <option value="passed">✓ Lolos Final (Juara)</option>
                       <option value="rejected">✕ Tidak Lolos Final</option>
                     </select>
+                  </div>
+
+                  {/* Urutkan Berdasarkan */}
+                  <div className="space-y-1 col-span-2">
+                    <label className="font-display font-bold text-[10px] text-blue-sail/70 uppercase block">Urutkan Data</label>
+                    <div className="flex gap-1">
+                      <select
+                        value={compSortField}
+                        onChange={e => setCompSortField(e.target.value as any)}
+                        className="flex-1 bg-white border border-blue-sail p-1.5 font-sans font-bold text-[11px] text-blue-sail"
+                      >
+                        <option value="date">Waktu Pendaftaran</option>
+                        <option value="team_name">Nama Tim</option>
+                        <option value="leader_name">Nama Ketua</option>
+                        <option value="institution">Institusi</option>
+                        <option value="type">Cabang Lomba</option>
+                        <option value="status">Status Tahapan</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setCompSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                        className="px-2 bg-blue-sail text-decor font-mono font-bold text-xs border border-blue-sail hover:bg-red-inferno hover:text-white transition-all cursor-pointer shrink-0"
+                        title={compSortOrder === 'asc' ? 'Urutan: A-Z / Terlama' : 'Urutan: Z-A / Terbaru'}
+                      >
+                        {compSortOrder === 'asc' ? '▲ ASC' : '▼ DESC'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2145,7 +2693,7 @@ export const Admin: React.FC = () => {
                     <Icon name="Trophy" size={40} className="text-blue-sail/30 mx-auto" />
                     <div>
                       <p className="text-sm font-semibold text-blue-sail">
-                        {competitionRegistrations.length === 0 ? 'Belum Ada Tim Pendaftar Yang Terdeteksi' : 'Tidak Ada Tim Yang Sesuai Filter &amp; Pencarian'}
+                        {competitionRegistrations.length === 0 ? 'Belum Ada Tim Pendaftar Yang Terdeteksi' : 'Tidak Ada Tim Yang Sesuai Filter & Pencarian'}
                       </p>
                       <p className="text-xs text-blue-sail/50 mt-1">
                         {competitionRegistrations.length === 0
@@ -2164,6 +2712,7 @@ export const Admin: React.FC = () => {
                           setCompFilterSemifinal('all');
                           setCompFilterFinal('all');
                           setCompSearchQuery('');
+                          setCompPage(1);
                         }}
                         className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-5 py-2.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] cursor-pointer inline-flex items-center gap-1.5"
                       >
@@ -2173,191 +2722,226 @@ export const Admin: React.FC = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs font-sans border-collapse">
-                      <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
-                        <tr>
-                          <th className="p-4">Identitas Tim</th>
-                          <th className="p-4">Cabang &amp; Jenjang</th>
-                          <th className="p-4">Detail Jawaban</th>
-                          <th className="p-4">Task Preliminary</th>
-                          <th className="p-4">Status &amp; Kontrol Kelolosan</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y-2 divide-blue-sail/15">
-                        {filteredCompetitionRegistrations.map(reg => {
-                          const compType = reg.competition_type || (reg.category_id?.includes('BCC') ? 'BCC' : 'BPC');
-                          const eduCat = reg.education_category || (reg.category_id?.includes('SMA') ? 'SMA/Sederajat' : 'Mahasiswa');
-                          const isBPC = compType === 'BPC';
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs font-sans border-collapse">
+                        <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                          <tr>
+                            <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                              if (compSortField === 'team_name') setCompSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                              else { setCompSortField('team_name'); setCompSortOrder('asc'); }
+                            }}>
+                              <div className="flex items-center gap-1.5">
+                                <span>Identitas Tim</span>
+                                {compSortField === 'team_name' && (compSortOrder === 'asc' ? '▲' : '▼')}
+                              </div>
+                            </th>
+                            <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                              if (compSortField === 'type') setCompSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                              else { setCompSortField('type'); setCompSortOrder('asc'); }
+                            }}>
+                              <div className="flex items-center gap-1.5">
+                                <span>Cabang &amp; Jenjang</span>
+                                {compSortField === 'type' && (compSortOrder === 'asc' ? '▲' : '▼')}
+                              </div>
+                            </th>
+                            <th className="p-4">Detail Jawaban</th>
+                            <th className="p-4">Task Preliminary</th>
+                            <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                              if (compSortField === 'status') setCompSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                              else { setCompSortField('status'); setCompSortOrder('asc'); }
+                            }}>
+                              <div className="flex items-center gap-1.5">
+                                <span>Status &amp; Kontrol Kelolosan</span>
+                                {compSortField === 'status' && (compSortOrder === 'asc' ? '▲' : '▼')}
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y-2 divide-blue-sail/15">
+                          {paginatedCompetitionRegistrations.map(reg => {
+                            const compType = reg.competition_type || (reg.category_id?.includes('BCC') ? 'BCC' : 'BPC');
+                            const eduCat = reg.education_category || (reg.category_id?.includes('SMA') ? 'SMA/Sederajat' : 'Mahasiswa');
+                            const isBPC = compType === 'BPC';
 
-                          return (
-                            <tr key={reg.id} className="hover:bg-gray-50/50">
-                              <td className="p-4 space-y-1">
-                                <p className="font-bold text-blue-sail uppercase text-sm">{reg.team_name}</p>
-                                <p className="font-medium text-blue-sail/80">Ketua: {reg.leader_name}</p>
-                                <p className="font-mono text-[10px] text-blue-sail/60">WA: {reg.contact}</p>
-                                <p className="font-mono text-[10px] text-blue-sail/60">{reg.email}</p>
-                              </td>
-                              <td className="p-4 space-y-1">
-                                <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2.5 py-1 uppercase border border-decor inline-block">
-                                  {compType}
-                                </span>
-                                <p className="text-[11px] font-sans font-bold text-blue-sail/70">{eduCat}</p>
-                                <p className="text-[10px] font-sans text-blue-sail/50">Institusi: {reg.institution}</p>
-                              </td>
-                              <td className="p-4">
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedCompDetail(reg)}
-                                  className="bg-blue-sail hover:bg-barbera text-decor font-display font-black text-xs px-3.5 py-2 uppercase border border-blue-sail shadow-[3px_3px_0_0_#F6BB02] flex items-center gap-1.5 cursor-pointer shrink-0"
-                                >
-                                  <Icon name="FileText" size={14} />
-                                  <span>LIHAT DETAIL JAWABAN</span>
-                                </button>
-                              </td>
-                              <td className="p-4 space-y-1">
-                                {reg.preliminary_file_url ? (
-                                  <div>
-                                    <button
-                                      type="button"
-                                      onClick={() => openDoc(reg.preliminary_file_url, `Berkas Preliminary ${isBPC ? 'BMC' : 'Executive Summary'} - ${reg.team_name}`)}
-                                      className="bg-decor text-blue-sail hover:bg-decor/90 font-display font-black text-[10px] px-2.5 py-1 uppercase border border-blue-sail inline-flex items-center gap-1 cursor-pointer"
-                                    >
-                                      <Icon name="FileCheck" size={12} />
-                                      <span>LIHAT {isBPC ? 'BMC' : 'EXEC SUMMARY'}</span>
-                                    </button>
-                                    <p className="text-[10px] font-sans text-emerald-700 font-bold mt-1">✓ Sudah Mengumpulkan</p>
-                                  </div>
-                                ) : (
-                                  <span className="bg-gray-100 text-gray-500 font-display text-[10px] px-2 py-0.5 border border-gray-300 uppercase inline-block">
-                                    Belum Submit
+                            return (
+                              <tr key={reg.id} className="hover:bg-gray-50/50">
+                                <td className="p-4 space-y-1">
+                                  <p className="font-bold text-blue-sail uppercase text-sm">{reg.team_name}</p>
+                                  <p className="font-medium text-blue-sail/80">Ketua: {reg.leader_name}</p>
+                                  <p className="font-mono text-[10px] text-blue-sail/60">WA: {reg.contact}</p>
+                                  <p className="font-mono text-[10px] text-blue-sail/60">{reg.email}</p>
+                                </td>
+                                <td className="p-4 space-y-1">
+                                  <span className="bg-blue-sail text-decor font-display font-black text-[10px] px-2.5 py-1 uppercase border border-decor inline-block">
+                                    {compType}
                                   </span>
-                                )}
-                              </td>
-                              <td className="p-4 space-y-2">
-                                <div className="flex flex-col gap-2 min-w-[170px]">
-                                  {/* Preliminary Stage Controller */}
-                                  <div className="space-y-1">
-                                    <span className="text-[9px] font-display font-extrabold text-blue-sail/60 uppercase block">1. Preliminary Stage:</span>
-                                    <div className="flex flex-col gap-1">
+                                  <p className="text-[11px] font-sans font-bold text-blue-sail/70">{eduCat}</p>
+                                  <p className="text-[10px] font-sans text-blue-sail/50">Institusi: {reg.institution}</p>
+                                </td>
+                                <td className="p-4">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedCompDetail(reg)}
+                                    className="bg-blue-sail hover:bg-barbera text-decor font-display font-black text-xs px-3.5 py-2 uppercase border border-blue-sail shadow-[3px_3px_0_0_#F6BB02] flex items-center gap-1.5 cursor-pointer shrink-0"
+                                  >
+                                    <Icon name="FileText" size={14} />
+                                    <span>LIHAT DETAIL JAWABAN</span>
+                                  </button>
+                                </td>
+                                <td className="p-4 space-y-1">
+                                  {reg.preliminary_file_url ? (
+                                    <div>
                                       <button
-                                        onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'pending', status_stage: 'preliminary' })}
-                                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                          (!reg.status_preliminary || reg.status_preliminary === 'pending')
-                                            ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
-                                            : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                                        }`}
+                                        type="button"
+                                        onClick={() => openDoc(reg.preliminary_file_url, `Berkas Preliminary ${isBPC ? 'BMC' : 'Executive Summary'} - ${reg.team_name}`)}
+                                        className="bg-decor text-blue-sail hover:bg-decor/90 font-display font-black text-[10px] px-2.5 py-1 uppercase border border-blue-sail inline-flex items-center gap-1 cursor-pointer"
                                       >
-                                        ↺ Kondisi Awal (Pending)
+                                        <Icon name="FileCheck" size={12} />
+                                        <span>LIHAT {isBPC ? 'BMC' : 'EXEC SUMMARY'}</span>
                                       </button>
-                                      <button
-                                        onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'passed', status_stage: 'semifinal' })}
-                                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                          reg.status_preliminary === 'passed'
-                                            ? 'bg-emerald-600 text-white border-emerald-700 font-black'
-                                            : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
-                                        }`}
-                                      >
-                                        ✓ Lolos Preliminary
-                                      </button>
-                                      <button
-                                        onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'rejected', status_stage: 'preliminary' })}
-                                        className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                          reg.status_preliminary === 'rejected'
-                                            ? 'bg-red-inferno text-white border-red-700 font-black'
-                                            : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
-                                        }`}
-                                      >
-                                        ✕ Tidak Lolos Preliminary
-                                      </button>
+                                      <p className="text-[10px] font-sans text-emerald-700 font-bold mt-1">✓ Sudah Mengumpulkan</p>
                                     </div>
-                                  </div>
-
-                                  {/* Semi Final Stage Controller (If Lolos Preliminary) */}
-                                  {reg.status_preliminary === 'passed' && (
-                                    <div className="space-y-1 pt-1.5 border-t-2 border-dashed border-blue-sail/20">
-                                      <span className="text-[9px] font-display font-extrabold text-blue-sail/60 uppercase block">2. Semi Final Stage:</span>
+                                  ) : (
+                                    <span className="bg-gray-100 text-gray-500 font-display text-[10px] px-2 py-0.5 border border-gray-300 uppercase inline-block">
+                                      Belum Submit
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="p-4 space-y-2">
+                                  <div className="flex flex-col gap-2 min-w-[170px]">
+                                    {/* Preliminary Stage Controller */}
+                                    <div className="space-y-1">
+                                      <span className="text-[9px] font-display font-extrabold text-blue-sail/60 uppercase block">1. Preliminary Stage:</span>
                                       <div className="flex flex-col gap-1">
                                         <button
-                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'pending', status_stage: 'semifinal' })}
+                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'pending', status_stage: 'preliminary' })}
                                           className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                            (!reg.status_semifinal || reg.status_semifinal === 'pending')
+                                            (!reg.status_preliminary || reg.status_preliminary === 'pending')
                                               ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
                                               : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                                           }`}
                                         >
-                                          ↺ Kondisi Awal Semi Final
+                                          ↺ Kondisi Awal (Pending)
                                         </button>
                                         <button
-                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'passed', status_stage: 'final' })}
+                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'passed', status_stage: 'semifinal' })}
                                           className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                            reg.status_semifinal === 'passed'
+                                            reg.status_preliminary === 'passed'
                                               ? 'bg-emerald-600 text-white border-emerald-700 font-black'
                                               : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
                                           }`}
                                         >
-                                          ✓ Lolos Semi Final
+                                          ✓ Lolos Preliminary
                                         </button>
                                         <button
-                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'rejected', status_stage: 'semifinal' })}
+                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_preliminary: 'rejected', status_stage: 'preliminary' })}
                                           className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                            reg.status_semifinal === 'rejected'
+                                            reg.status_preliminary === 'rejected'
                                               ? 'bg-red-inferno text-white border-red-700 font-black'
                                               : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
                                           }`}
                                         >
-                                          ✕ Tidak Lolos Semi Final
+                                          ✕ Tidak Lolos Preliminary
                                         </button>
                                       </div>
                                     </div>
-                                  )}
 
-                                  {/* Final Stage Controller (If Lolos Semi Final) */}
-                                  {reg.status_semifinal === 'passed' && (
-                                    <div className="space-y-1 pt-1.5 border-t-2 border-dashed border-blue-sail/20">
-                                      <span className="text-[9px] font-display font-extrabold text-blue-sail/60 uppercase block">3. Grand Final Stage:</span>
-                                      <div className="flex flex-col gap-1">
-                                        <button
-                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'pending', status_stage: 'final' })}
-                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                            (!reg.status_final || reg.status_final === 'pending')
-                                              ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
-                                              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                                          }`}
-                                        >
-                                          ↺ Kondisi Awal Final
-                                        </button>
-                                        <button
-                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'passed', status_stage: 'final' })}
-                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                            reg.status_final === 'passed'
-                                              ? 'bg-purple-700 text-white border-purple-800 font-black'
-                                              : 'bg-white text-purple-700 border-purple-400 hover:bg-purple-50'
-                                          }`}
-                                        >
-                                          🏆 Lolos Final (Juara)
-                                        </button>
-                                        <button
-                                          onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'rejected', status_stage: 'final' })}
-                                          className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
-                                            reg.status_final === 'rejected'
-                                              ? 'bg-red-inferno text-white border-red-700 font-black'
-                                              : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
-                                          }`}
-                                        >
-                                          ✕ Tidak Lolos Final
-                                        </button>
+                                    {/* Semi Final Stage Controller (If Lolos Preliminary) */}
+                                    {reg.status_preliminary === 'passed' && (
+                                      <div className="space-y-1 pt-1.5 border-t-2 border-dashed border-blue-sail/20">
+                                        <span className="text-[9px] font-display font-extrabold text-blue-sail/60 uppercase block">2. Semi Final Stage:</span>
+                                        <div className="flex flex-col gap-1">
+                                          <button
+                                            onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'pending', status_stage: 'semifinal' })}
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                              (!reg.status_semifinal || reg.status_semifinal === 'pending')
+                                                ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
+                                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                                            }`}
+                                          >
+                                            ↺ Kondisi Awal Semi Final
+                                          </button>
+                                          <button
+                                            onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'passed', status_stage: 'final' })}
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                              reg.status_semifinal === 'passed'
+                                                ? 'bg-emerald-600 text-white border-emerald-700 font-black'
+                                                : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
+                                            }`}
+                                          >
+                                            ✓ Lolos Semi Final
+                                          </button>
+                                          <button
+                                            onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_semifinal: 'rejected', status_stage: 'semifinal' })}
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                              reg.status_semifinal === 'rejected'
+                                                ? 'bg-red-inferno text-white border-red-700 font-black'
+                                                : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
+                                            }`}
+                                          >
+                                            ✕ Tidak Lolos Semi Final
+                                          </button>
+                                        </div>
                                       </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                                    )}
+
+                                    {/* Final Stage Controller (If Lolos Semi Final) */}
+                                    {reg.status_semifinal === 'passed' && (
+                                      <div className="space-y-1 pt-1.5 border-t-2 border-dashed border-blue-sail/20">
+                                        <span className="text-[9px] font-display font-extrabold text-blue-sail/60 uppercase block">3. Grand Final Stage:</span>
+                                        <div className="flex flex-col gap-1">
+                                          <button
+                                            onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'pending', status_stage: 'final' })}
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                              (!reg.status_final || reg.status_final === 'pending')
+                                                ? 'bg-amber-100 text-amber-800 border-amber-400 font-black'
+                                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                                            }`}
+                                          >
+                                            ↺ Kondisi Awal Final
+                                          </button>
+                                          <button
+                                            onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'passed', status_stage: 'final' })}
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                              reg.status_final === 'passed'
+                                                ? 'bg-purple-700 text-white border-purple-800 font-black'
+                                                : 'bg-white text-purple-700 border-purple-400 hover:bg-purple-50'
+                                            }`}
+                                          >
+                                            🏆 Lolos Final (Juara)
+                                          </button>
+                                          <button
+                                            onClick={() => updateCompetitionRegistrationStatus(reg.id, { status_final: 'rejected', status_stage: 'final' })}
+                                            className={`px-2 py-1 text-[9px] font-display font-bold uppercase border cursor-pointer ${
+                                              reg.status_final === 'rejected'
+                                                ? 'bg-red-inferno text-white border-red-700 font-black'
+                                                : 'bg-white text-red-600 border-red-300 hover:bg-red-50'
+                                            }`}
+                                          >
+                                            ✕ Tidak Lolos Final
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <TablePagination
+                      currentPage={compPage}
+                      totalPages={Math.ceil(filteredCompetitionRegistrations.length / compPageSize) || 1}
+                      totalItems={filteredCompetitionRegistrations.length}
+                      pageSize={compPageSize}
+                      onPageChange={setCompPage}
+                      onPageSizeChange={setCompPageSize}
+                    />
+                  </>
                 )}
               </div>
             </div>
@@ -2382,6 +2966,58 @@ export const Admin: React.FC = () => {
                 </button>
               </div>
 
+              {/* Search & Sort Panel for Vendor */}
+              <div className="bg-ballroom border-4 border-blue-sail p-4 shadow-[6px_6px_0_0_#2A4C9E] flex flex-wrap items-center gap-3">
+                <div className="flex-1 min-w-[240px] relative">
+                  <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-sail/50" />
+                  <input
+                    type="text"
+                    placeholder="Cari brand thrift, deskripsi, kategori, atau nomor WA..."
+                    value={vendorSearchQuery}
+                    onChange={e => {
+                      setVendorSearchQuery(e.target.value);
+                      setVendorPage(1);
+                    }}
+                    className="w-full pl-9 pr-4 py-2 bg-white border-2 border-blue-sail text-xs font-sans font-semibold text-blue-sail placeholder-blue-sail/40 focus:outline-none focus:border-decor"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-display font-bold uppercase text-blue-sail/70">Urutkan:</span>
+                  <select
+                    value={vendorSortField}
+                    onChange={e => setVendorSortField(e.target.value as any)}
+                    className="bg-white border-2 border-blue-sail p-2 font-sans font-bold text-xs text-blue-sail"
+                  >
+                    <option value="name">Nama Brand</option>
+                    <option value="category">Kategori Produk</option>
+                    <option value="date">Terbaru</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setVendorSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    className="p-2 bg-blue-sail text-decor font-mono font-bold text-xs border-2 border-blue-sail hover:bg-red-inferno hover:text-white transition-all cursor-pointer"
+                    title={vendorSortOrder === 'asc' ? 'Urutan: A-Z / Terlama' : 'Urutan: Z-A / Terbaru'}
+                  >
+                    {vendorSortOrder === 'asc' ? '▲ ASC' : '▼ DESC'}
+                  </button>
+
+                  {vendorSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVendorSearchQuery('');
+                        setVendorPage(1);
+                      }}
+                      className="bg-red-inferno hover:bg-red-700 text-white font-display font-bold text-[10px] uppercase px-3 py-2 border-2 border-blue-sail flex items-center gap-1 cursor-pointer"
+                    >
+                      <Icon name="RotateCcw" size={12} />
+                      <span>RESET</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Table Data */}
               <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
                 {vendorApplications.length === 0 ? (
@@ -2390,51 +3026,93 @@ export const Admin: React.FC = () => {
                     <p className="text-sm font-semibold">Belum Ada Vendor Booth Mengajukan</p>
                     <p className="text-xs text-blue-sail/50 mt-1">Isi Formulir pendaftaran vendor di menu Thrift Bazar untuk merekam data simulasi.</p>
                   </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs font-sans border-collapse">
-                      <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
-                        <tr>
-                          <th className="p-4">Brand Thrift / Pendaftar</th>
-                          <th className="p-4">Kategori Produk</th>
-                          <th className="p-4">Proposal / Deskripsi Katalog</th>
-                          <th className="p-4">WhatsApp Contact</th>
-                          <th className="p-4">Aksi Hubungi</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y-2 divide-blue-sail/15">
-                        {vendorApplications.map(app => (
-                          <tr key={app.id} className="hover:bg-gray-50/50">
-                            <td className="p-4">
-                              <p className="font-bold text-blue-sail uppercase">{app.vendor_name}</p>
-                              <p className="text-[10px] text-blue-sail/50 font-mono mt-0.5">ID: {app.id}</p>
-                            </td>
-                            <td className="p-4">
-                              <span className="bg-red-inferno text-ballroom font-mono text-[9px] font-bold px-2.5 py-1 rounded-none border border-red-700 uppercase tracking-widest inline-block">
-                                {app.product_category}
-                              </span>
-                            </td>
-                            <td className="p-4 max-w-[280px]">
-                              <p className="leading-relaxed text-blue-sail/85 italic font-medium">"{app.description}"</p>
-                            </td>
-                            <td className="p-4 font-mono font-bold">
-                              {app.contact}
-                            </td>
-                            <td className="p-4">
-                              <a
-                                href={`https://wa.me/${app.contact}?text=Halo%20${encodeURIComponent(app.vendor_name)},%20kami%20dari%20logistik%20Panitia%20TSF%20Bazar%20terkait%20pengajuan%20booth.`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-[10px] px-3 py-1.5 rounded-none border border-blue-sail uppercase tracking-wider inline-block shadow-[2px_2px_0_0_#2A4C9E] cursor-pointer"
-                              >
-                                Chat WhatsApp
-                              </a>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                ) : filteredVendorApplications.length === 0 ? (
+                  <div className="p-12 text-center space-y-3">
+                    <Icon name="Search" size={40} className="text-blue-sail/30 mx-auto" />
+                    <p className="text-sm font-semibold text-blue-sail">Tidak ada vendor yang cocok dengan pencarian "{vendorSearchQuery}"</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVendorSearchQuery('');
+                        setVendorPage(1);
+                      }}
+                      className="bg-decor text-blue-sail font-display font-bold text-xs uppercase px-4 py-2 border-2 border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer"
+                    >
+                      Reset Pencarian
+                    </button>
                   </div>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs font-sans border-collapse">
+                        <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                          <tr>
+                            <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                              if (vendorSortField === 'name') setVendorSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                              else { setVendorSortField('name'); setVendorSortOrder('asc'); }
+                            }}>
+                              <div className="flex items-center gap-1.5">
+                                <span>Brand Thrift / Pendaftar</span>
+                                {vendorSortField === 'name' && (vendorSortOrder === 'asc' ? '▲' : '▼')}
+                              </div>
+                            </th>
+                            <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                              if (vendorSortField === 'category') setVendorSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                              else { setVendorSortField('category'); setVendorSortOrder('asc'); }
+                            }}>
+                              <div className="flex items-center gap-1.5">
+                                <span>Kategori Produk</span>
+                                {vendorSortField === 'category' && (vendorSortOrder === 'asc' ? '▲' : '▼')}
+                              </div>
+                            </th>
+                            <th className="p-4">Proposal / Deskripsi Katalog</th>
+                            <th className="p-4">WhatsApp Contact</th>
+                            <th className="p-4">Aksi Hubungi</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y-2 divide-blue-sail/15">
+                          {paginatedVendorApplications.map(app => (
+                            <tr key={app.id} className="hover:bg-gray-50/50">
+                              <td className="p-4">
+                                <p className="font-bold text-blue-sail uppercase">{app.vendor_name}</p>
+                                <p className="text-[10px] text-blue-sail/50 font-mono mt-0.5">ID: {app.id}</p>
+                              </td>
+                              <td className="p-4">
+                                <span className="bg-red-inferno text-ballroom font-mono text-[9px] font-bold px-2.5 py-1 rounded-none border border-red-700 uppercase tracking-widest inline-block">
+                                  {app.product_category}
+                                </span>
+                              </td>
+                              <td className="p-4 max-w-[280px]">
+                                <p className="leading-relaxed text-blue-sail/85 italic font-medium">"{app.description}"</p>
+                              </td>
+                              <td className="p-4 font-mono font-bold">
+                                {app.contact}
+                              </td>
+                              <td className="p-4">
+                                <a
+                                  href={`https://wa.me/${app.contact}?text=Halo%20${encodeURIComponent(app.vendor_name)},%20kami%20dari%20logistik%20Panitia%20TSF%20Bazar%20terkait%20pengajuan%20booth.`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-[10px] px-3 py-1.5 rounded-none border border-blue-sail uppercase tracking-wider inline-block shadow-[2px_2px_0_0_#2A4C9E] cursor-pointer"
+                                >
+                                  Chat WhatsApp
+                                </a>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <TablePagination
+                      currentPage={vendorPage}
+                      totalPages={Math.ceil(filteredVendorApplications.length / vendorPageSize) || 1}
+                      totalItems={filteredVendorApplications.length}
+                      pageSize={vendorPageSize}
+                      onPageChange={setVendorPage}
+                      onPageSizeChange={setVendorPageSize}
+                    />
+                  </>
                 )}
               </div>
             </div>
@@ -2463,6 +3141,58 @@ export const Admin: React.FC = () => {
               </button>
             </div>
 
+            {/* Search & Sort Bar for User Accounts */}
+            <div className="bg-ballroom border-4 border-blue-sail p-4 shadow-[6px_6px_0_0_#2A4C9E] flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[240px] relative">
+                <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-sail/50" />
+                <input
+                  type="text"
+                  placeholder="Cari berdasarkan nama user, email, atau ID user..."
+                  value={userSearchQuery}
+                  onChange={e => {
+                    setUserSearchQuery(e.target.value);
+                    setUserPage(1);
+                  }}
+                  className="w-full pl-9 pr-4 py-2 bg-white border-2 border-blue-sail text-xs font-sans font-semibold text-blue-sail placeholder-blue-sail/40 focus:outline-none focus:border-decor"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-display font-bold uppercase text-blue-sail/70">Urutkan:</span>
+                <select
+                  value={userSortField}
+                  onChange={e => setUserSortField(e.target.value as any)}
+                  className="bg-white border-2 border-blue-sail p-2 font-sans font-bold text-xs text-blue-sail"
+                >
+                  <option value="name">Nama User</option>
+                  <option value="email">Email</option>
+                  <option value="created_at">Tanggal Daftar</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setUserSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="p-2 bg-blue-sail text-decor font-mono font-bold text-xs border-2 border-blue-sail hover:bg-red-inferno hover:text-white transition-all cursor-pointer"
+                  title={userSortOrder === 'asc' ? 'Urutan: A-Z / Terlama' : 'Urutan: Z-A / Terbaru'}
+                >
+                  {userSortOrder === 'asc' ? '▲ ASC' : '▼ DESC'}
+                </button>
+
+                {userSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserSearchQuery('');
+                      setUserPage(1);
+                    }}
+                    className="bg-red-inferno hover:bg-red-700 text-white font-display font-bold text-[10px] uppercase px-3 py-2 border-2 border-blue-sail flex items-center gap-1 cursor-pointer"
+                  >
+                    <Icon name="RotateCcw" size={12} />
+                    <span>RESET</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="bg-white rounded-none border-4 border-blue-sail shadow-[6px_6px_0_0_#2A4C9E] overflow-hidden">
               {adminUsersList.length === 0 ? (
                 <div className="p-12 text-center">
@@ -2470,66 +3200,116 @@ export const Admin: React.FC = () => {
                   <p className="text-sm font-semibold text-blue-sail">Belum Ada Akun User Terdaftar</p>
                   <p className="text-xs text-blue-sail/50 mt-1">Akun yang didaftarkan pengunjung akan otomatis muncul di tabel ini.</p>
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs font-sans border-collapse">
-                    <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
-                      <tr>
-                        <th className="p-4">ID User</th>
-                        <th className="p-4">Nama Lengkap</th>
-                        <th className="p-4">Alamat Email</th>
-                        <th className="p-4">Metode Login</th>
-                        <th className="p-4">Tanggal Registrasi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y-2 divide-blue-sail/15">
-                      {adminUsersList.map((user) => {
-                        const formatDateSafe = (dateVal: any) => {
-                          if (!dateVal) return '-';
-                          let d = new Date(dateVal);
-                          if (isNaN(d.getTime())) {
-                            const num = Number(dateVal);
-                            if (!isNaN(num)) d = new Date(num);
-                          }
-                          if (isNaN(d.getTime())) return String(dateVal);
-                          return d.toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          });
-                        };
-
-                        return (
-                          <tr key={user.id} className="hover:bg-gray-50/50">
-                            <td className="p-4 font-mono font-bold text-blue-sail/60">
-                              {user.id}
-                            </td>
-                            <td className="p-4 font-bold text-blue-sail uppercase">
-                              {user.name}
-                            </td>
-                            <td className="p-4 font-sans text-blue-sail font-semibold">
-                              {user.email}
-                            </td>
-                            <td className="p-4">
-                              <span className={`px-2.5 py-1 text-[10px] font-display font-black uppercase border ${
-                                user.auth_provider === 'google'
-                                  ? 'bg-blue-50 text-blue-600 border-blue-300'
-                                  : 'bg-amber-50 text-amber-700 border-amber-300'
-                              }`}>
-                                {user.auth_provider === 'google' ? 'Gmail / Google' : 'Email Manual'}
-                              </span>
-                            </td>
-                            <td className="p-4 font-sans text-blue-sail/70 font-medium font-mono">
-                              {formatDateSafe(user.created_at)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+              ) : filteredAdminUsersList.length === 0 ? (
+                <div className="p-12 text-center space-y-3">
+                  <Icon name="Search" size={40} className="text-blue-sail/30 mx-auto" />
+                  <p className="text-sm font-semibold text-blue-sail">Tidak ada user yang cocok dengan pencarian "{userSearchQuery}"</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserSearchQuery('');
+                      setUserPage(1);
+                    }}
+                    className="bg-decor text-blue-sail font-display font-bold text-xs uppercase px-4 py-2 border-2 border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer"
+                  >
+                    Reset Pencarian
+                  </button>
                 </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-sans border-collapse">
+                      <thead className="bg-blue-sail text-ballroom uppercase font-display font-bold border-b-4 border-decor">
+                        <tr>
+                          <th className="p-4">ID User</th>
+                          <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (userSortField === 'name') setUserSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setUserSortField('name'); setUserSortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Nama Lengkap</span>
+                              {userSortField === 'name' && (userSortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                          <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (userSortField === 'email') setUserSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setUserSortField('email'); setUserSortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Alamat Email</span>
+                              {userSortField === 'email' && (userSortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                          <th className="p-4">Metode Login</th>
+                          <th className="p-4 cursor-pointer select-none hover:bg-blue-sail/90" onClick={() => {
+                            if (userSortField === 'created_at') setUserSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setUserSortField('created_at'); setUserSortOrder('asc'); }
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span>Tanggal Registrasi</span>
+                              {userSortField === 'created_at' && (userSortOrder === 'asc' ? '▲' : '▼')}
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y-2 divide-blue-sail/15">
+                        {paginatedAdminUsersList.map((user) => {
+                          const formatDateSafe = (dateVal: any) => {
+                            if (!dateVal) return '-';
+                            let d = new Date(dateVal);
+                            if (isNaN(d.getTime())) {
+                              const num = Number(dateVal);
+                              if (!isNaN(num)) d = new Date(num);
+                            }
+                            if (isNaN(d.getTime())) return String(dateVal);
+                            return d.toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            });
+                          };
+
+                          return (
+                            <tr key={user.id} className="hover:bg-gray-50/50">
+                              <td className="p-4 font-mono font-bold text-blue-sail/60">
+                                {user.id}
+                              </td>
+                              <td className="p-4 font-bold text-blue-sail uppercase">
+                                {user.name}
+                              </td>
+                              <td className="p-4 font-sans text-blue-sail font-semibold">
+                                {user.email}
+                              </td>
+                              <td className="p-4">
+                                <span className={`px-2.5 py-1 text-[10px] font-display font-black uppercase border ${
+                                  user.auth_provider === 'google'
+                                    ? 'bg-blue-50 text-blue-600 border-blue-300'
+                                    : 'bg-amber-50 text-amber-700 border-amber-300'
+                                }`}>
+                                  {user.auth_provider === 'google' ? 'Gmail / Google' : 'Email Manual'}
+                                </span>
+                              </td>
+                              <td className="p-4 font-sans text-blue-sail/70 font-medium font-mono">
+                                {formatDateSafe(user.created_at)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <TablePagination
+                    currentPage={userPage}
+                    totalPages={Math.ceil(filteredAdminUsersList.length / userPageSize) || 1}
+                    totalItems={filteredAdminUsersList.length}
+                    pageSize={userPageSize}
+                    onPageChange={setUserPage}
+                    onPageSizeChange={setUserPageSize}
+                  />
+                </>
               )}
             </div>
           </div>
@@ -2642,56 +3422,118 @@ export const Admin: React.FC = () => {
 
               {/* Daftar Akun */}
               <div className="lg:col-span-2 bg-ballroom p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#F6BB02] space-y-4">
-                <h3 className="font-display font-black text-sm uppercase tracking-wider text-blue-sail border-b border-blue-sail/10 pb-2 flex items-center gap-1.5">
-                  <Icon name="Users" size={16} />
-                  <span>Daftar Akun Admin Aktif</span>
-                </h3>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-blue-sail/10 pb-2">
+                  <h3 className="font-display font-black text-sm uppercase tracking-wider text-blue-sail flex items-center gap-1.5">
+                    <Icon name="Users" size={16} />
+                    <span>Daftar Akun Admin Aktif ({filteredAdminAccounts.length})</span>
+                  </h3>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b-2 border-blue-sail/25 font-display font-black uppercase text-[10px] tracking-wider">
-                        <th className="p-3">No.</th>
-                        <th className="p-3">Username</th>
-                        <th className="p-3">Kata Sandi</th>
-                        <th className="p-3 text-right">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-blue-sail/10">
-                      {adminAccounts.map((acc, idx) => {
-                        const isPrimary = acc.username.toLowerCase() === 'admin';
-                        return (
-                          <tr key={acc.username} className="hover:bg-blue-sail/[0.01]">
-                            <td className="p-3 font-mono font-bold text-blue-sail/50">{idx + 1}</td>
-                            <td className="p-3 font-semibold text-blue-sail">{acc.username}</td>
-                            <td className="p-3 font-mono text-blue-sail/80">•••••••• (sandi)</td>
-                            <td className="p-3 text-right">
-                              {isPrimary ? (
-                                <span className="text-[9px] font-mono text-blue-sail/40 uppercase font-bold italic bg-blue-sail/5 px-2 py-1 border border-blue-sail/10">
-                                  Default Akun
-                                </span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (confirm(`Apakah Anda yakin ingin menghapus akun admin "${acc.username}"?`)) {
-                                      const updated = adminAccounts.filter(a => a.username.toLowerCase() !== acc.username.toLowerCase());
-                                      setAdminAccounts(updated);
-                                      localStorage.setItem('tsf_admin_accounts', JSON.stringify(updated));
-                                    }
-                                  }}
-                                  className="bg-red-50 hover:bg-red-inferno text-red-inferno hover:text-ballroom text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border border-red-inferno transition-all cursor-pointer"
-                                >
-                                  Hapus
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Icon name="Search" size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-blue-sail/50" />
+                      <input
+                        type="text"
+                        placeholder="Cari username..."
+                        value={adminAccSearchQuery}
+                        onChange={e => {
+                          setAdminAccSearchQuery(e.target.value);
+                          setAdminAccPage(1);
+                        }}
+                        className="pl-7 pr-3 py-1 bg-white border border-blue-sail text-xs font-sans text-blue-sail placeholder-blue-sail/40 focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAdminAccSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                      className="px-2 py-1 bg-blue-sail text-decor font-mono font-bold text-[10px] border border-blue-sail hover:bg-red-inferno hover:text-white transition-all cursor-pointer"
+                      title={adminAccSortOrder === 'asc' ? 'A-Z' : 'Z-A'}
+                    >
+                      {adminAccSortOrder === 'asc' ? '▲ A-Z' : '▼ Z-A'}
+                    </button>
+                    {adminAccSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminAccSearchQuery('');
+                          setAdminAccPage(1);
+                        }}
+                        className="bg-red-inferno text-white font-mono font-bold text-[10px] px-2 py-1 border border-blue-sail cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {filteredAdminAccounts.length === 0 ? (
+                  <div className="p-8 text-center space-y-2">
+                    <Icon name="Search" size={32} className="text-blue-sail/30 mx-auto" />
+                    <p className="text-xs font-semibold text-blue-sail">Tidak ada akun yang cocok dengan "{adminAccSearchQuery}"</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b-2 border-blue-sail/25 font-display font-black uppercase text-[10px] tracking-wider">
+                            <th className="p-3">No.</th>
+                            <th className="p-3 cursor-pointer select-none hover:text-red-inferno" onClick={() => setAdminAccSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+                              <div className="flex items-center gap-1">
+                                <span>Username</span>
+                                <span>{adminAccSortOrder === 'asc' ? '▲' : '▼'}</span>
+                              </div>
+                            </th>
+                            <th className="p-3">Kata Sandi</th>
+                            <th className="p-3 text-right">Aksi</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-blue-sail/10">
+                          {paginatedAdminAccounts.map((acc, idx) => {
+                            const isPrimary = acc.username.toLowerCase() === 'admin';
+                            const displayIdx = (adminAccPage - 1) * adminAccPageSize + idx + 1;
+                            return (
+                              <tr key={acc.username} className="hover:bg-blue-sail/[0.01]">
+                                <td className="p-3 font-mono font-bold text-blue-sail/50">{displayIdx}</td>
+                                <td className="p-3 font-semibold text-blue-sail">{acc.username}</td>
+                                <td className="p-3 font-mono text-blue-sail/80">•••••••• (sandi)</td>
+                                <td className="p-3 text-right">
+                                  {isPrimary ? (
+                                    <span className="text-[9px] font-mono text-blue-sail/40 uppercase font-bold italic bg-blue-sail/5 px-2 py-1 border border-blue-sail/10">
+                                      Default Akun
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (confirm(`Apakah Anda yakin ingin menghapus akun admin "${acc.username}"?`)) {
+                                          const updated = adminAccounts.filter(a => a.username.toLowerCase() !== acc.username.toLowerCase());
+                                          setAdminAccounts(updated);
+                                          localStorage.setItem('tsf_admin_accounts', JSON.stringify(updated));
+                                        }
+                                      }}
+                                      className="bg-red-50 hover:bg-red-inferno text-red-inferno hover:text-ballroom text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border border-red-inferno transition-all cursor-pointer"
+                                    >
+                                      Hapus
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <TablePagination
+                      currentPage={adminAccPage}
+                      totalPages={Math.ceil(filteredAdminAccounts.length / adminAccPageSize) || 1}
+                      totalItems={filteredAdminAccounts.length}
+                      pageSize={adminAccPageSize}
+                      onPageChange={setAdminAccPage}
+                      onPageSizeChange={setAdminAccPageSize}
+                    />
+                  </>
+                )}
               </div>
             </div>
           </div>
