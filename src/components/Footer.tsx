@@ -62,7 +62,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="border-t border-decor/20 mt-8 pt-6 text-center text-xs font-mono text-ballroom/40 flex flex-wrap items-center justify-center gap-4">
             <button
               type="button"
@@ -74,7 +74,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
             <span>•</span>
             <button
               type="button"
-              onClick={() => setCurrentPage('health')}
+              // onClick={() => setCurrentPage('health')}
               className="hover:text-decor text-emerald-400 font-bold transition-colors focus:outline-none cursor-pointer flex items-center gap-1.5"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
