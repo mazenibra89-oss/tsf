@@ -16,8 +16,9 @@ import { InterviewAnnouncement } from './pages/InterviewAnnouncement';
 import { Recruitment } from './pages/Recruitment';
 import { PE1 } from './pages/PE1';
 import { ParticipantDashboard } from './pages/ParticipantDashboard';
+import { ServerHealthMonitor } from './pages/ServerHealthMonitor';
 
-type PageType = 'home' | 'staff' | 'pe1' | 'pe2' | 'competition' | 'thrift' | 'admin' | 'announcement' | 'interview-result' | 'recruitment' | 'dashboard';
+type PageType = 'home' | 'staff' | 'pe1' | 'pe2' | 'competition' | 'thrift' | 'admin' | 'announcement' | 'interview-result' | 'recruitment' | 'dashboard' | 'health';
 
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<PageType>('home');
@@ -46,6 +47,8 @@ const AppContent: React.FC = () => {
         setCurrentPage('thrift');
       } else if (hash === '#/admin') {
         setCurrentPage('admin');
+      } else if (hash === '#/health') {
+        setCurrentPage('health');
       } else {
         setCurrentPage('home');
         // fallback hash
@@ -86,11 +89,14 @@ const AppContent: React.FC = () => {
         return <Thrift />;
       case 'admin':
         return <Admin />;
+      case 'health':
+        return <ServerHealthMonitor />;
       case 'home':
       default:
         return <Home setCurrentPage={(p) => { window.location.hash = '#/' + p; }} />;
     }
   };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-ballroom font-sans antialiased text-blue-sail">

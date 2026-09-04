@@ -638,10 +638,7 @@ export const Admin: React.FC = () => {
   const fetchServerHealth = async () => {
     setHealthLoading(true);
     try {
-      const token = localStorage.getItem('tsf_admin_token');
-      const res = await fetch('/api/system/health', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch('/api/system/health');
       if (res.ok) {
         const data = await res.json();
         setServerHealth(data);
@@ -655,15 +652,12 @@ export const Admin: React.FC = () => {
 
   const fetchServerLogs = async (level = logFilterLevel, search = logSearchText) => {
     try {
-      const token = localStorage.getItem('tsf_admin_token');
       const params = new URLSearchParams();
       if (level && level !== 'all') params.append('level', level);
       if (search) params.append('search', search);
       params.append('limit', '250');
 
-      const res = await fetch(`/api/system/logs?${params.toString()}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch(`/api/system/logs?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setServerLogsList(data.logs || []);
@@ -678,11 +672,7 @@ export const Admin: React.FC = () => {
     setIsCleaningBlobs(true);
     setCleanBlobResult('');
     try {
-      const token = localStorage.getItem('tsf_admin_token');
-      const res = await fetch('/api/system/clean-blobs', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch('/api/system/clean-blobs', { method: 'POST' });
       const data = await res.json();
       setCleanBlobResult(data.message || 'Pembersihan selesai.');
       await fetchServerHealth();
@@ -696,11 +686,7 @@ export const Admin: React.FC = () => {
   const handleClearLogs = async () => {
     if (!confirm('Yakin ingin membersihkan tampilan riwayat log server?')) return;
     try {
-      const token = localStorage.getItem('tsf_admin_token');
-      const res = await fetch('/api/system/logs/clear', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch('/api/system/logs/clear', { method: 'POST' });
       if (res.ok) {
         setServerLogsList([]);
         await fetchServerHealth();
@@ -709,6 +695,7 @@ export const Admin: React.FC = () => {
       console.error(e);
     }
   };
+
 
   useEffect(() => {
     if (activeTab === 'server-health' && isAuthenticated) {

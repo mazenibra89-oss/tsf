@@ -1812,34 +1812,12 @@ app.put('/api/form-questions', authenticateToken, async (req: Request, res: Resp
 });
 
 // -------------------------------------------------------------
-// SYSTEM HEALTH, DIAGNOSTICS & SERVER LOGS ENDPOINTS
+// SYSTEM HEALTH, DIAGNOSTICS & SERVER LOGS ENDPOINTS (OPEN ACCESS)
 // -------------------------------------------------------------
 
-// Helper to authenticate either Admin JWT token or emergency query key
-const authenticateAdminOrKey = (req: Request, res: Response, next: NextFunction): void => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  const queryKey = req.query.key as string;
+// 1. Comprehensive Server Health & Resource Metrics (OPEN)
+app.get('/api/system/health', async (_req: Request, res: Response): Promise<void> => {
 
-  if (queryKey && queryKey === 'tsf_health_key_2026') {
-    return next();
-  }
-
-  if (token) {
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-      if (!err && decoded) {
-        return next();
-      }
-      res.status(403).json({ message: 'Akses ditolak: Token admin tidak valid atau kedaluwarsa.' });
-    });
-    return;
-  }
-
-  res.status(401).json({ message: 'Akses ditolak: Diperlukan token admin atau query key darurat.' });
-};
-
-// 1. Comprehensive Server Health & Resource Metrics
-app.get('/api/system/health', authenticateAdminOrKey, async (_req: Request, res: Response): Promise<void> => {
   try {
     const memory = process.memoryUsage();
     const totalMem = os.totalmem();
@@ -1941,8 +1919,8 @@ app.get('/api/system/health', authenticateAdminOrKey, async (_req: Request, res:
   }
 });
 
-// 2. Real-time In-App Server Logs Endpoint
-app.get('/api/system/logs', authenticateAdminOrKey, (req: Request, res: Response): void => {
+// 2. Real-time In-App Server Logs Endpoint (OPEN)
+app.get('/api/system/logs', (req: Request, res: Response): void => {
   const level = req.query.level as string;
   const search = (req.query.search as string || '').toLowerCase();
   const limit = Math.min(parseInt(req.query.limit as string || '200'), MAX_LOGS);
@@ -1963,15 +1941,16 @@ app.get('/api/system/logs', authenticateAdminOrKey, (req: Request, res: Response
   });
 });
 
-// 3. Clear In-Memory Logs Endpoint
-app.post('/api/system/logs/clear', authenticateAdminOrKey, (_req: Request, res: Response): void => {
+// 3. Clear In-Memory Logs Endpoint (OPEN)
+app.post('/api/system/logs/clear', (_req: Request, res: Response): void => {
   serverLogs.length = 0;
-  console.log('[SYSTEM] Server logs cleared by administrator.');
+  console.log('[SYSTEM] Server logs cleared by user/administrator.');
   res.json({ message: 'Log sistem berhasil dibersihkan.' });
 });
 
-// 4. Sanitize & Purge Legacy Heavy Base64 Blobs From Database
-app.post('/api/system/clean-blobs', authenticateAdminOrKey, async (_req: Request, res: Response): Promise<void> => {
+// 4. Sanitize & Purge Legacy Heavy Base64 Blobs From Database (OPEN)
+app.post('/api/system/clean-blobs', async (_req: Request, res: Response): Promise<void> => {
+
   try {
     const rows = await db('competition_registrations').select('*');
     let cleanedColumnsCount = 0;
