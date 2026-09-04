@@ -183,7 +183,10 @@ export const PE1: React.FC = () => {
     }, 50);
   };
 
+  const isRegistrationOpen = false;
+
   const scrollToForm = () => {
+    if (!isRegistrationOpen) return;
     setStep('form-data');
     scrollToFormSection();
   };
@@ -277,11 +280,16 @@ export const PE1: React.FC = () => {
 
               <motion.button
                 onClick={scrollToForm}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-sm uppercase px-8 py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 transition-all tracking-widest cursor-pointer"
+                disabled={!isRegistrationOpen}
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 font-display font-black text-sm uppercase px-8 py-4 border-2 transition-all tracking-widest ${
+                  isRegistrationOpen 
+                    ? 'bg-decor hover:bg-decor/90 text-blue-sail border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer'
+                    : 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed opacity-80'
+                }`}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
               >
-                <span>DAFTAR SEKARANG</span>
-                <Icon name="ArrowRight" size={18} />
+                <span>{isRegistrationOpen ? 'DAFTAR SEKARANG' : 'PENDAFTARAN DITUTUP'}</span>
+                {isRegistrationOpen && <Icon name="ArrowRight" size={18} />}
               </motion.button>
             </div>
 
@@ -441,17 +449,25 @@ export const PE1: React.FC = () => {
             SECTION B: MULTI-STEP FORM
         ══════════════════════════════════════════════════ */}
         <section id="pe1-form-section" className="scroll-mt-20">
-          {step !== 'info' && step !== 'success' && (
+          {step !== 'info' && step !== 'success' && isRegistrationOpen && (
             <div className="text-center mb-6">
               <span className="font-mono text-xs font-bold text-red-inferno tracking-widest uppercase">// REGISTRATION FORM</span>
               <h2 className="font-display font-black text-2xl sm:text-3xl text-blue-sail uppercase tracking-tight mt-1">FORMULIR PENDAFTARAN</h2>
               <div className="w-20 h-1.5 bg-decor mx-auto mt-2" />
             </div>
           )}
+          
+          {!isRegistrationOpen && step !== 'success' && (
+            <div className="max-w-2xl mx-auto bg-gray-100 border-2 border-gray-300 p-8 text-center shadow-lg">
+              <Icon name="Lock" size={48} className="mx-auto text-gray-500 mb-4" />
+              <h2 className="font-display font-black text-2xl text-gray-700 uppercase mb-2">PENDAFTARAN DITUTUP</h2>
+              <p className="font-sans text-gray-600">Mohon maaf, periode pendaftaran untuk CEO FOR A DAY telah ditutup. Terima kasih atas antusiasme Anda!</p>
+            </div>
+          )}
 
           <AnimatePresence mode="wait">
             {/* ─── STEP 1: DATA DIRI ─── */}
-            {step === 'form-data' && (
+            {step === 'form-data' && isRegistrationOpen && (
               <motion.div
                 key="form-data"
                 initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}

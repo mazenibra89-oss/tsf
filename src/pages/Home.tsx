@@ -143,7 +143,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                 onClick={() => setCurrentPage('pe1')}
                 className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-extrabold text-sm uppercase px-8 py-4 rounded-none tracking-widest border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] hover:shadow-[5px_5px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 flex items-center space-x-2 cursor-pointer"
               >
-                <span>DAFTAR CEO FOR A DAY</span>
+                <span>INFO CEO FOR A DAY</span>
                 <Icon name="ArrowRight" size={16} className="stroke-[3px]" />
               </button>
 
@@ -179,7 +179,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                 onClick={() => setCurrentPage('pe1')}
                 className="w-full bg-blue-sail hover:bg-barbera text-ballroom font-display font-extrabold text-xs uppercase py-3 rounded-none border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] tracking-wider transition-all text-center cursor-pointer"
               >
-                Daftar CEO FOR A DAY Sekarang
+                Info CEO FOR A DAY Sekarang
               </button>
             </div>
           </div>
