@@ -17,6 +17,7 @@ import {
 } from '../types';
 
 interface AppContextType extends AppState {
+  loading: boolean;
   refreshState: () => Promise<void>;
   setActivePhase: (phaseName: EventPhase['name']) => void;
   updatePhase: (phase: EventPhase) => void;
@@ -1053,12 +1054,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const fetchState = async () => {
     try {
+      const adminToken = localStorage.getItem('tsf_admin_token');
+      const headers: Record<string, string> = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      };
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+
       const res = await fetch(getApiUrl('/api/state?t=' + Date.now()), {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+        headers
       });
       if (res.ok) {
         const data = await res.json();
@@ -1094,9 +1101,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (currentUser) {
       fetchMyTeam(currentUser);
     }
-    // Poll state & myTeam every 60 seconds to safely sync data across devices
+
+    // Polling optimization:
+    // Only poll myTeam for logged-in user every 60s
+    // If admin is active, poll state every 60s; otherwise do NOT poll heavy /api/state constantly for casual visitors
     const interval = setInterval(() => {
-      fetchState();
+      const adminToken = typeof localStorage !== 'undefined' ? localStorage.getItem('tsf_admin_token') : null;
+      if (adminToken) {
+        fetchState();
+      }
       if (currentUser) {
         fetchMyTeam(currentUser);
       }
@@ -1650,6 +1663,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addVendorApplication,
       updateFormQuestions,
       resetToDefault,
+      loading,
       currentUser,
       authToken,
       myTeam,

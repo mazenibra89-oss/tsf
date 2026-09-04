@@ -184,10 +184,12 @@ export const Admin: React.FC = () => {
     resetToDefault,
     adminUsers,
     fetchAdminUsers,
-    updateCompetitionRegistrationStatus
+    updateCompetitionRegistrationStatus,
+    loading
   } = useApp();
 
   const [adminUsersList, setAdminUsersList] = useState<import('../types').User[]>([]);
+  const [isFetchingUsers, setIsFetchingUsers] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
@@ -277,9 +279,12 @@ export const Admin: React.FC = () => {
 
   useEffect(() => {
     refreshState();
-    fetchAdminUsers().then(res => {
-      if (res && res.length > 0) setAdminUsersList(res);
-    });
+    setIsFetchingUsers(true);
+    fetchAdminUsers()
+      .then(res => {
+        if (res && res.length > 0) setAdminUsersList(res);
+      })
+      .finally(() => setIsFetchingUsers(false));
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -1059,7 +1064,14 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Award" size={16} />
-            <span>Pendaftar Ambassador ({(ambassadorApplications || []).length})</span>
+            <span className="flex items-center gap-1.5">
+              <span>Pendaftar Ambassador</span>
+              {loading ? (
+                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
+              ) : (
+                <span>({(ambassadorApplications || []).length})</span>
+              )}
+            </span>
           </button>
 
           <button
@@ -1071,7 +1083,14 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Briefcase" size={16} />
-            <span>Pendaftar PE1 CEO For A Day ({(pe1Registrations || []).length})</span>
+            <span className="flex items-center gap-1.5">
+              <span>Pendaftar PE1 CEO For A Day</span>
+              {loading ? (
+                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
+              ) : (
+                <span>({(pe1Registrations || []).length})</span>
+              )}
+            </span>
           </button>
 
           <button
@@ -1083,7 +1102,14 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Users" size={16} />
-            <span>Pendaftar Staff ({staffApplications.length})</span>
+            <span className="flex items-center gap-1.5">
+              <span>Pendaftar Staff</span>
+              {loading ? (
+                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
+              ) : (
+                <span>({staffApplications.length})</span>
+              )}
+            </span>
           </button>
 
           <button
@@ -1095,13 +1121,21 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Trophy" size={16} />
-            <span>Pendaftar Competition ({competitionRegistrations.length})</span>
+            <span className="flex items-center gap-1.5">
+              <span>Pendaftar Competition</span>
+              {loading ? (
+                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
+              ) : (
+                <span>({competitionRegistrations.length})</span>
+              )}
+            </span>
           </button>
 
           <button
             onClick={() => {
               setActiveTab('user-accounts' as any);
-              fetchAdminUsers().then(res => { if (res) setAdminUsersList(res); });
+              setIsFetchingUsers(true);
+              fetchAdminUsers().then(res => { if (res) setAdminUsersList(res); }).finally(() => setIsFetchingUsers(false));
             }}
             className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${
               (activeTab as string) === 'user-accounts'
@@ -1110,7 +1144,14 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="Users" size={16} />
-            <span>Akun Pendaftar ({adminUsersList.length})</span>
+            <span className="flex items-center gap-1.5">
+              <span>Akun Pendaftar</span>
+              {isFetchingUsers ? (
+                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
+              ) : (
+                <span>({adminUsersList.length})</span>
+              )}
+            </span>
           </button>
 
           <button
@@ -1134,7 +1175,14 @@ export const Admin: React.FC = () => {
             }`}
           >
             <Icon name="CalendarRange" size={16} />
-            <span>Manajemen Divisi ({divisions.length})</span>
+            <span className="flex items-center gap-1.5">
+              <span>Manajemen Divisi</span>
+              {loading ? (
+                <span className="inline-block w-5 h-3.5 bg-blue-sail/20 rounded animate-pulse" />
+              ) : (
+                <span>({divisions.length})</span>
+              )}
+            </span>
           </button>
 
           <button
@@ -1196,7 +1244,11 @@ export const Admin: React.FC = () => {
                 </div>
                 <div>
                   <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Pendaftar Staff</span>
-                  <span className="block font-display font-black text-2xl text-blue-sail">{staffApplications.length} Orang</span>
+                  {loading ? (
+                    <div className="h-7 w-20 bg-blue-sail/20 rounded animate-pulse mt-1" />
+                  ) : (
+                    <span className="block font-display font-black text-2xl text-blue-sail">{staffApplications.length} Orang</span>
+                  )}
                 </div>
               </div>
 
@@ -1206,7 +1258,11 @@ export const Admin: React.FC = () => {
                 </div>
                 <div>
                   <span className="block text-[10px] font-mono uppercase text-blue-sail/50">Pendaftar Competition</span>
-                  <span className="block font-display font-black text-2xl text-blue-sail">{competitionRegistrations.length} Tim</span>
+                  {loading ? (
+                    <div className="h-7 w-20 bg-blue-sail/20 rounded animate-pulse mt-1" />
+                  ) : (
+                    <span className="block font-display font-black text-2xl text-blue-sail">{competitionRegistrations.length} Tim</span>
+                  )}
                 </div>
               </div>
 

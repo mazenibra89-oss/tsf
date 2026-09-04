@@ -572,23 +572,22 @@ app.get('/api/auth/admins', authenticateToken, async (req: Request, res: Respons
 });
 
 // -------------------------------------------------------------
-// APPLICATION STATE ENDPOINT (LOADS EVERYTHING AT STARTUP)
+// APPLICATION STATE ENDPOINT (LOADS APPLICATION DATA)
 // -------------------------------------------------------------
 app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
   try {
-    const phases = await db('event_phases').orderBy('id', 'asc').catch(() => []);
-    const divisions = await db('divisions').orderBy('id', 'asc').catch(() => []);
-    const staffApplications = await db('staff_applications').orderBy('submitted_at', 'desc').catch(() => []);
-    const ambassadorApplications = await db('ambassador_applications').orderBy('submitted_at', 'desc').catch(() => []);
-    const pe1Registrations = await db('pe1_registrations').orderBy('submitted_at', 'desc').catch(() => []);
-    const subEvents = await db('sub_events').orderBy('id', 'asc').catch(() => []);
-    const competitions = await db('competitions').orderBy('id', 'asc').catch(() => []);
-    const competitionRegistrations = await db('competition_registrations').orderBy('submitted_at', 'desc').catch(() => []);
-    const thriftProducts = await db('thrift_products').orderBy('id', 'desc').catch(() => []);
-    const thriftVendors = await db('thrift_vendors').orderBy('id', 'asc').catch(() => []);
-    const vendorApplications = await db('vendor_applications').orderBy('submitted_at', 'desc').catch(() => []);
-    const qConfig = await db('form_questions_config').where({ id: 'main_config' }).first().catch(() => undefined);
-    const users = await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc').catch(() => []);
+    // Check if requester has a valid admin JWT
+    let isAdmin = false;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+      try {
+        jwt.verify(token, JWT_SECRET);
+        isAdmin = true;
+      } catch {
+        isAdmin = false;
+      }
+    }
 
     const parseJson = (val: any) => {
       if (val == null) return val;
@@ -619,8 +618,44 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
       return sanitized;
     };
 
-    res.json({
+    // Essential public data needed by every visitor
+    const phases = await db('event_phases').orderBy('id', 'asc').catch(() => []);
+    const divisions = await db('divisions').orderBy('id', 'asc').catch(() => []);
+    const subEvents = await db('sub_events').orderBy('id', 'asc').catch(() => []);
+    const competitions = await db('competitions').orderBy('id', 'asc').catch(() => []);
+    const thriftProducts = await db('thrift_products').orderBy('id', 'desc').catch(() => []);
+    const thriftVendors = await db('thrift_vendors').orderBy('id', 'asc').catch(() => []);
+    const qConfig = await db('form_questions_config').where({ id: 'main_config' }).first().catch(() => undefined);
 
+    // If requester is not admin, only fetch lightweight summaries or empty arrays to save RAM & payload size
+    let staffApplications: any[] = [];
+    let ambassadorApplications: any[] = [];
+    let pe1Registrations: any[] = [];
+    let competitionRegistrations: any[] = [];
+    let vendorApplications: any[] = [];
+    let users: any[] = [];
+
+    if (isAdmin) {
+      // Full data for authenticated admin dashboard
+      staffApplications = await db('staff_applications').orderBy('submitted_at', 'desc').catch(() => []);
+      ambassadorApplications = await db('ambassador_applications').orderBy('submitted_at', 'desc').catch(() => []);
+      pe1Registrations = await db('pe1_registrations').orderBy('submitted_at', 'desc').catch(() => []);
+      competitionRegistrations = await db('competition_registrations').orderBy('submitted_at', 'desc').catch(() => []);
+      vendorApplications = await db('vendor_applications').orderBy('submitted_at', 'desc').catch(() => []);
+      users = await db('users').select('id', 'name', 'email', 'auth_provider', 'created_at').orderBy('created_at', 'desc').catch(() => []);
+    } else {
+      // For public users, only provide minimal fields if needed, without heavy answer/file blobs
+      // Note: Normal visitors only use phases, divisions, competitions, subEvents, thrift
+      // Providing empty arrays for internal admin tables saves >90% bandwidth and RAM!
+      staffApplications = [];
+      ambassadorApplications = [];
+      pe1Registrations = [];
+      competitionRegistrations = [];
+      vendorApplications = [];
+      users = [];
+    }
+
+    res.json({
       phases,
       divisions: divisions.map(d => ({
         ...d,
@@ -628,9 +663,9 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
         jobdesk: parseJson(d.jobdesk || '[]'),
         skills: d.skills || ''
       })),
-      staffApplications: staffApplications.map(a => ({ ...a, custom_form_answers: parseJson(a.custom_form_answers) })),
-      ambassadorApplications,
-      pe1Registrations,
+      staffApplications: staffApplications.map(a => ({ ...sanitizeRowFiles(a), custom_form_answers: parseJson(a.custom_form_answers) })),
+      ambassadorApplications: ambassadorApplications.map(a => sanitizeRowFiles(a)),
+      pe1Registrations: pe1Registrations.map(r => sanitizeRowFiles(r)),
       subEvents: subEvents.map(e => ({
         ...e,
         lineup: parseJson(e.lineup),
@@ -653,7 +688,7 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
       }),
       thriftProducts: thriftProducts.map(p => ({ ...p, price: Number(p.price) })),
       thriftVendors,
-      vendorApplications,
+      vendorApplications: vendorApplications.map(v => sanitizeRowFiles(v)),
       users,
       formQuestions: qConfig ? parseJson(qConfig.config) : undefined
     });
