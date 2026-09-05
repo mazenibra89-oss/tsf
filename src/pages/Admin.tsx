@@ -5802,19 +5802,31 @@ export const Admin: React.FC = () => {
                       <span>PRATINJAU BUKTI</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await updateCompetitionRegistrationStatus(selectedCompDetail.id, { payment_semifinal_status: 'verified' });
-                        setSelectedCompDetail(prev => prev ? { ...prev, payment_semifinal_status: 'verified' } : null);
-                      }}
-                      className={`font-display font-bold text-xs uppercase px-3 py-1.5 border cursor-pointer ${selectedCompDetail.payment_semifinal_status === 'verified'
-                          ? 'bg-emerald-700 text-white border-emerald-800'
-                          : 'bg-white text-emerald-700 border-emerald-600 hover:bg-emerald-100'
-                        }`}
-                    >
-                      ✓ Setujui Pembayaran
-                    </button>
+                    {selectedCompDetail.payment_semifinal_status === 'verified' ? (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const confirmCancel = window.confirm('Batalkan verifikasi pembayaran ini? Status akan dikembalikan menjadi pending.');
+                          if (!confirmCancel) return;
+                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { payment_semifinal_status: 'pending' });
+                          setSelectedCompDetail(prev => prev ? { ...prev, payment_semifinal_status: 'pending' } : null);
+                        }}
+                        className="font-display font-bold text-xs uppercase px-3 py-1.5 border cursor-pointer bg-red-600 text-white border-red-700 hover:bg-red-700"
+                      >
+                        ✕ Batal Verifikasi
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await updateCompetitionRegistrationStatus(selectedCompDetail.id, { payment_semifinal_status: 'verified' });
+                          setSelectedCompDetail(prev => prev ? { ...prev, payment_semifinal_status: 'verified' } : null);
+                        }}
+                        className="font-display font-bold text-xs uppercase px-3 py-1.5 border cursor-pointer bg-white text-emerald-700 border-emerald-600 hover:bg-emerald-100"
+                      >
+                        ✓ Setujui Pembayaran
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : selectedCompDetail.status_preliminary === 'passed' ? (
