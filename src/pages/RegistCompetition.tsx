@@ -621,10 +621,20 @@ export const RegistCompetition: React.FC = () => {
               <p className="text-xs font-sans text-blue-sail"><strong>Tahap Kompetisi:</strong> {myTeam.status_stage?.toUpperCase() || 'PRELIMINARY'}</p>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-4 flex flex-col items-center gap-4 w-full">
+              <a
+                href={myTeam.competition_type === 'BCC' ? 'https://intip.in/GRUPWHATSAPPBCCTSF2026' : 'https://intip.in/WHATSAPPBPCTSF2026'}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full max-w-md bg-emerald-500 hover:bg-emerald-600 text-white font-display font-black text-xs sm:text-sm uppercase px-8 py-4 border-2 border-blue-sail shadow-[5px_5px_0_0_#000] cursor-pointer inline-flex justify-center items-center gap-2"
+              >
+                <Icon name="MessageCircle" size={18} />
+                <span>JOIN GRUP WHATSAPP {myTeam.competition_type || 'BPC'}</span>
+              </a>
+
               <button
                 onClick={() => { window.location.hash = '#/dashboard'; }}
-                className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs sm:text-sm uppercase px-8 py-4 border-2 border-blue-sail shadow-[5px_5px_0_0_#BD1B1F] cursor-pointer inline-flex items-center gap-2"
+                className="w-full max-w-md bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs sm:text-sm uppercase px-8 py-4 border-2 border-blue-sail shadow-[5px_5px_0_0_#BD1B1F] cursor-pointer inline-flex justify-center items-center gap-2"
               >
                 <Icon name="Trophy" size={18} />
                 <span>MASUK KE DASHBOARD TIM SAYA</span>
