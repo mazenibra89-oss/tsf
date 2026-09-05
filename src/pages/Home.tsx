@@ -17,10 +17,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   // Find currently active phase
   const activePhase = phases.find(p => p.status === 'active') || phases[0];
 
-  // Function to calculate time left until 25 August at 23.59 WIB
+  // Function to calculate time left until competition deadline (e.g. 15 October 2026)
   const calculateTimeLeft = () => {
-    // Target: 25 August 2026 at 23:59:59 WIB
-    const target = new Date('2026-08-25T23:59:59').getTime();
+    // Target: 15 October 2026 at 23:59:59 WIB
+    const target = new Date('2026-10-15T23:59:59').getTime();
     const now = new Date().getTime();
     const difference = target - now;
     if (difference <= 0) {
@@ -140,10 +140,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
             <div className="flex flex-wrap justify-center lg:justify-start gap-4 pt-2">
               <button
                 id="hero-primary-cta"
-                onClick={() => setCurrentPage('pe1')}
+                onClick={() => setCurrentPage('competition')}
                 className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-extrabold text-sm uppercase px-8 py-4 rounded-none tracking-widest border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] hover:shadow-[5px_5px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 flex items-center space-x-2 cursor-pointer"
               >
-                <span>INFO CEO FOR A DAY</span>
+                <span>INFO COMPETITION</span>
                 <Icon name="ArrowRight" size={16} className="stroke-[3px]" />
               </button>
 
@@ -168,18 +168,18 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
               </div>
               <p className="font-mono text-xs font-bold text-red-inferno tracking-wider mb-2">● REGISTRATION OPEN</p>
               <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight border-b-2 border-blue-sail/20 pb-3 mb-4">
-                Open Registration CEO FOR A DAY
+                Open Registration BPC & BCC Competition
               </h3>
               <p className="text-sm text-blue-sail/80 font-sans leading-relaxed mb-6">
-                Pendaftaran CEO FOR A DAY Pre-Event 1 TDC Summit Fest 2026 resmi dibuka! Pilih paket kepemimpinanmu dan daftarkan dirimu sekarang.
+                Pendaftaran Business Plan & Business Case Competition TSF 2026 resmi dibuka! Siapkan tim terbaikmu dan jadilah juara inovasi bisnis.
               </p>
 
               <button
                 id="hero-banner-action"
-                onClick={() => setCurrentPage('pe1')}
+                onClick={() => setCurrentPage('competition')}
                 className="w-full bg-blue-sail hover:bg-barbera text-ballroom font-display font-extrabold text-xs uppercase py-3 rounded-none border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] tracking-wider transition-all text-center cursor-pointer"
               >
-                Info CEO FOR A DAY Sekarang
+                Daftar Kompetisi Sekarang
               </button>
             </div>
           </div>
@@ -203,10 +203,10 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   </span>
                 </div>
                 <h3 className="font-display font-black text-2xl uppercase tracking-tight text-decor mt-1">
-                  Open Registration CEO FOR A DAY TSF 2026!
+                  Pendaftaran BPC & BCC TSF 2026 Dibuka!
                 </h3>
                 <p className="text-sm text-ballroom/80 font-sans max-w-xl mt-1.5">
-                  Pendaftaran CEO FOR A DAY Pre-Event 1 telah resmi dibuka! Jangan lewatkan kesempatan emas untuk belajar langsung dan mengasah keterampilan kewirausahaanmu.
+                  Fase kompetisi skala nasional dari TDC Summit Fest telah dimulai. Buktikan bahwa ide bisnis inovatifmu adalah yang terbaik dan dapatkan total hadiah jutaan rupiah!
                 </p>
               </div>
             </div>
@@ -214,7 +214,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
             {/* Banner Right */}
             <button
               id="dynamic-banner-cta"
-              onClick={() => setCurrentPage('pe1')}
+              onClick={() => setCurrentPage('competition')}
               className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest shrink-0 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
               DAFTAR SEKARANG
