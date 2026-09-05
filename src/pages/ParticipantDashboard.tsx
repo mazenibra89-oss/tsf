@@ -606,22 +606,60 @@ export const ParticipantDashboard: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Payment Info Card */}
-                <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#000]">
-                  <div className="flex items-center justify-between border-b border-blue-sail/20 pb-2">
-                    <span className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-1.5">
-                      <Icon name="CreditCard" size={16} /> BIAYA PARTISIPASI SEMI FINAL
-                    </span>
-                    <span className="bg-blue-sail text-decor font-display font-black text-base px-3 py-1 border border-decor">
-                      Rp {myTeam.education_category?.includes('SMA') ? '100.000' : '125.000'} / Tim
+                {/* Payment Info Card - Premium Redesign */}
+                <div className="bg-white border-4 border-blue-sail p-6 sm:p-8 space-y-6 shadow-[8px_8px_0_0_#BD1B1F]">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b-4 border-blue-sail pb-4">
+                    <div className="space-y-1">
+                      <span className="font-display font-black text-[10px] sm:text-xs uppercase text-blue-sail/70 block tracking-widest">
+                        TAGIHAN RESMI TIM {myTeam.team_name.toUpperCase()}
+                      </span>
+                      <span className="font-display font-black text-xl sm:text-2xl uppercase text-blue-sail flex items-center gap-2">
+                        <Icon name="CreditCard" size={24} className="text-red-inferno" /> BIAYA PARTISIPASI SEMIFINAL
+                      </span>
+                    </div>
+                    <span className="bg-decor text-blue-sail font-display font-black text-2xl sm:text-3xl px-5 py-2.5 border-4 border-blue-sail shadow-[4px_4px_0_0_#000] rotate-[-2deg]">
+                      Rp{myTeam.education_category?.includes('SMA') ? '100.000' : '125.000'}
                     </span>
                   </div>
-                  <div className="text-xs font-sans text-blue-sail space-y-1">
-                    <p><strong>Transfer Rekening Resmi Panitia TSF 2026:</strong></p>
-                    <div className="bg-white border border-blue-sail/30 p-3 font-mono space-y-2">
-                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> Bank Jago: <strong>106265590338</strong> a.n. Ahmad Andra Rizky Maulana</p>
-                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> QRIS All Payment:</p>
-                      <img src="/qristsf.jpeg" alt="QRIS TSF 2026" className="w-48 border border-gray-300 mt-2 block" />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    {/* Bank Jago Card */}
+                    <div className="bg-blue-sail text-white p-5 border-4 border-blue-sail shadow-[6px_6px_0_0_#F6BB02] space-y-5 flex flex-col justify-between hover:translate-y-1 hover:translate-x-1 hover:shadow-[2px_2px_0_0_#F6BB02] transition-all">
+                      <div className="flex items-center justify-between">
+                        <span className="font-display font-black text-sm uppercase tracking-widest text-decor">BANK TRANSFER</span>
+                        <Icon name="Landmark" size={24} className="text-decor" />
+                      </div>
+                      
+                      <div className="space-y-1 pt-2">
+                        <p className="text-[10px] font-sans text-white/70 uppercase tracking-widest">Bank Tujuan</p>
+                        <p className="font-display font-black text-2xl tracking-wide text-white">BANK JAGO</p>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-sans text-white/70 uppercase tracking-widest">Nomor Rekening</p>
+                        <div className="flex items-center justify-between bg-white/10 p-2 border border-white/30">
+                          <p className="font-mono font-bold text-xl sm:text-2xl tracking-widest text-white">106265590338</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 pt-2">
+                        <p className="text-[10px] font-sans text-white/70 uppercase tracking-widest">Atas Nama</p>
+                        <p className="font-mono font-bold text-sm tracking-widest text-decor">AHMAD ANDRA RIZKY MAULANA</p>
+                      </div>
+                    </div>
+
+                    {/* QRIS Card */}
+                    <div className="bg-ballroom border-4 border-blue-sail shadow-[6px_6px_0_0_#000] p-5 flex flex-col items-center justify-center space-y-4 hover:translate-y-1 hover:translate-x-1 hover:shadow-[2px_2px_0_0_#000] transition-all">
+                      <div className="flex items-center gap-2 w-full justify-center border-b-2 border-blue-sail/20 pb-3">
+                        <Icon name="ScanLine" size={20} className="text-blue-sail" />
+                        <span className="font-display font-black text-sm uppercase tracking-widest text-blue-sail">SCAN QRIS ALL PAYMENT</span>
+                      </div>
+                      <div className="bg-white p-3 border-4 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F]">
+                        <img src="/qristsf.jpeg" alt="QRIS TSF 2026" className="w-48 sm:w-56 h-auto object-contain mx-auto" />
+                      </div>
+                      <p className="text-[10px] font-sans text-blue-sail/70 uppercase text-center font-bold px-4">
+                        Bebas biaya admin! Dukung transaksi digital antar bank dan e-wallet.
+                      </p>
                     </div>
                   </div>
                 </div>
