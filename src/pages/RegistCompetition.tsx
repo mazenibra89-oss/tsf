@@ -1396,12 +1396,17 @@ export const RegistCompetition: React.FC = () => {
                     <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
                       Bukti upload poster TSF 2026 di story akun pribadi utama Instagram masing-masing anggota dengan tag instagram <strong>@tdcsummitfest_its</strong> dan <strong>@tdcits</strong>.
                     </p>
-                    
-                    <div className="bg-decor/30 text-blue-sail p-3 border border-blue-sail/30 flex items-center justify-between text-xs font-display font-bold">
-                      <span>Poster dapat diakses di:</span>
-                      <span className="bg-blue-sail text-decor px-2.5 py-1 text-[10px] uppercase border border-blue-sail">
-                        LINK MENYUSUL
-                      </span>
+                    <div className="bg-decor/30 text-blue-sail p-3 border border-blue-sail/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-display font-bold">
+                      <span>Keperluan Peserta (Poster) dapat diakses di:</span>
+                      <a 
+                        href={form.competitionType === 'BCC' ? 'https://intip.in/TSF2026KeperluanPesertaBCC' : 'https://intip.in/TSF2026KeperluanPesertaBPC'} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="bg-blue-sail hover:bg-blue-sail/90 text-decor px-3 py-1.5 text-[10px] uppercase border border-blue-sail transition-all flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0_0_#BD1B1F]"
+                      >
+                        <Icon name="ExternalLink" size={12} />
+                        UNDUH POSTER
+                      </a>
                     </div>
 
                     <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2">
@@ -1433,12 +1438,17 @@ export const RegistCompetition: React.FC = () => {
                     <p className="text-xs font-sans text-blue-sail/80 leading-relaxed">
                       Bukti upload feeds twibbon TSF 2026 melalui feeds akun pribadi utama Instagram masing-masing anggota dengan tag instagram <strong>@tdcsummitfest_its</strong> dan <strong>@tdcits</strong>.
                     </p>
-
-                    <div className="bg-decor/30 text-blue-sail p-3 border border-blue-sail/30 flex items-center justify-between text-xs font-display font-bold">
+                    <div className="bg-decor/30 text-blue-sail p-3 border border-blue-sail/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-display font-bold">
                       <span>Twibbon dan caption dapat diakses di:</span>
-                      <span className="bg-blue-sail text-decor px-2.5 py-1 text-[10px] uppercase border border-blue-sail">
-                        LINK BELUM
-                      </span>
+                      <a 
+                        href={form.competitionType === 'BCC' ? 'https://intip.in/TSF2026KeperluanPesertaBCC' : 'https://intip.in/TSF2026KeperluanPesertaBPC'} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="bg-blue-sail hover:bg-blue-sail/90 text-decor px-3 py-1.5 text-[10px] uppercase border border-blue-sail transition-all flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0_0_#BD1B1F]"
+                      >
+                        <Icon name="ExternalLink" size={12} />
+                        UNDUH TWIBBON
+                      </a>
                     </div>
 
                     <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2">
@@ -1646,13 +1656,15 @@ export const RegistCompetition: React.FC = () => {
                     Pastikan Anda bergabung ke grup WhatsApp resmi melalui tautan berikut:
                   </p>
 
-                  <button
-                    onClick={() => alert('Link Grup WhatsApp Resmi TSF 2026 Business Competition akan segera dikirimkan via WhatsApp / Email Ketua Tim!')}
+                  <a
+                    href={form.competitionType === 'BCC' ? 'https://intip.in/GRUPWHATSAPPBCCTSF2026' : 'https://intip.in/WHATSAPPBPCTSF2026'}
+                    target="_blank"
+                    rel="noreferrer"
                     className="w-full bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase py-3.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Icon name="MessageCircle" size={18} />
-                    <span>JOIN WHATSAPP GROUP (LINK MENYUSUL)</span>
-                  </button>
+                    <span>JOIN WHATSAPP GROUP {form.competitionType}</span>
+                  </a>
                 </div>
 
                 <p className="font-display font-black text-base text-red-inferno uppercase tracking-wide">
