@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Icon } from '../components/Icon';
 import { motion, AnimatePresence } from 'motion/react';
-import qrisImg from '../qristsf.jpeg';
 import cfadImg from '../cfad_1.jpg';
 
 type FormStep = 'info' | 'form-data' | 'form-package' | 'form-ebook' | 'form-social' | 'form-payment' | 'success';
@@ -944,8 +943,8 @@ export const PE1: React.FC = () => {
                             <p className="text-xs text-ballroom/80 font-sans mt-0.5">Total Nominal: <strong>{selectedPkg?.price}</strong></p>
                           </div>
 
-                          <div className="bg-white p-3 inline-block border-2 border-blue-sail shadow-[2px_2px_0_0_#000]">
-                            <img src={qrisImg} alt="QRIS TSF 2026" className="w-56 sm:w-64 h-auto mx-auto border border-gray-200" />
+                          <div className="bg-white p-2">
+                            <img src="/qristsf.jpeg" alt="QRIS TSF 2026" className="w-56 sm:w-64 h-auto mx-auto border border-gray-200" />
                           </div>
 
                           <p className="text-[11px] font-mono text-decor font-bold uppercase tracking-wider">
