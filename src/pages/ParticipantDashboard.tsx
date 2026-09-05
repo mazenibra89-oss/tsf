@@ -400,7 +400,7 @@ export const ParticipantDashboard: React.FC = () => {
                 </span>
               </div>
               <h4 className={`font-display font-black text-base uppercase ${myTeam.status_semifinal === 'passed' ? 'text-blue-sail' : 'text-gray-600'}`}>
-                GRAND FINAL &amp; AWARDING
+                GRAND FINAL
               </h4>
               <p className={`text-xs font-sans ${myTeam.status_semifinal === 'passed' ? 'text-blue-sail/80' : 'text-gray-500'}`}>
                 {myTeam.status_semifinal === 'passed'
