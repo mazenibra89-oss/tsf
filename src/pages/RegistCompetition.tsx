@@ -334,7 +334,7 @@ export const RegistCompetition: React.FC = () => {
     { date: '5 Sep – 10 Okt 2026', title: 'Open Registration & Submit BMC', status: 'Active', icon: 'Edit3' },
     { date: '18 Oktober 2026', title: 'Semi-Finalist Announcement', status: 'Upcoming', icon: 'Megaphone' },
     { date: '18 – 31 Oktober 2026', title: 'Semi-Final Stage', status: 'Upcoming', icon: 'Monitor' },
-    { date: '22 November 2026', title: 'Final Stage & Awarding', status: 'Upcoming', icon: 'Award' }
+    { date: '22 November 2026', title: 'Final Stage', status: 'Upcoming', icon: 'Award' }
   ];
 
   return (

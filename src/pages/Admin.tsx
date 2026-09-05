@@ -5848,6 +5848,32 @@ export const Admin: React.FC = () => {
                   Pembayaran Semi Final sudah terverifikasi. Tim belum mengunggah berkas submission Semi Final.
                 </p>
               ) : null}
+
+              {/* Final Task Submission File Section for Admin */}
+              {selectedCompDetail.final_file_url ? (
+                <div className="bg-amber-50 p-3 border border-amber-600 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-2">
+                  <div>
+                    <span className="font-display font-bold text-xs text-amber-900 uppercase block">
+                      BERKAS SUBMISSION GRAND FINAL (PRESENTASI)
+                    </span>
+                    <span className="text-[11px] font-mono text-amber-800 font-bold">
+                      Berkas: {selectedCompDetail.final_file_name || 'Berkas_Final.pdf'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => window.open(selectedCompDetail.final_file_url, '_blank')}
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-display font-bold text-xs uppercase px-4 py-2 border border-amber-800 flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Icon name="FileCheck" size={14} />
+                    <span>BUKA BERKAS GRAND FINAL</span>
+                  </button>
+                </div>
+              ) : selectedCompDetail.status_semifinal === 'passed' ? (
+                <p className="text-xs font-sans text-amber-800 bg-amber-50 border border-amber-300 p-2 font-bold mt-2">
+                  Tim Lolos Grand Final tapi belum mengunggah berkas submission Grand Final.
+                </p>
+              ) : null}
             </div>
 
             {/* Stage Progression Controller inside Modal */}
