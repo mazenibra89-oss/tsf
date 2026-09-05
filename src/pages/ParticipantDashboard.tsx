@@ -407,7 +407,7 @@ export const ParticipantDashboard: React.FC = () => {
                   ? myTeam.status_final === 'passed'
                     ? 'Selamat! Tim Anda meraih Juara Grand Final TDC Summit Fest 2026!'
                     : 'Selamat! Tim Anda bertanding di babak Grand Final!'
-                  : 'Presentasi akhir &amp; penganugerahan pemenang.'}
+                  : 'Presentasi akhir dan Penganugrahan Pemenang.'}
               </p>
             </div>
 
@@ -602,7 +602,7 @@ export const ParticipantDashboard: React.FC = () => {
                     </div>
                   </div>
                   <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
-                    Selamat kepada tim <strong>{myTeam.team_name}</strong>! Berkas submission Preliminary ({myTeam.preliminary_file_type || (myTeam.competition_type === 'BCC' ? 'Executive Summary' : 'BMC')}) Anda telah dinilai oleh dewan juri dan dinyatakan <strong>LOLOS KE BABAK SEMI FINAL</strong>. Untuk mengonfirmasi keikutsertaan dan mengunggah proposal Semi Final, silakan lakukan pembayaran registrasi Semi Final di bawah ini.
+                    Selamat kepada tim <strong>{myTeam.team_name}</strong>! Berkas submission Preliminary ({myTeam.preliminary_file_type || (myTeam.competition_type === 'BCC' ? 'Executive Summary' : 'BMC')}) Anda telah dinilai oleh dewan juri dan dinyatakan <strong>LOLOS KE BABAK SEMI FINAL</strong>. Untuk mengonfirmasi keikutsertaan dan mengunggah proposal Semi Final, silakan lakukan pembayaran partisipasi Semi Final di bawah ini.
                   </p>
                 </div>
 
@@ -610,7 +610,7 @@ export const ParticipantDashboard: React.FC = () => {
                 <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#000]">
                   <div className="flex items-center justify-between border-b border-blue-sail/20 pb-2">
                     <span className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-1.5">
-                      <Icon name="CreditCard" size={16} /> BIAYA REGISTRASI SEMI FINAL
+                      <Icon name="CreditCard" size={16} /> BIAYA PARTISIPASI SEMI FINAL
                     </span>
                     <span className="bg-blue-sail text-decor font-display font-black text-base px-3 py-1 border border-decor">
                       Rp {myTeam.education_category?.includes('SMA') ? '100.000' : '125.000'} / Tim
@@ -633,7 +633,7 @@ export const ParticipantDashboard: React.FC = () => {
                       <span>BUKTI PEMBAYARAN SUDAH DIKUMPULKAN — MENUNGGU VERIFIKASI ADMIN</span>
                     </h4>
                     <p className="text-xs font-sans opacity-90">
-                      Bukti pembayaran Anda sedang diverifikasi oleh panitia. Setelah dikonfirmasi Admin, form submission berkas Semi Final akan otomatis terbuka di halaman ini.
+                      Bukti pembayaran Anda sedang diverifikasi oleh panitia (Maks. 1x24 Jam). Setelah dikonfirmasi Admin, form submission berkas Semi Final akan otomatis terbuka di halaman ini.
                     </p>
                     {myTeam.payment_semifinal_url && (
                       <button
@@ -736,19 +736,19 @@ export const ParticipantDashboard: React.FC = () => {
                       <span>PEMBAYARAN DIVERIFIKASI — FORM SUBMISSION SEMI FINAL TERBUKA!</span>
                     </h4>
                     <p className="text-xs font-sans text-white/90">
-                      Pembayaran registrasi Semi Final Anda telah diverifikasi oleh Panitia. Silakan unggah berkas proposal / solusi studi kasus Semi Final tim Anda di bawah ini.
+                      Pembayaran partisipasi Semi Final Anda telah diverifikasi oleh Panitia. Silakan unggah berkas proposal / solusi studi kasus Semi Final tim Anda di bawah ini.
                     </p>
                   </div>
                 )}
 
                 {myTeam.semifinal_file_url ? (
                   <div className="bg-blue-sail/5 border-2 border-blue-sail p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-display font-black text-xs text-emerald-700 bg-emerald-100 px-3 py-1 border border-emerald-300 uppercase flex items-center gap-1.5">
-                        <Icon name="FileCheck" size={16} /> BERKAS SEMI FINAL SUDAH DIKUMPULKAN
+                    <div className="flex flex-col gap-2">
+                      <span className="font-display font-black text-xs text-emerald-700 bg-emerald-100 px-3 py-1 border border-emerald-300 uppercase flex items-center gap-1.5 w-fit">
+                        <Icon name="FileCheck" size={16} /> PROPOSAL TERSUBMIT
                       </span>
-                      <span className="text-[11px] font-sans text-blue-sail/60 font-semibold">
-                        Status: Menunggu Penilaian Juri Semi Final
+                      <span className="text-[11px] font-sans text-blue-sail/70 font-semibold leading-relaxed">
+                        Proposal Semifinal Anda telah terkumpul pada sistem. Nantikan Pengumuman Finalis pada instagram @tdcsummitfest.net
                       </span>
                     </div>
 
