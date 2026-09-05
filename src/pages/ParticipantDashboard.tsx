@@ -219,6 +219,26 @@ export const ParticipantDashboard: React.FC = () => {
 
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-8">
         
+        {/* WhatsApp Group Box */}
+        <div className="bg-decor border-4 border-blue-sail p-4 shadow-[6px_6px_0_0_#2A4C9E] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-blue-sail">
+            <h3 className="font-display font-black text-sm uppercase flex items-center gap-2">
+              <Icon name="MessageCircle" size={18} />
+              GRUP WHATSAPP PESERTA {myTeam.competition_type || 'BPC'}
+            </h3>
+            <p className="text-xs font-sans font-bold mt-1 opacity-90">Pastikan ketua dan seluruh anggota tim bergabung untuk mendapatkan informasi terbaru dan koordinasi.</p>
+          </div>
+          <a
+            href={myTeam.competition_type === 'BCC' ? 'https://intip.in/GRUPWHATSAPPBCCTSF2026' : 'https://intip.in/WHATSAPPBPCTSF2026'}
+            target="_blank"
+            rel="noreferrer"
+            className="shrink-0 bg-blue-sail hover:bg-blue-sail/90 text-decor font-display font-black text-xs uppercase px-6 py-3 border-2 border-blue-sail transition-all cursor-pointer shadow-[3px_3px_0_0_#BD1B1F] flex items-center gap-2"
+          >
+            <span>JOIN GRUP WA</span>
+            <Icon name="ExternalLink" size={14} />
+          </a>
+        </div>
+
         {/* Step Progression Stepper */}
         <div className="bg-ballroom border-4 border-blue-sail p-6 shadow-[6px_6px_0_0_#2A4C9E] space-y-4">
           <h3 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2">
