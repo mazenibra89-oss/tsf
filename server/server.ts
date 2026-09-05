@@ -212,6 +212,25 @@ async function initDatabase() {
       console.log('Created users table.');
     }
 
+    // Auto-create system_settings table if missing
+    const hasSystemSettings = await db.schema.hasTable('system_settings');
+    if (!hasSystemSettings) {
+      await db.schema.createTable('system_settings', (table) => {
+        table.string('key').primary();
+        table.text('value').nullable();
+      });
+      console.log('Created system_settings table.');
+      
+      // Auto-seed default submission toggles
+      const defaultSettings = [
+        { key: 'submission_preliminary_open', value: 'true' },
+        { key: 'submission_semifinal_payment_open', value: 'true' },
+        { key: 'submission_semifinal_open', value: 'true' },
+        { key: 'submission_final_open', value: 'true' }
+      ];
+      await db('system_settings').insert(defaultSettings);
+    }
+
     // Auto update competition_registrations table if missing new columns
     await ensureCompetitionColumns();
     await ensureCompetitionCategories();
@@ -621,6 +640,13 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
     const thriftProducts = await db('thrift_products').orderBy('id', 'desc').catch(() => []);
     const thriftVendors = await db('thrift_vendors').orderBy('id', 'asc').catch(() => []);
     const qConfig = await db('form_questions_config').where({ id: 'main_config' }).first().catch(() => undefined);
+    
+    // Fetch system settings
+    const systemSettingsRows = await db('system_settings').catch(() => []);
+    const systemSettings = systemSettingsRows.reduce((acc: any, row: any) => {
+      acc[row.key] = row.value;
+      return acc;
+    }, {});
 
     // Fast lightweight counts for admin overview (nearly 0 KB, pure integer queries)
     const [staffCount] = await db('staff_applications').count('id as count').catch(() => [{ count: 0 }]);
@@ -629,6 +655,7 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
     const [pe1Count] = await db('pe1_registrations').count('id as count').catch(() => [{ count: 0 }]);
 
     res.json({
+      systemSettings,
       phases,
       divisions: divisions.map(d => ({
         ...d,
@@ -1892,6 +1919,27 @@ app.delete('/api/thrift-products/:id', authenticateToken, async (req: Request, r
 });
 
 // -------------------------------------------------------------
+// Update System Setting
+app.post('/api/admin/system/settings', authenticateAdmin, async (req: Request, res: Response): Promise<void> => {
+  const { key, value } = req.body;
+  if (!key) {
+    res.status(400).json({ message: 'Key is required' });
+    return;
+  }
+  try {
+    const exists = await db('system_settings').where({ key }).first();
+    if (exists) {
+      await db('system_settings').where({ key }).update({ value });
+    } else {
+      await db('system_settings').insert({ key, value });
+    }
+    res.json({ message: 'Setting updated successfully' });
+  } catch (err) {
+    console.error('Failed to update setting', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // FORM QUESTIONS CONFIG ENDPOINTS
 // -------------------------------------------------------------
 

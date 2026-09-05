@@ -83,6 +83,9 @@ interface AppContextType extends AppState {
   // Form Questions Control
   updateFormQuestions: (config: FormQuestionsConfig) => void;
 
+  // System Settings
+  updateSystemSetting: (key: string, value: string) => Promise<void>;
+
   // Reset
   resetToDefault: () => void;
 }
@@ -795,6 +798,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ambassadorApplications: [],
     subEvents: SEED_SUB_EVENTS,
     competitions: SEED_COMPETITIONS,
+    systemSettings: {
+      'submission_preliminary_open': 'true',
+      'submission_semifinal_payment_open': 'true',
+      'submission_semifinal_open': 'true',
+      'submission_final_open': 'true'
+    },
     competitionRegistrations: (() => {
       try {
         const cached = localStorage.getItem('tsf_cache_comp_regs');
@@ -1161,6 +1170,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             thriftProducts: data.thriftProducts || prev.thriftProducts,
             thriftVendors: data.thriftVendors || prev.thriftVendors,
             formQuestions: data.formQuestions || prev.formQuestions,
+            systemSettings: data.systemSettings || prev.systemSettings,
             metrics: data.metrics || prev.metrics,
             // Keep existing loaded applications in memory unless incoming data explicitly provides non-empty list
             staffApplications: (Array.isArray(data.staffApplications) && data.staffApplications.length > 0) ? data.staffApplications : prev.staffApplications,
@@ -1229,6 +1239,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error(err);
       alert('Gagal memperbarui konfigurasi pertanyaan.');
     }
+  };
+
+  const updateSystemSetting = async (key: string, value: string) => {
+    const adminToken = localStorage.getItem('tsf_admin_token');
+    if (!adminToken) throw new Error('Not authenticated as admin');
+    const res = await fetch(getApiUrl('/api/admin/system/settings'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({ key, value })
+    });
+    if (!res.ok) throw new Error('Failed to update system setting');
+    setState(prev => ({
+      ...prev,
+      systemSettings: {
+        ...(prev.systemSettings || {}),
+        [key]: value
+      }
+    }));
   };
 
   const setActivePhase = async (phaseName: EventPhase['name']) => {
@@ -1747,6 +1778,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteThriftProduct,
       addVendorApplication,
       updateFormQuestions,
+      updateSystemSetting,
       resetToDefault,
       loading,
       currentUser,

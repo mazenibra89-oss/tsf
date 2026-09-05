@@ -282,6 +282,7 @@ export interface AppState {
   thriftVendors: ThriftVendor[];
   vendorApplications: VendorApplication[];
   formQuestions?: FormQuestionsConfig;
+  systemSettings?: Record<string, string>;
   metrics?: {
     staffCount: number;
     compCount: number;

@@ -4,7 +4,7 @@ import { Icon } from '../components/Icon';
 import { AuthModal } from '../components/AuthModal';
 
 export const ParticipantDashboard: React.FC = () => {
-  const { currentUser, myTeam, fetchMyTeam, submitPreliminaryFile, submitSemiFinalPayment, submitSemiFinalFile, submitFinalFile, setCurrentPage } = useApp();
+  const { currentUser, myTeam, fetchMyTeam, submitPreliminaryFile, submitSemiFinalPayment, submitSemiFinalFile, submitFinalFile, setCurrentPage, systemSettings } = useApp();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -473,6 +473,16 @@ export const ParticipantDashboard: React.FC = () => {
                   </button>
                 </div>
               </div>
+            ) : systemSettings?.submission_preliminary_open === 'false' ? (
+              <div className="bg-red-50 border-2 border-red-600 p-5 space-y-2 text-center shadow-[4px_4px_0_0_#DC2626]">
+                <Icon name="Lock" size={24} className="text-red-600 mx-auto" />
+                <h4 className="font-display font-black text-sm uppercase text-red-700">
+                  MOHON MAAF, WAKTU PENGUMPULAN BERKAS PRELIMINARY TELAH DITUTUP.
+                </h4>
+                <p className="text-xs font-sans text-red-900 font-bold">
+                  Batas waktu pengumpulan berkas tahap Preliminary telah berakhir.
+                </p>
+              </div>
             ) : (
               <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-4">
                 <div className="flex items-center gap-2">
@@ -684,6 +694,16 @@ export const ParticipantDashboard: React.FC = () => {
                       </button>
                     )}
                   </div>
+                ) : systemSettings?.submission_semifinal_payment_open === 'false' ? (
+                  <div className="bg-red-50 border-2 border-red-600 p-5 space-y-2 text-center shadow-[4px_4px_0_0_#DC2626]">
+                    <Icon name="Lock" size={24} className="text-red-600 mx-auto" />
+                    <h4 className="font-display font-black text-sm uppercase text-red-700">
+                      MOHON MAAF, WAKTU PEMBAYARAN SEMI FINAL TELAH DITUTUP.
+                    </h4>
+                    <p className="text-xs font-sans text-red-900 font-bold">
+                      Batas waktu pembayaran untuk tahap Semi Final telah berakhir.
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     <h4 className="font-display font-black text-sm uppercase text-blue-sail flex items-center gap-2">
@@ -809,8 +829,18 @@ export const ParticipantDashboard: React.FC = () => {
                       </button>
                     </div>
                   </div>
+                ) : systemSettings?.submission_semifinal_open === 'false' ? (
+                  <div className="bg-red-50 border-2 border-red-600 p-5 space-y-2 text-center shadow-[4px_4px_0_0_#DC2626]">
+                    <Icon name="Lock" size={24} className="text-red-600 mx-auto" />
+                    <h4 className="font-display font-black text-sm uppercase text-red-700">
+                      MOHON MAAF, WAKTU PENGUMPULAN BERKAS SEMI FINAL TELAH DITUTUP.
+                    </h4>
+                    <p className="text-xs font-sans text-red-900 font-bold">
+                      Batas waktu pengumpulan berkas tahap Semi Final telah berakhir.
+                    </p>
+                  </div>
                 ) : (
-                  <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-4">
+                  <div className="bg-blue-sail/5 border-2 border-blue-sail p-5 space-y-4">
                     <div className="flex items-center gap-2">
                       <Icon name="Upload" size={20} className="text-red-inferno" />
                       <h4 className="font-display font-black text-sm uppercase text-blue-sail">
@@ -973,8 +1003,18 @@ export const ParticipantDashboard: React.FC = () => {
                       </button>
                     </div>
                   </div>
+                ) : systemSettings?.submission_final_open === 'false' ? (
+                  <div className="bg-red-50 border-2 border-red-600 p-5 space-y-2 text-center shadow-[4px_4px_0_0_#DC2626] mt-4">
+                    <Icon name="Lock" size={24} className="text-red-600 mx-auto" />
+                    <h4 className="font-display font-black text-sm uppercase text-red-700">
+                      MOHON MAAF, WAKTU PENGUMPULAN BERKAS GRAND FINAL TELAH DITUTUP.
+                    </h4>
+                    <p className="text-xs font-sans text-red-900 font-bold">
+                      Batas waktu pengumpulan berkas tahap Grand Final telah berakhir.
+                    </p>
+                  </div>
                 ) : (
-                  <div className="bg-white border-2 border-blue-sail/30 p-5 shadow-[4px_4px_0_0_#E5E7EB]">
+                  <div className="bg-white border-2 border-blue-sail/30 p-5 shadow-[4px_4px_0_0_#E5E7EB] mt-4">
                     <div className="flex items-center gap-2 mb-4">
                       <div className="w-8 h-8 bg-decor text-blue-sail flex items-center justify-center font-display font-black">
                         !

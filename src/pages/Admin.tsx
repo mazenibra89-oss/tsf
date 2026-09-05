@@ -163,6 +163,8 @@ export const Admin: React.FC = () => {
     subEvents,
     competitions,
     competitionRegistrations,
+    systemSettings,
+    updateSystemSetting,
     thriftProducts,
     thriftVendors,
     vendorApplications,
@@ -2450,6 +2452,38 @@ export const Admin: React.FC = () => {
         {activeTab === 'competitions' && (
           <div className="space-y-8">
 
+            {/* SYSTEM & SUBMISSION SETTINGS */}
+            <div className="bg-white border-4 border-blue-sail p-4 sm:p-5 shadow-[6px_6px_0_0_#BD1B1F] space-y-4">
+              <div className="flex items-center gap-2 border-b-2 border-blue-sail/20 pb-3">
+                <Icon name="Settings" size={20} className="text-red-inferno" />
+                <h2 className="font-display font-black text-lg uppercase text-blue-sail">PENGATURAN SISTEM & SUBMISSION</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { key: 'submission_preliminary_open', label: 'PRELIMINARY (PROPOSAL)', icon: 'FileText' },
+                  { key: 'submission_semifinal_payment_open', label: 'BUKTI BAYAR SEMI FINAL', icon: 'CreditCard' },
+                  { key: 'submission_semifinal_open', label: 'SEMI FINAL (PROPOSAL)', icon: 'FileCheck' },
+                  { key: 'submission_final_open', label: 'GRAND FINAL', icon: 'Trophy' }
+                ].map(setting => {
+                  const isOpen = systemSettings?.[setting.key] === 'true';
+                  return (
+                    <div key={setting.key} className={`border-2 p-4 flex flex-col items-center justify-center gap-3 text-center transition-all ${isOpen ? 'border-emerald-600 bg-emerald-50' : 'border-red-600 bg-red-50'}`}>
+                      <Icon name={setting.icon as any} size={24} className={isOpen ? 'text-emerald-700' : 'text-red-700'} />
+                      <span className={`font-display font-bold text-[10px] uppercase ${isOpen ? 'text-emerald-900' : 'text-red-900'}`}>{setting.label}</span>
+                      
+                      <button
+                        type="button"
+                        onClick={() => updateSystemSetting(setting.key, isOpen ? 'false' : 'true')}
+                        className={`mt-1 font-display font-bold text-xs uppercase px-4 py-1.5 border-2 cursor-pointer transition-all shadow-[2px_2px_0_0_#000] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none ${isOpen ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-red-600 text-white border-red-800'}`}
+                      >
+                        {isOpen ? '🟢 TERBUKA' : '🔴 DITUTUP'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             {/* LOMBA DATABASE */}
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
