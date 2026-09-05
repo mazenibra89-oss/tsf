@@ -4,7 +4,7 @@ import { Icon } from '../components/Icon';
 import { AuthModal } from '../components/AuthModal';
 
 export const ParticipantDashboard: React.FC = () => {
-  const { currentUser, myTeam, fetchMyTeam, submitPreliminaryFile, submitSemiFinalPayment, submitSemiFinalFile, setCurrentPage } = useApp();
+  const { currentUser, myTeam, fetchMyTeam, submitPreliminaryFile, submitSemiFinalPayment, submitSemiFinalFile, submitFinalFile, setCurrentPage } = useApp();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
