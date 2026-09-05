@@ -134,8 +134,12 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
 async function initDatabase() {
   try {
     console.log('Running database migrations...');
-    await db.migrate.latest();
-    console.log('Migrations complete.');
+    try {
+      await db.migrate.latest();
+      console.log('Migrations complete.');
+    } catch (migErr) {
+      console.error('Warning: Migrations failed (expected in raw node production), continuing...', migErr);
+    }
 
     const hasAmbassadorTable = await db.schema.hasTable('ambassador_applications');
     if (!hasAmbassadorTable) {
