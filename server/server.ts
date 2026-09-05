@@ -1920,7 +1920,7 @@ app.delete('/api/thrift-products/:id', authenticateToken, async (req: Request, r
 
 // -------------------------------------------------------------
 // Update System Setting
-app.post('/api/admin/system/settings', authenticateAdmin, async (req: Request, res: Response): Promise<void> => {
+app.post('/api/admin/system/settings', authenticateToken, async (req: Request, res: Response): Promise<void> => {
   const { key, value } = req.body;
   if (!key) {
     res.status(400).json({ message: 'Key is required' });
