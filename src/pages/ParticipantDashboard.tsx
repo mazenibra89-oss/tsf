@@ -836,8 +836,6 @@ export const ParticipantDashboard: React.FC = () => {
           </div>
         )}
 
-        )}
-
         {/* Grand Final Portal Box (Appears when Semi Final is Passed) */}
         {myTeam.status_semifinal === 'passed' && (
           <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] space-y-6">
