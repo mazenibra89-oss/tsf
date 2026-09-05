@@ -28,6 +28,11 @@ export const ParticipantDashboard: React.FC = () => {
   const [semiError, setSemiError] = useState('');
   const [semiSuccessMsg, setSemiSuccessMsg] = useState('');
 
+  const [finalFileUrl, setFinalFileUrl] = useState('');
+  const [isSubmittingFinal, setIsSubmittingFinal] = useState(false);
+  const [finalError, setFinalError] = useState('');
+  const [finalSuccessMsg, setFinalSuccessMsg] = useState('');
+
   const [viewingFile, setViewingFile] = useState<{ url: string; title: string; fileName?: string } | null>(null);
 
   const SAMPLE_DOC_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="100%" height="100%" fill="%232A4C9E"/><rect x="20" y="20" width="560" height="360" fill="%23FFF" stroke="%23F6BB02" stroke-width="4"/><text x="50%" y="80" font-family="sans-serif" font-size="22" font-weight="bold" fill="%232A4C9E" text-anchor="middle">TDC SUMMIT FEST 2026</text><text x="50%" y="120" font-family="sans-serif" font-size="16" font-weight="bold" fill="%23BD1B1F" text-anchor="middle">BERKAS PRATINJAU DOKUMEN PESERTA</text><line x1="50" y1="140" x2="550" y2="140" stroke="%232A4C9E" stroke-width="2"/><text x="60" y="180" font-family="sans-serif" font-size="14" fill="%23333">Status Berkas: Terverifikasi Sistem</text><text x="60" y="220" font-family="sans-serif" font-size="14" fill="%23333">Tipe Berkas: Kartu Identitas / KTM / Persyaratan Lomba</text><text x="60" y="260" font-family="sans-serif" font-size="14" fill="%23333">Status Validasi: Sesuai Ketentuan Pedoman</text><rect x="60" y="300" width="480" height="40" fill="%23F6BB02"/><text x="50%" y="325" font-family="sans-serif" font-size="14" font-weight="bold" fill="%232A4C9E" text-anchor="middle">DOC VERIFIED BY TDC COMMITTEE 2026</text></svg>`;
@@ -37,11 +42,7 @@ export const ParticipantDashboard: React.FC = () => {
       alert(`Berkas "${docTitle || 'Dokumen'}" belum diunggah.`);
       return;
     }
-    setViewingFile({
-      url: fileUrl,
-      title: docTitle || 'Pratinjau Berkas',
-      fileName: fileName || 'berkas_pendaftaran.pdf'
-    });
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
   };
 
   useEffect(() => {
@@ -183,7 +184,33 @@ export const ParticipantDashboard: React.FC = () => {
       setSemiSuccessMsg('Berkas submission Semi Final berhasil dikumpulkan!');
     } catch (err: any) {
       setIsSubmittingSemi(false);
-      setSemiError(err.message || 'Gagal mengunggah berkas Semi Final');
+      setSemiError(err.message || 'Gagal mengirim berkas Semi Final. Coba lagi nanti.');
+    }
+  };
+
+  const handleFinalUploadSubmit = async () => {
+    let targetUrl = finalFileUrl;
+
+    if (!targetUrl || !targetUrl.startsWith('http')) {
+      setFinalError('Wajib mengisi Link Google Drive berkas Grand Final');
+      return;
+    }
+
+    setIsSubmittingFinal(true);
+    setFinalError('');
+    setFinalSuccessMsg('');
+
+    try {
+      await submitFinalFile(
+        myTeam.id,
+        targetUrl,
+        'Link GDrive Final'
+      );
+      setIsSubmittingFinal(false);
+      setFinalSuccessMsg('Berkas Grand Final berhasil dikumpulkan! Status tim diperbarui.');
+    } catch (err: any) {
+      setIsSubmittingFinal(false);
+      setFinalError(err.message || 'Gagal mengirim berkas Grand Final. Coba lagi nanti.');
     }
   };
 
@@ -586,15 +613,15 @@ export const ParticipantDashboard: React.FC = () => {
                       <Icon name="CreditCard" size={16} /> BIAYA REGISTRASI SEMI FINAL
                     </span>
                     <span className="bg-blue-sail text-decor font-display font-black text-base px-3 py-1 border border-decor">
-                      Rp 150.000 / Tim
+                      Rp {myTeam.education_category?.includes('SMA') ? '100.000' : '125.000'} / Tim
                     </span>
                   </div>
                   <div className="text-xs font-sans text-blue-sail space-y-1">
                     <p><strong>Transfer Rekening Resmi Panitia TSF 2026:</strong></p>
-                    <div className="bg-white border border-blue-sail/30 p-3 font-mono space-y-1">
-                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> Bank BCA: <strong>8290-1928-301</strong> a.n. Panitia TDC Summit Fest</p>
-                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> Bank Mandiri: <strong>1400-0192-8301</strong> a.n. TDC SUMMIT FEST 2026</p>
-                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> QRIS All Payment: Scan QRIS pada portal resmi</p>
+                    <div className="bg-white border border-blue-sail/30 p-3 font-mono space-y-2">
+                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> Bank Jago: <strong>106265590338</strong> a.n. Ahmad Andra Rizky Maulana</p>
+                      <p><Icon name="CheckCircle2" size={12} className="inline text-blue-sail mr-1.5" /> QRIS All Payment:</p>
+                      <img src="/qristsf.jpeg" alt="QRIS TSF 2026" className="w-48 border border-gray-300 mt-2 block" />
                     </div>
                   </div>
                 </div>
@@ -809,6 +836,179 @@ export const ParticipantDashboard: React.FC = () => {
           </div>
         )}
 
+        )}
+
+        {/* Grand Final Portal Box (Appears when Semi Final is Passed) */}
+        {myTeam.status_semifinal === 'passed' && (
+          <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] space-y-6">
+            <div className="border-b-2 border-blue-sail/20 pb-4 flex items-center justify-between">
+              <div>
+                <span className="bg-purple-700 text-white font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider inline-block mb-1">
+                  STAGE 03 PORTAL
+                </span>
+                <h3 className="font-display font-black text-xl uppercase text-blue-sail">
+                  PORTAL BABAK GRAND FINAL TIM {myTeam.team_name.toUpperCase()}
+                </h3>
+              </div>
+            </div>
+
+            {myTeam.status_final === 'rejected' ? (
+              <div className="bg-red-inferno text-white p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#000] space-y-3">
+                <div className="flex items-center gap-3 border-b-2 border-white/20 pb-3">
+                  <div className="w-10 h-10 bg-ballroom text-red-inferno flex items-center justify-center font-black text-xl shrink-0 shadow-md">
+                    <Icon name="X" size={24} />
+                  </div>
+                  <div>
+                    <span className="font-mono text-[10px] tracking-widest text-red-200 uppercase block">
+                      PENGUMUMAN BABAK GRAND FINAL
+                    </span>
+                    <h4 className="font-display font-black text-lg sm:text-xl uppercase tracking-tight">
+                      MOHON MAAF, TIM ANDA BELUM MENJADI JUARA GRAND FINAL
+                    </h4>
+                  </div>
+                </div>
+                <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
+                  Terima kasih yang sebesar-besarnya atas kerja keras dan kontribusi luar biasa dari tim <strong>{myTeam.team_name}</strong> pada babak Grand Final TDC Summit Fest 2026. Meskipun belum menjadi juara, karya dan dedikasi tim Anda sangat kami apresiasi!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {myTeam.status_final === 'passed' && (
+                  <div className="bg-amber-500 text-white p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#000] space-y-3">
+                    <div className="flex items-center gap-3 border-b-2 border-white/20 pb-3">
+                      <div className="w-10 h-10 bg-decor text-amber-700 flex items-center justify-center font-black text-xl shrink-0 shadow-md">
+                        <Icon name="Award" size={20} />
+                      </div>
+                      <div>
+                        <span className="font-mono text-[10px] tracking-widest text-amber-100 uppercase block">
+                          PENGUMUMAN JUARA
+                        </span>
+                        <h4 className="font-display font-black text-lg sm:text-xl uppercase tracking-tight">
+                          SELAMAT! TIM ANDA ADALAH JUARA GRAND FINAL!
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
+                      Selamat kepada tim <strong>{myTeam.team_name}</strong>! Anda adalah yang terbaik di ajang TDC Summit Fest 2026.
+                    </p>
+                  </div>
+                )}
+
+                {(!myTeam.status_final || myTeam.status_final === 'pending') && (
+                  <div className="bg-decor/20 border-2 border-blue-sail p-5 space-y-3 shadow-[4px_4px_0_0_#000]">
+                    <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
+                      <Icon name="UploadCloud" size={22} />
+                      <span>FORM SUBMISSION GRAND FINAL</span>
+                    </h4>
+                    <p className="text-xs font-sans text-blue-sail/90">
+                      Silakan unggah berkas presentasi Grand Final tim Anda di bawah ini.
+                    </p>
+                  </div>
+                )}
+
+                {myTeam.final_file_url ? (
+                  <div className="bg-blue-sail/5 border-2 border-blue-sail p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-display font-black text-xs text-emerald-700 bg-emerald-100 px-3 py-1 border border-emerald-300 uppercase flex items-center gap-1.5">
+                        <Icon name="FileCheck" size={16} /> BERKAS GRAND FINAL SUDAH DIKUMPULKAN
+                      </span>
+                      <span className="text-[11px] font-sans text-blue-sail/60 font-semibold">
+                        Status: Menunggu Penilaian Juri Grand Final
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-4 border border-blue-sail/30 flex items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <h4 className="font-display font-black text-sm uppercase text-blue-sail">
+                          {myTeam.final_file_name || `Berkas_Final_${myTeam.team_name}.pdf`}
+                        </h4>
+                        <p className="text-[11px] font-sans text-blue-sail/60 flex items-center gap-1">
+                          <Icon name="FileText" size={12} />
+                          Format: Presentasi / Berkas GDrive
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => window.open(myTeam.final_file_url, '_blank', 'noopener,noreferrer')}
+                        className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] shrink-0 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Icon name="Eye" size={14} />
+                        <span>LIHAT BERKAS FINAL</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white border-2 border-blue-sail/30 p-5 shadow-[4px_4px_0_0_#E5E7EB]">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 bg-decor text-blue-sail flex items-center justify-center font-display font-black">
+                        !
+                      </div>
+                      <div>
+                        <h4 className="font-display font-black text-sm uppercase text-blue-sail">
+                          UNGGAH BERKAS PRESENTASI GRAND FINAL
+                        </h4>
+                        <p className="text-xs font-sans text-blue-sail/70 mt-0.5">
+                          Masukkan Link Google Drive berkas final Anda.
+                        </p>
+                      </div>
+                    </div>
+
+                    {finalError && (
+                      <p className="text-red-600 text-xs font-sans font-semibold bg-red-50 p-2.5 border border-red-300">
+                        {finalError}
+                      </p>
+                    )}
+
+                    {finalSuccessMsg && (
+                      <p className="text-emerald-700 text-xs font-sans font-semibold bg-emerald-50 p-2.5 border border-emerald-300">
+                        {finalSuccessMsg}
+                      </p>
+                    )}
+
+                    <div className="bg-white border border-blue-sail/20 p-3.5 space-y-2 mt-4">
+                      <p className="text-[11px] text-red-inferno font-sans font-bold flex items-center gap-1.5">
+                        <Icon name="AlertCircle" size={14} />
+                        <span>Pastikan akses Google Drive diatur ke "Siapa saja yang memiliki tautan".</span>
+                      </p>
+                      
+                      <input
+                        type="url"
+                        value={finalFileUrl}
+                        onChange={(e) => {
+                          setFinalFileUrl(e.target.value);
+                          setFinalError('');
+                        }}
+                        placeholder="Link Google Drive Berkas Grand Final"
+                        className="w-full bg-white border-2 border-blue-sail/30 focus:border-decor px-4 py-2.5 text-sm font-sans text-blue-sail outline-none"
+                      />
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <button
+                        disabled={isSubmittingFinal || !finalFileUrl}
+                        onClick={handleFinalUploadSubmit}
+                        className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-8 py-3.5 border-2 border-blue-sail shadow-[4px_4px_0_0_#BD1B1F] cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {isSubmittingFinal ? (
+                          <>
+                            <Icon name="Loader2" size={16} className="animate-spin" />
+                            <span>MENGIRIM BERKAS...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Icon name="Upload" size={16} />
+                            <span>SUBMIT BERKAS FINAL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* DETAIL TIM & ANGGOTA SECTION */}
         <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[6px_6px_0_0_#2A4C9E] space-y-6">
           <div className="border-b-2 border-blue-sail/20 pb-4 flex items-center justify-between">
@@ -843,7 +1043,11 @@ export const ParticipantDashboard: React.FC = () => {
                 <p><strong className="font-display uppercase text-blue-sail">Institusi:</strong> {myTeam.institution}</p>
                 {leaderData.studentId && <p><strong className="font-display uppercase text-blue-sail">NRP / NIM:</strong> {leaderData.studentId}</p>}
                 {leaderData.major && <p><strong className="font-display uppercase text-blue-sail">Jurusan:</strong> {leaderData.major}</p>}
-                {leaderData.grade && <p><strong className="font-display uppercase text-blue-sail">Kelas:</strong> Kelas {leaderData.grade}</p>}
+                {myTeam.education_category?.includes('SMA') ? (
+                  leaderData.grade && <p><strong className="font-display uppercase text-blue-sail">Kelas:</strong> Kelas {leaderData.grade}</p>
+                ) : (
+                  leaderData.year && <p><strong className="font-display uppercase text-blue-sail">Angkatan:</strong> {leaderData.year}</p>
+                )}
                 {leaderData.domicile && <p><strong className="font-display uppercase text-blue-sail">Domisili:</strong> {leaderData.domicile}</p>}
                 <p><strong className="font-display uppercase text-blue-sail">WhatsApp:</strong> {myTeam.contact}</p>
               </div>
@@ -877,7 +1081,11 @@ export const ParticipantDashboard: React.FC = () => {
                   <p><strong className="font-display uppercase text-blue-sail">Institusi:</strong> {m.institution || '-'}</p>
                   {m.studentId && <p><strong className="font-display uppercase text-blue-sail">NRP / NIM:</strong> {m.studentId}</p>}
                   {m.major && <p><strong className="font-display uppercase text-blue-sail">Jurusan:</strong> {m.major}</p>}
-                  {m.grade && <p><strong className="font-display uppercase text-blue-sail">Kelas:</strong> Kelas {m.grade}</p>}
+                  {myTeam.education_category?.includes('SMA') ? (
+                    m.grade && <p><strong className="font-display uppercase text-blue-sail">Kelas:</strong> Kelas {m.grade}</p>
+                  ) : (
+                    m.year && <p><strong className="font-display uppercase text-blue-sail">Angkatan:</strong> {m.year}</p>
+                  )}
                   {m.domicile && <p><strong className="font-display uppercase text-blue-sail">Domisili:</strong> {m.domicile}</p>}
                   {m.whatsapp && <p><strong className="font-display uppercase text-blue-sail">WhatsApp:</strong> {m.whatsapp}</p>}
                 </div>

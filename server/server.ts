@@ -325,7 +325,10 @@ async function ensureCompetitionColumns() {
       { name: 'payment_semifinal_submitted_at', type: 'timestamp' },
       { name: 'semifinal_file_url', type: 'text' },
       { name: 'semifinal_file_name', type: 'string' },
-      { name: 'semifinal_submitted_at', type: 'timestamp' }
+      { name: 'semifinal_submitted_at', type: 'timestamp' },
+      { name: 'final_file_url', type: 'text' },
+      { name: 'final_file_name', type: 'string' },
+      { name: 'final_submitted_at', type: 'timestamp' }
     ];
 
     for (const col of columns) {
@@ -1700,7 +1703,32 @@ app.post('/api/competitions/submit-semifinal', async (req: Request, res: Respons
     res.json({ message: 'Berkas submission Semi Final berhasil dikumpulkan' });
   } catch (err: any) {
     console.error(err);
-    res.status(500).json({ message: err.message || 'Gagal mengunggah berkas Semi Final' });
+    res.status(500).json({ message: 'Gagal menyimpan berkas Semi Final' });
+  }
+});
+
+// Participant: Submit Final Task Submission File
+app.post('/api/competitions/submit-final', async (req: Request, res: Response): Promise<void> => {
+  const { team_id, final_file_url, final_file_name } = req.body;
+
+  if (!team_id || !final_file_url) {
+    res.status(400).json({ message: 'ID Tim dan berkas submission Final wajib diisi.' });
+    return;
+  }
+
+  try {
+    await db('competition_registrations')
+      .where({ id: team_id })
+      .update({
+        final_file_url,
+        final_file_name: final_file_name || 'berkas_final.pdf',
+        final_submitted_at: db.fn.now()
+      });
+
+    res.json({ message: 'Berkas submission Grand Final berhasil dikumpulkan' });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal menyimpan berkas Grand Final' });
   }
 });
 

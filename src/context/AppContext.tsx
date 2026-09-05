@@ -77,6 +77,7 @@ interface AppContextType extends AppState {
   submitPreliminaryFile: (team_id: string, preliminary_file_url: string, preliminary_file_name: string, preliminary_file_type: 'BMC' | 'Executive Summary') => Promise<void>;
   submitSemiFinalPayment: (team_id: string, payment_semifinal_url: string, payment_semifinal_file_name: string) => Promise<void>;
   submitSemiFinalFile: (team_id: string, semifinal_file_url: string, semifinal_file_name: string) => Promise<void>;
+  submitFinalFile: (team_id: string, final_file_url: string, final_file_name: string) => Promise<void>;
   updateCompetitionRegistrationStatus: (id: string, payload: { status_stage?: string; status_preliminary?: string; status_semifinal?: string; status_final?: string; payment_semifinal_status?: string; }) => Promise<void>;
 
   // Form Questions Control
@@ -1089,9 +1090,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Gagal mengunggah berkas Semi Final');
+    if (!res.ok) throw new Error(data.message || 'Gagal menyimpan berkas');
+    await fetchState();
     await fetchMyTeam();
-    fetchState().catch(() => {});
+  };
+
+  const submitFinalFile = async (
+    team_id: string,
+    final_file_url: string,
+    final_file_name: string
+  ) => {
+    const res = await fetch(getApiUrl('/api/competitions/submit-final'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        team_id,
+        final_file_url,
+        final_file_name
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Gagal menyimpan berkas Final');
+    await fetchState();
+    await fetchMyTeam();
   };
 
   const updateCompetitionRegistrationStatus = async (
@@ -1747,6 +1768,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       submitPreliminaryFile,
       submitSemiFinalPayment,
       submitSemiFinalFile,
+      submitFinalFile,
       updateCompetitionRegistrationStatus
     }}>
       {children}
