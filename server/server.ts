@@ -594,7 +594,8 @@ const sanitizeRowFiles = (row: any) => {
     'ig_follow_file_url',
     'preliminary_file_url',
     'payment_semifinal_url',
-    'semifinal_file_url'
+    'semifinal_file_url',
+    'final_file_url'
   ];
   fileFields.forEach(field => {
     if (typeof sanitized[field] === 'string' && sanitized[field].startsWith('data:')) {
@@ -1942,11 +1943,14 @@ app.get('/api/system/health', async (_req: Request, res: Response): Promise<void
         'ig_follow_file_url',
         'preliminary_file_url',
         'payment_semifinal_url',
-        'semifinal_file_url'
+        'semifinal_file_url',
+        'final_file_url',
+        'final_file_name',
+        'final_submitted_at'
       );
       totalTeams = rows.length;
       rows.forEach(r => {
-        ['payment_proof_url', 'file_url', 'ig_story_file_url', 'twibbon_file_url', 'ig_follow_file_url', 'preliminary_file_url', 'payment_semifinal_url', 'semifinal_file_url'].forEach(col => {
+        ['payment_proof_url', 'file_url', 'ig_story_file_url', 'twibbon_file_url', 'ig_follow_file_url', 'preliminary_file_url', 'payment_semifinal_url', 'semifinal_file_url', 'final_file_url'].forEach(col => {
           if (typeof (r as any)[col] === 'string' && (r as any)[col].startsWith('data:')) {
             base64EntriesCount++;
             approximateBlobBytes += (r as any)[col].length;
@@ -2059,7 +2063,8 @@ app.post('/api/system/clean-blobs', async (_req: Request, res: Response): Promis
         'ig_follow_file_url',
         'preliminary_file_url',
         'payment_semifinal_url',
-        'semifinal_file_url'
+        'semifinal_file_url',
+        'final_file_url'
       ];
 
       fileColumns.forEach(col => {
