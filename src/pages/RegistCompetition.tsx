@@ -378,13 +378,23 @@ export const RegistCompetition: React.FC = () => {
                 </p>
 
                 {/* Prominent Featured CTA Button */}
-                <button
-                  onClick={scrollToForm}
-                  className="w-full bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-sm uppercase py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span>DAFTAR SEKARANG</span>
-                  <Icon name="ArrowRight" size={18} className="stroke-[3px]" />
-                </button>
+                <div className="space-y-2 pt-2">
+                  <button
+                    onClick={scrollToForm}
+                    className="w-full bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-sm uppercase py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>DAFTAR SEKARANG</span>
+                    <Icon name="ArrowRight" size={18} className="stroke-[3px]" />
+                  </button>
+
+                  <button
+                    onClick={() => window.open('https://intip.in/GuidebookTSF2026', '_blank', 'noopener,noreferrer')}
+                    className="w-full bg-transparent hover:bg-blue-sail hover:text-ballroom text-blue-sail font-display font-black text-xs uppercase py-3 border-2 border-blue-sail transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Icon name="BookOpen" size={16} />
+                    <span>BUKA GUIDEBOOK</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
