@@ -793,7 +793,7 @@ export const Admin: React.FC = () => {
   };
 
   const exportCompCSV = () => {
-    const headers = ['Nama Tim', 'Ketua Tim', 'Anggota', 'Instansi', 'No WA', 'Email', 'Cabang Kompetisi', 'Bukti Transfer', 'Tanggal Daftar'];
+    const headers = ['Nama Tim', 'Ketua Tim', 'Anggota', 'Instansi', 'No WA', 'Email', 'Cabang Kompetisi', 'KTM Ketua', 'Bukti IG Story', 'Bukti Twibbon', 'Bukti Follow IG', 'Tanggal Daftar'];
     const rows = competitionRegistrations.map(reg => {
       const comp = competitions.find(c => c.id === reg.category_id);
       return [
@@ -804,7 +804,10 @@ export const Admin: React.FC = () => {
         reg.contact,
         reg.email,
         comp ? comp.title : 'Kategori Tidak Ditemukan',
-        reg.payment_proof_url,
+        reg.payment_proof_url || '-', // payment_proof_url is used for KTM in preliminary
+        reg.ig_story_file_url || reg.file_url || '-',
+        reg.twibbon_file_url || '-',
+        reg.ig_follow_file_url || '-',
         new Date(reg.submitted_at).toLocaleDateString('id-ID')
       ];
     });
