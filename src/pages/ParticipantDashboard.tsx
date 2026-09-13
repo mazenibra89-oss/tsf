@@ -136,6 +136,33 @@ export const ParticipantDashboard: React.FC = () => {
         'Link GDrive',
         isBPC ? 'BMC' : 'Executive Summary'
       );
+
+      // --- Kirim ke Google Sheets ---
+      try {
+        const sheetPayload = {
+          "sheetName": "Data Preliminary",
+          "Kategori": isBPC ? 'BPC' : 'BCC',
+          "Nama Tim": myTeam.team_name,
+          "Ketua Tim": myTeam.leader_name,
+          "Asal Instansi": myTeam.institution,
+          "Kontak WA": myTeam.contact,
+          "Tipe Berkas": isBPC ? 'BMC' : 'Executive Summary',
+          "Link Dokumen Preliminary": targetUrl
+        };
+
+        await fetch("https://script.google.com/macros/s/AKfycbx9jmX3Qa320kXsUKUEpA4wd83SeSwPQip9SqQZxezWTZuTZfcP41gll8ZuoZk3K9TiJg/exec", {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "text/plain"
+          },
+          body: JSON.stringify(sheetPayload)
+        });
+      } catch (e) {
+        console.error("Gagal mengirim ke Google Sheets", e);
+      }
+      // ------------------------------
+
       setIsSubmitting(false);
       setSuccessMsg(`Berkas ${requiredFileType} berhasil dikumpulkan! Status tim diperbarui.`);
     } catch (err: any) {

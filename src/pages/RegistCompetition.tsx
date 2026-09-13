@@ -303,6 +303,7 @@ export const RegistCompetition: React.FC = () => {
         // --- Kirim ke Google Sheets ---
         try {
           const sheetPayload: any = {
+            "sheetName": "Pendaftar Kompetisi",
             "Tipe Kompetisi": form.competitionType,
             "Kategori": form.educationCategory,
             "Nama Tim": form.teamName,
