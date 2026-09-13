@@ -300,6 +300,50 @@ export const RegistCompetition: React.FC = () => {
           status_preliminary: 'pending'
         } as any);
 
+        // --- Kirim ke Google Sheets ---
+        try {
+          const sheetPayload: any = {
+            "Tipe Kompetisi": form.competitionType,
+            "Kategori": form.educationCategory,
+            "Nama Tim": form.teamName,
+            "Jumlah Anggota (inc. Ketua)": form.teamSize,
+            "Nama Ketua": form.leaderFullName,
+            "Instansi Ketua": form.leaderInstitution,
+            "Domisili Ketua": form.leaderDomicile,
+            "NRP/NIM Ketua": form.leaderStudentId,
+            "Jurusan Ketua": form.leaderMajor,
+            "Kelas Ketua": form.leaderGrade,
+            "Angkatan Ketua": form.leaderYear,
+            "WhatsApp Ketua": form.leaderWhatsapp,
+            "Email Ketua": form.leaderEmail,
+            "Link KTM/Identitas Ketua": form.leaderCardFileUrl || form.leaderCardFileName,
+            "Link IG Story": form.igStoryFileUrl || form.igStoryFileName,
+            "Link Twibbon": form.twibbonFileUrl || form.twibbonFileName,
+            "Link Follow IG": form.igFollowFileUrl || form.igFollowFileName
+          };
+
+          // Tambahkan anggota jika ada
+          membersArray.forEach((m, idx) => {
+            sheetPayload[`Nama Anggota ${idx + 1}`] = m.fullName;
+            sheetPayload[`Instansi Anggota ${idx + 1}`] = m.institution;
+            sheetPayload[`NRP/NIM Anggota ${idx + 1}`] = m.studentId;
+            sheetPayload[`WhatsApp Anggota ${idx + 1}`] = m.whatsapp;
+            sheetPayload[`Email Anggota ${idx + 1}`] = m.email;
+          });
+
+          await fetch("https://script.google.com/macros/s/AKfycbx9jmX3Qa320kXsUKUEpA4wd83SeSwPQip9SqQZxezWTZuTZfcP41gll8ZuoZk3K9TiJg/exec", {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "text/plain"
+            },
+            body: JSON.stringify(sheetPayload)
+          });
+        } catch (e) {
+          console.error("Gagal mengirim ke Google Sheets", e);
+        }
+        // ------------------------------
+
         setIsSubmitting(false);
         try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
         setStep('success');
