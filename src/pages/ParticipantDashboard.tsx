@@ -185,6 +185,24 @@ export const ParticipantDashboard: React.FC = () => {
 
     try {
       await submitSemiFinalPayment(myTeam.id, targetUrl, 'Link GDrive');
+
+      // --- Kirim ke Google Sheets ---
+      try {
+        const sheetPayload = {
+          "sheetName": "Bukti Bayar Semifinal",
+          "Kategori": myTeam.competition_type || (isBPC ? 'BPC' : 'BCC'),
+          "Nama Tim": myTeam.team_name,
+          "Ketua Tim": myTeam.leader_name,
+          "Asal Instansi": myTeam.institution,
+          "Kontak WA": myTeam.contact,
+          "Link Bukti Pembayaran": targetUrl
+        };
+        await fetch("https://script.google.com/macros/s/AKfycbx9jmX3Qa320kXsUKUEpA4wd83SeSwPQip9SqQZxezWTZuTZfcP41gll8ZuoZk3K9TiJg/exec", {
+          method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(sheetPayload)
+        });
+      } catch (e) { console.error("Gagal", e); }
+      // ------------------------------
+
       setIsSubmittingPayment(false);
       setPaymentSuccessMsg('Bukti pembayaran Semi Final berhasil dikirim! Menunggu verifikasi admin.');
     } catch (err: any) {
@@ -207,6 +225,24 @@ export const ParticipantDashboard: React.FC = () => {
 
     try {
       await submitSemiFinalFile(myTeam.id, targetUrl, 'Link GDrive');
+
+      // --- Kirim ke Google Sheets ---
+      try {
+        const sheetPayload = {
+          "sheetName": "Submission Semifinal",
+          "Kategori": myTeam.competition_type || (isBPC ? 'BPC' : 'BCC'),
+          "Nama Tim": myTeam.team_name,
+          "Ketua Tim": myTeam.leader_name,
+          "Asal Instansi": myTeam.institution,
+          "Kontak WA": myTeam.contact,
+          "Link Berkas Semifinal": targetUrl
+        };
+        await fetch("https://script.google.com/macros/s/AKfycbx9jmX3Qa320kXsUKUEpA4wd83SeSwPQip9SqQZxezWTZuTZfcP41gll8ZuoZk3K9TiJg/exec", {
+          method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(sheetPayload)
+        });
+      } catch (e) { console.error("Gagal", e); }
+      // ------------------------------
+
       setIsSubmittingSemi(false);
       setSemiSuccessMsg('Berkas submission Semi Final berhasil dikumpulkan!');
     } catch (err: any) {
@@ -233,6 +269,24 @@ export const ParticipantDashboard: React.FC = () => {
         targetUrl,
         'Link GDrive Final'
       );
+
+      // --- Kirim ke Google Sheets ---
+      try {
+        const sheetPayload = {
+          "sheetName": "Submission Final",
+          "Kategori": myTeam.competition_type || (isBPC ? 'BPC' : 'BCC'),
+          "Nama Tim": myTeam.team_name,
+          "Ketua Tim": myTeam.leader_name,
+          "Asal Instansi": myTeam.institution,
+          "Kontak WA": myTeam.contact,
+          "Link Berkas Final": targetUrl
+        };
+        await fetch("https://script.google.com/macros/s/AKfycbx9jmX3Qa320kXsUKUEpA4wd83SeSwPQip9SqQZxezWTZuTZfcP41gll8ZuoZk3K9TiJg/exec", {
+          method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(sheetPayload)
+        });
+      } catch (e) { console.error("Gagal", e); }
+      // ------------------------------
+
       setIsSubmittingFinal(false);
       setFinalSuccessMsg('Berkas Grand Final berhasil dikumpulkan! Status tim diperbarui.');
     } catch (err: any) {
@@ -641,6 +695,15 @@ export const ParticipantDashboard: React.FC = () => {
                   <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
                     Selamat kepada tim <strong>{myTeam.team_name}</strong>! Berkas submission Preliminary ({myTeam.preliminary_file_type || (myTeam.competition_type === 'BCC' ? 'Executive Summary' : 'BMC')}) Anda telah dinilai oleh dewan juri dan dinyatakan <strong>LOLOS KE BABAK SEMI FINAL</strong>. Untuk mengonfirmasi keikutsertaan dan mengunggah proposal Semi Final, silakan lakukan pembayaran partisipasi Semi Final di bawah ini.
                   </p>
+                  <div className="pt-2">
+                    <a
+                      href={myTeam.competition_type === 'BPC' ? 'https://intip.in/WhatsAppTSFSemifinalBPC2026' : 'https://intip.in/WhatsAppTSFSemifinalBCC2026'}
+                      target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-white text-blue-sail hover:bg-decor font-display font-black text-[10px] sm:text-xs px-4 py-2 uppercase tracking-widest border border-blue-sail transition-colors cursor-pointer"
+                    >
+                      <Icon name="Users" size={16} /> GABUNG GRUP WHATSAPP SEMIFINAL
+                    </a>
+                  </div>
                 </div>
 
                 {/* Payment Info Card - Premium Redesign */}
@@ -811,6 +874,15 @@ export const ParticipantDashboard: React.FC = () => {
                     <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
                       Selamat kepada tim <strong>{myTeam.team_name}</strong>! Solusi dan proposal Semi Final Anda berhasil memukau dewan juri dan dinyatakan <strong>LOLOS KE BABAK GRAND FINAL</strong>. Persiapkan presentasi final tim Anda!
                     </p>
+                    <div className="pt-2">
+                      <a
+                        href={myTeam.competition_type === 'BPC' ? 'https://intip.in/WhatsAppTSFBPCFINAL2026' : 'https://intip.in/WhatsAppTSFBCCFINAL2026'}
+                        target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-white text-purple-900 hover:bg-decor font-display font-black text-[10px] sm:text-xs px-4 py-2 uppercase tracking-widest border border-purple-900 transition-colors cursor-pointer"
+                      >
+                        <Icon name="Users" size={16} /> GABUNG GRUP WHATSAPP GRAND FINAL
+                      </a>
+                    </div>
                   </div>
                 )}
 
