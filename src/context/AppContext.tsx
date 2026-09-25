@@ -132,10 +132,10 @@ const SEED_PHASES: EventPhase[] = [
     id: 'p-3',
     name: 'pe2',
     label: 'Pre-Event 2 (PE2)',
-    status: 'upcoming',
+    status: 'active',
     start_date: '2026-09-08',
     end_date: '2026-09-12',
-    description: 'Coming Soon',
+    description: 'Impacture',
     cta_link: '/pe2'
   },
   {

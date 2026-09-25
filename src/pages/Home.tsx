@@ -57,7 +57,7 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
       setCurrentPage('recruitment');
       return;
     }
-    const disabledPages = ['pe2', 'thrift', 'staff', 'interview-result', 'announcement'];
+    const disabledPages = ['thrift', 'staff', 'interview-result', 'announcement'];
     if (disabledPages.includes(page)) {
       setCurrentPage('recruitment');
     } else {
