@@ -155,48 +155,70 @@ export const PE2: React.FC = () => {
 
         {/* SECTION A: LANDING PAGE */}
         {step === 'info' && (
-          <div className="space-y-12 mb-16">
-            <div className="text-center space-y-4 max-w-4xl mx-auto">
-              <h2 className="font-display font-black text-4xl sm:text-6xl text-decor uppercase tracking-tight drop-shadow-sm">
-                Welcome to TDC Summit Fest 2026: Pre-Event II — <span className="text-blue-sail bg-decor px-2 inline-block -rotate-2 transform">Impacture</span>
-              </h2>
-              <p className="font-mono text-xl sm:text-2xl text-blue-sail font-bold">
-                "Turning Challenges Into Sustainable Opportunities"
-              </p>
-              <p className="font-sans text-base sm:text-lg text-blue-sail/80 leading-relaxed max-w-2xl mx-auto">
-                Permasalahan limbah nggak harus selalu jadi masalah. Impacture hadir sebagai ruang buat generasi muda ngolah limbah jadi produk yang bernilai guna, lewat pendekatan sustainability dan circular economy!
-                <br /><br />
-                <strong>Take your step. Create your impact. Be part of Impacture🌱✨</strong>
-              </p>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-12 mb-16"
+          >
+            <div className="relative bg-white border-4 border-blue-sail p-8 sm:p-12 shadow-[12px_12px_0_0_#BD1B1F] max-w-5xl mx-auto overflow-hidden">
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-decor rounded-bl-full -mr-8 -mt-8 opacity-20 pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-red-inferno rounded-tr-full -ml-8 -mb-8 opacity-10 pointer-events-none"></div>
+              
+              <div className="relative text-center space-y-6">
+                <motion.h2 
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                  className="font-display font-black text-4xl sm:text-6xl text-blue-sail uppercase tracking-tight leading-tight"
+                >
+                  Welcome to TDC Summit Fest 2026<br/>
+                  Pre-Event II — <span className="text-decor bg-blue-sail px-4 py-1 mt-2 inline-block -rotate-2 transform border-4 border-decor shadow-[4px_4px_0_0_#BD1B1F]">Impacture</span>
+                </motion.h2>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-4 font-mono text-sm text-blue-sail">
-                <div className="flex items-center gap-2 bg-blue-sail/10 px-4 py-2 border border-blue-sail/20">
-                  <Icon name="Calendar" size={16} className="text-decor" />
-                  <span>Minggu, 4 Oktober 2026</span>
+                <p className="font-mono text-xl sm:text-2xl text-blue-sail font-bold bg-blue-50 inline-block px-4 py-2 border-2 border-blue-sail/20 border-dashed">
+                  "Turning Challenges Into Sustainable Opportunities"
+                </p>
+
+                <p className="font-sans text-base sm:text-lg text-blue-sail/90 leading-relaxed max-w-3xl mx-auto pt-4">
+                  Permasalahan limbah nggak harus selalu jadi masalah. Impacture hadir sebagai ruang buat generasi muda ngolah limbah jadi produk yang bernilai guna, lewat pendekatan sustainability dan circular economy!
+                  <br /><br />
+                  <span className="font-bold text-red-inferno bg-red-50 px-2 py-1">Take your step. Create your impact. Be part of Impacture🌱✨</span>
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-stretch justify-center gap-4 py-6 font-mono text-sm text-blue-sail">
+                  <div className="flex items-center gap-3 bg-white px-5 py-3 border-4 border-blue-sail shadow-[4px_4px_0_0_#F6BB02]">
+                    <Icon name="Calendar" size={24} className="text-red-inferno shrink-0" />
+                    <span className="font-bold uppercase">Minggu, 4 Okt 2026</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white px-5 py-3 border-4 border-blue-sail shadow-[4px_4px_0_0_#F6BB02]">
+                    <Icon name="Clock" size={24} className="text-red-inferno shrink-0" />
+                    <span className="font-bold uppercase">10.00 WIB</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white px-5 py-3 border-4 border-blue-sail shadow-[4px_4px_0_0_#F6BB02]">
+                    <Icon name="MapPin" size={24} className="text-red-inferno shrink-0" />
+                    <span className="font-bold uppercase text-left leading-tight">Visma Coffee<br/><span className="text-[10px] text-blue-sail/70">Jl. Tegalsari No. 35, SBY</span></span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 bg-blue-sail/10 px-4 py-2 border border-blue-sail/20">
-                  <Icon name="Clock" size={16} className="text-decor" />
-                  <span>10.00 WIB</span>
-                </div>
-                <div className="flex items-center gap-2 bg-blue-sail/10 px-4 py-2 border border-blue-sail/20">
-                  <Icon name="MapPin" size={16} className="text-decor" />
-                  <span>Visma Coffee, Art & Co-Working Space, Jl. Tegalsari No. 35, Surabaya</span>
+
+                <div className="pt-4">
+                  {!isRegistrationOpen && (
+                    <div className="inline-block bg-red-500/20 text-red-700 border-4 border-red-500 px-6 py-4 font-mono font-bold uppercase shadow-[4px_4px_0_0_#ef4444]">
+                      Pendaftaran saat ini ditutup.
+                    </div>
+                  )}
+                  {isRegistrationOpen && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={startRegistration}
+                      className="bg-decor hover:bg-yellow-400 text-blue-sail font-display font-black text-2xl px-12 py-5 border-4 border-blue-sail shadow-[8px_8px_0_0_#1E2A4F] transition-colors uppercase group relative overflow-hidden inline-flex items-center justify-center gap-3 cursor-pointer"
+                    >
+                      Secure Your Seat <Icon name="ArrowRight" className="group-hover:translate-x-2 transition-transform" />
+                    </motion.button>
+                  )}
                 </div>
               </div>
-
-              {!isRegistrationOpen && (
-                <div className="bg-red-500/20 text-red-100 border border-red-500/50 p-4 font-mono">
-                  Pendaftaran saat ini ditutup.
-                </div>
-              )}
-              {isRegistrationOpen && (
-                <button
-                  onClick={startRegistration}
-                  className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xl px-12 py-4 border-4 border-blue-sail shadow-[8px_8px_0_0_#1E2A4F] hover:shadow-[4px_4px_0_0_#1E2A4F] hover:translate-y-[4px] hover:translate-x-[4px] transition-all uppercase"
-                >
-                  Secure Your Seat
-                </button>
-              )}
             </div>
 
             <div className="max-w-4xl mx-auto bg-blue-sail text-ballroom border-4 border-blue-sail shadow-[8px_8px_0_0_#F6BB02] p-8 sm:p-12">
@@ -227,7 +249,7 @@ export const PE2: React.FC = () => {
                 ))}
               </ul>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* SECTION B: REGISTRATION FORM */}
