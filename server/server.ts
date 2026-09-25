@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
 import db from './db';
+import { google } from 'googleapis';
 
 import os from 'os';
 
@@ -97,6 +98,16 @@ dotenv.config({ path: path.join(appDir, '.env') });
 const app = express();
 const PORT = process.env.PORT || 5005;
 const JWT_SECRET = process.env.JWT_SECRET || 'tsf_super_secret_key_2026';
+
+// Google Sheets Auth for PE2
+const sheetAuth = new google.auth.GoogleAuth({
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL || '',
+    private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+  },
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
+const sheets = google.sheets({ version: 'v4', auth: sheetAuth });
 
 // Middleware
 app.use(cors());
@@ -195,6 +206,28 @@ async function initDatabase() {
         table.timestamp('submitted_at').notNullable().defaultTo(db.fn.now());
       });
       console.log('Created pe1_registrations table.');
+    }
+
+    // Auto-create pe2_registrations table if missing
+    const hasPe2Table = await db.schema.hasTable('pe2_registrations');
+    if (!hasPe2Table) {
+      await db.schema.createTable('pe2_registrations', (table) => {
+        table.string('id').primary();
+        table.string('set_type').notNullable();
+        table.string('p1_name').notNullable();
+        table.string('p1_email').notNullable();
+        table.string('p1_whatsapp').notNullable();
+        table.string('p1_institution').notNullable();
+        table.string('p2_name').nullable();
+        table.string('p2_email').nullable();
+        table.string('p2_whatsapp').nullable();
+        table.string('p2_institution').nullable();
+        table.string('payment_method').notNullable();
+        table.string('payment_proof_url').notNullable();
+        table.string('status').notNullable().defaultTo('pending');
+        table.timestamp('submitted_at').notNullable().defaultTo(db.fn.now());
+      });
+      console.log('Created pe2_registrations table.');
     }
 
     // Auto-create users table if missing
@@ -653,6 +686,7 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
     const [compCount] = await db('competition_registrations').count('id as count').catch(() => [{ count: 0 }]);
     const [ambassadorCount] = await db('ambassador_applications').count('id as count').catch(() => [{ count: 0 }]);
     const [pe1Count] = await db('pe1_registrations').count('id as count').catch(() => [{ count: 0 }]);
+    const [pe2Count] = await db('pe2_registrations').count('id as count').catch(() => [{ count: 0 }]);
 
     res.json({
       systemSettings,
@@ -666,6 +700,7 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
       staffApplications: [],
       ambassadorApplications: [],
       pe1Registrations: [],
+      pe2Registrations: [],
       subEvents: subEvents.map(e => ({
         ...e,
         lineup: parseJson(e.lineup),
@@ -687,7 +722,8 @@ app.get('/api/state', async (req: Request, res: Response): Promise<void> => {
         staffCount: Number(staffCount?.count || 0),
         compCount: Number(compCount?.count || 0),
         ambassadorCount: Number(ambassadorCount?.count || 0),
-        pe1Count: Number(pe1Count?.count || 0)
+        pe1Count: Number(pe1Count?.count || 0),
+        pe2Count: Number(pe2Count?.count || 0)
       }
     });
 
@@ -731,6 +767,17 @@ app.get('/api/admin/pe1-registrations', authenticateToken, async (req: Request, 
   } catch (err) {
     console.error('Failed to fetch PE1 registrations:', err);
     res.status(500).json({ message: 'Failed to fetch PE1 registrations' });
+  }
+});
+
+// PE2 Registrations (Only loaded when Admin opens PE2 tab)
+app.get('/api/admin/pe2-registrations', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const regs = await db('pe2_registrations').orderBy('submitted_at', 'desc').catch(() => []);
+    res.json(regs.map(r => sanitizeRowFiles(r)));
+  } catch (err) {
+    console.error('Failed to fetch PE2 registrations:', err);
+    res.status(500).json({ message: 'Failed to fetch PE2 registrations' });
   }
 });
 
@@ -1112,6 +1159,52 @@ app.put('/api/pe1-registrations/:id/status', authenticateToken, async (req: Requ
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Gagal memperbarui status pendaftar PE1' });
+  }
+});
+
+// Create PE2 Registration
+app.post('/api/pe2-registrations', async (req: Request, res: Response): Promise<void> => {
+  const {
+    set_type, p1_name, p1_email, p1_whatsapp, p1_institution,
+    p2_name, p2_email, p2_whatsapp, p2_institution,
+    payment_method, payment_proof_url
+  } = req.body;
+
+  const id = `pe2-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+
+  try {
+    const newReg = {
+      id, set_type, p1_name, p1_email, p1_whatsapp, p1_institution,
+      p2_name, p2_email, p2_whatsapp, p2_institution,
+      payment_method, payment_proof_url
+    };
+    
+    await db('pe2_registrations').insert(newReg);
+
+
+    res.status(201).json({ id, message: 'Pendaftaran PE2 berhasil!' });
+  } catch (err: any) {
+    console.error('[pe2-registrations] INSERT ERROR:', err);
+    res.status(500).json({ message: 'Gagal mengirim pendaftaran PE2' });
+  }
+});
+
+// Update PE2 Registration Status
+app.put('/api/pe2-registrations/:id/status', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!['pending', 'confirmed', 'rejected'].includes(status)) {
+    res.status(400).json({ message: 'Status tidak valid' });
+    return;
+  }
+
+  try {
+    await db('pe2_registrations').where({ id }).update({ status });
+    res.json({ message: 'Status pendaftar PE2 berhasil diperbarui' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal memperbarui status pendaftar PE2' });
   }
 });
 

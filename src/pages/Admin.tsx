@@ -159,6 +159,7 @@ export const Admin: React.FC = () => {
     staffApplications,
     ambassadorApplications,
     pe1Registrations,
+    pe2Registrations,
     refreshState,
     subEvents,
     competitions,
@@ -190,7 +191,9 @@ export const Admin: React.FC = () => {
     fetchStaffApplications,
     fetchAmbassadorApplications,
     fetchPE1Registrations,
+    fetchPE2Registrations,
     fetchCompetitionRegistrations,
+    updatePE2RegistrationStatus,
     updateCompetitionRegistrationStatus,
     metrics,
     loading
@@ -297,7 +300,7 @@ export const Admin: React.FC = () => {
   }, [isAuthenticated]);
 
   // Active sub-dashboard section tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'ambassadors' | 'pe1' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control' | 'server-health' | 'user-accounts'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'ambassadors' | 'pe1' | 'pe2' | 'staff' | 'competitions' | 'accounts' | 'divisions' | 'form-control' | 'server-health' | 'user-accounts'>('overview');
 
   // ON-DEMAND (LAZY) DATA LOADING BY ACTIVE TAB
   useEffect(() => {
@@ -312,6 +315,9 @@ export const Admin: React.FC = () => {
     } else if (activeTab === 'pe1' && (!pe1Registrations || pe1Registrations.length === 0)) {
       setTabLoading(true);
       fetchPE1Registrations().finally(() => setTabLoading(false));
+    } else if (activeTab === 'pe2' && (!pe2Registrations || pe2Registrations.length === 0)) {
+      setTabLoading(true);
+      fetchPE2Registrations().finally(() => setTabLoading(false));
     } else if (activeTab === 'competitions' && competitionRegistrations.length === 0) {
       setTabLoading(true);
       fetchCompetitionRegistrations().finally(() => setTabLoading(false));
@@ -360,6 +366,15 @@ export const Admin: React.FC = () => {
   const [pe1SortOrder, setPE1SortOrder] = useState<'asc' | 'desc'>('desc');
   const [pe1Page, setPE1Page] = useState<number>(1);
   const [pe1PageSize, setPE1PageSize] = useState<number>(10);
+
+  // Filter States for PE2 Registrations
+  const [filterPE2Set, setFilterPE2Set] = useState<string>('all');
+  const [filterPE2Status, setFilterPE2Status] = useState<string>('all');
+  const [searchPE2Query, setSearchPE2Query] = useState('');
+  const [pe2SortField, setPE2SortField] = useState<'name' | 'date' | 'status' | 'set'>('date');
+  const [pe2SortOrder, setPE2SortOrder] = useState<'asc' | 'desc'>('desc');
+  const [pe2Page, setPE2Page] = useState<number>(1);
+  const [pe2PageSize, setPE2PageSize] = useState<number>(10);
   const [selectedPE1Reg, setSelectedPE1Reg] = useState<any>(null);
 
   // Competition Registrations Sorting & Pagination States
@@ -1048,6 +1063,43 @@ export const Admin: React.FC = () => {
     return filteredPE1Regs.slice(start, start + pe1PageSize);
   }, [filteredPE1Regs, pe1Page, pe1PageSize]);
 
+  // PE2 Filter & Sort Logic
+  const filteredPE2Regs = useMemo(() => {
+    const list = (pe2Registrations || []).filter(reg => {
+      const matchSet = filterPE2Set === 'all' || reg.set_type === filterPE2Set;
+      const matchStatus = filterPE2Status === 'all' || reg.status === filterPE2Status;
+      const matchQuery = searchPE2Query === '' ||
+        reg.p1_name.toLowerCase().includes(searchPE2Query.toLowerCase()) ||
+        reg.p1_email.toLowerCase().includes(searchPE2Query.toLowerCase());
+      return matchSet && matchStatus && matchQuery;
+    });
+
+    return list.sort((a, b) => {
+      let valA: any = a.submitted_at;
+      let valB: any = b.submitted_at;
+
+      if (pe2SortField === 'name') {
+        valA = a.p1_name.toLowerCase();
+        valB = b.p1_name.toLowerCase();
+      } else if (pe2SortField === 'set') {
+        valA = a.set_type;
+        valB = b.set_type;
+      } else if (pe2SortField === 'status') {
+        valA = a.status;
+        valB = b.status;
+      }
+
+      if (valA < valB) return pe2SortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return pe2SortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [pe2Registrations, filterPE2Set, filterPE2Status, searchPE2Query, pe2SortField, pe2SortOrder]);
+
+  const paginatedPE2Regs = useMemo(() => {
+    const start = (pe2Page - 1) * pe2PageSize;
+    return filteredPE2Regs.slice(start, start + pe2PageSize);
+  }, [filteredPE2Regs, pe2Page, pe2PageSize]);
+
   // --- 3. STAFF APPLICATIONS ---
   const filteredStaffApplications = useMemo(() => {
     const list = staffApplications.filter(app => {
@@ -1392,6 +1444,17 @@ export const Admin: React.FC = () => {
           >
             <Icon name="Briefcase" size={16} />
             <span>Pendaftar PE1 CEO For A Day</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('pe2')}
+            className={`w-full text-left px-4 py-3 rounded-none border-2 flex items-center space-x-2.5 transition-all cursor-pointer ${activeTab === 'pe2'
+                ? 'bg-decor border-blue-sail text-blue-sail shadow-[3px_3px_0_0_#BD1B1F]'
+                : 'bg-transparent border-transparent text-ballroom hover:bg-barbera/40 hover:border-ballroom/15'
+              }`}
+          >
+            <Icon name="Briefcase" size={16} />
+            <span>Pendaftar PE2 Impacture</span>
           </button>
 
           <button

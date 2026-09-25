@@ -13,7 +13,8 @@ import {
   FormQuestionsConfig,
   QuestionConfig,
   AmbassadorApplication,
-  PE1Registration
+  PE1Registration,
+  PE2Registration
 } from '../types';
 
 interface AppContextType extends AppState {
@@ -31,9 +32,12 @@ interface AppContextType extends AppState {
   addAmbassadorApplication: (app: Omit<AmbassadorApplication, 'id' | 'status' | 'submitted_at'>) => Promise<void>;
   updateAmbassadorApplicationStatus: (id: string, status: AmbassadorApplication['status']) => Promise<void>;
   
-  // PE1 Registrations
   addPE1Registration: (reg: Omit<PE1Registration, 'id' | 'status' | 'submitted_at'>) => Promise<void>;
   updatePE1RegistrationStatus: (id: string, status: PE1Registration['status']) => Promise<void>;
+  
+  // PE2 Registrations
+  addPE2Registration: (reg: Omit<PE2Registration, 'id' | 'status' | 'submitted_at'>) => Promise<void>;
+  updatePE2RegistrationStatus: (id: string, status: PE2Registration['status']) => Promise<void>;
   
   addDivision: (div: Omit<Division, 'id'>) => void;
   updateDivision: (div: Division) => void;
@@ -73,6 +77,7 @@ interface AppContextType extends AppState {
   fetchStaffApplications: () => Promise<import('../types').StaffApplication[]>;
   fetchAmbassadorApplications: () => Promise<import('../types').AmbassadorApplication[]>;
   fetchPE1Registrations: () => Promise<import('../types').PE1Registration[]>;
+  fetchPE2Registrations: () => Promise<import('../types').PE2Registration[]>;
   fetchCompetitionRegistrations: () => Promise<import('../types').CompetitionRegistration[]>;
   submitPreliminaryFile: (team_id: string, preliminary_file_url: string, preliminary_file_name: string, preliminary_file_type: 'BMC' | 'Executive Summary') => Promise<void>;
   submitSemiFinalPayment: (team_id: string, payment_semifinal_url: string, payment_semifinal_file_name: string) => Promise<void>;
@@ -1027,6 +1032,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return [];
   };
 
+  const fetchPE2Registrations = async (): Promise<import('../types').PE2Registration[]> => {
+    try {
+      const res = await authFetch('/api/admin/pe2-registrations');
+      if (res.ok) {
+        const regs = await res.json();
+        setState(prev => ({ ...prev, pe2Registrations: regs }));
+        return regs;
+      }
+    } catch (err) {
+      console.error('Failed to fetch PE2 registrations:', err);
+    }
+    return [];
+  };
+
   const fetchCompetitionRegistrations = async (): Promise<import('../types').CompetitionRegistration[]> => {
     try {
       const res = await authFetch('/api/admin/competition-registrations');
@@ -1176,6 +1195,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             staffApplications: (Array.isArray(data.staffApplications) && data.staffApplications.length > 0) ? data.staffApplications : prev.staffApplications,
             ambassadorApplications: (Array.isArray(data.ambassadorApplications) && data.ambassadorApplications.length > 0) ? data.ambassadorApplications : prev.ambassadorApplications,
             pe1Registrations: (Array.isArray(data.pe1Registrations) && data.pe1Registrations.length > 0) ? data.pe1Registrations : prev.pe1Registrations,
+            pe2Registrations: (Array.isArray(data.pe2Registrations) && data.pe2Registrations.length > 0) ? data.pe2Registrations : prev.pe2Registrations,
             competitionRegistrations: (Array.isArray(data.competitionRegistrations) && data.competitionRegistrations.length > 0) ? data.competitionRegistrations : prev.competitionRegistrations
           };
         });
@@ -1398,6 +1418,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.error(err);
       alert('Gagal memperbarui status pendaftar PE1.');
+    }
+  };
+
+  const addPE2Registration = async (reg: Omit<PE2Registration, 'id' | 'status' | 'submitted_at'>) => {
+    const targetUrl = getApiUrl('/api/pe2-registrations');
+    console.log('[SUBMIT PE2] Sending payload to backend:', targetUrl, reg);
+
+    const res = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reg)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.error(`[SUBMIT PE2 ERROR ${res.status}]:`, errText);
+      throw new Error(`Gagal menyimpan pendaftaran PE2 (HTTP ${res.status}): ${errText || 'Terjadi kesalahan server'}`);
+    }
+
+    const result = await res.json();
+    const newReg: PE2Registration = {
+      ...reg,
+      id: result.id || `pe2-${Date.now()}`,
+      status: 'pending',
+      submitted_at: new Date().toISOString()
+    };
+
+    setState(prev => ({
+      ...prev,
+      pe2Registrations: [newReg, ...(prev.pe2Registrations || []).filter(r => r.id !== newReg.id)]
+    }));
+
+    await fetchState();
+  };
+
+  const updatePE2RegistrationStatus = async (id: string, status: PE2Registration['status']) => {
+    try {
+      const res = await authFetch(`/api/pe2-registrations/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) throw new Error('Failed to update PE2 status');
+      await fetchState();
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui status pendaftar PE2.');
     }
   };
 
@@ -1762,6 +1828,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateAmbassadorApplicationStatus,
       addPE1Registration,
       updatePE1RegistrationStatus,
+      addPE2Registration,
+      updatePE2RegistrationStatus,
       addDivision,
       updateDivision,
       deleteDivision,
@@ -1796,6 +1864,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       fetchStaffApplications,
       fetchAmbassadorApplications,
       fetchPE1Registrations,
+      fetchPE2Registrations,
       fetchCompetitionRegistrations,
       submitPreliminaryFile,
       submitSemiFinalPayment,

@@ -165,6 +165,8 @@ export interface CompetitionRegistration {
   semifinal_file_url?: string;
   semifinal_file_name?: string;
   semifinal_submitted_at?: string;
+  final_file_url?: string;
+  final_file_name?: string;
   submitted_at: string;
 }
 
@@ -269,12 +271,35 @@ export interface PE1Registration {
   submitted_at: string;
 }
 
+export interface PE2Registration {
+  id: string;
+  set_type: 'Single Set' | 'Couple Set';
+  
+  // Participant 1
+  p1_name: string;
+  p1_email: string;
+  p1_whatsapp: string;
+  p1_institution: string;
+
+  // Participant 2 (Optional)
+  p2_name?: string;
+  p2_email?: string;
+  p2_whatsapp?: string;
+  p2_institution?: string;
+
+  payment_method: 'Transfer Bank' | 'QRIS';
+  payment_proof_url: string;
+  status: 'pending' | 'confirmed' | 'rejected';
+  submitted_at: string;
+}
+
 export interface AppState {
   phases: EventPhase[];
   divisions: Division[];
   staffApplications: StaffApplication[];
   ambassadorApplications?: AmbassadorApplication[];
   pe1Registrations?: PE1Registration[];
+  pe2Registrations?: PE2Registration[];
   subEvents: SubEvent[];
   competitions: Competition[];
   competitionRegistrations: CompetitionRegistration[];
@@ -288,6 +313,7 @@ export interface AppState {
     compCount: number;
     ambassadorCount: number;
     pe1Count: number;
+    pe2Count: number;
   };
 }
 

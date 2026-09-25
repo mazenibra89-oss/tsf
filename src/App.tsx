@@ -15,6 +15,7 @@ import { Announcement } from './pages/Announcement';
 import { InterviewAnnouncement } from './pages/InterviewAnnouncement';
 import { Recruitment } from './pages/Recruitment';
 import { PE1 } from './pages/PE1';
+import { PE2 } from './pages/PE2';
 import { ParticipantDashboard } from './pages/ParticipantDashboard';
 import { ServerHealthMonitor } from './pages/ServerHealthMonitor';
 
@@ -80,7 +81,7 @@ const AppContent: React.FC = () => {
       case 'pe1':
         return <PE1 />;
       case 'pe2':
-        return <SubEventPage slug="pe2" />;
+        return <PE2 />;
       case 'competition':
         return <RegistCompetition />;
       case 'dashboard':
