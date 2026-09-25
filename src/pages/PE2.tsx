@@ -160,25 +160,25 @@ export const PE2: React.FC = () => {
               <h2 className="font-display font-black text-4xl sm:text-6xl text-decor uppercase tracking-tight drop-shadow-sm">
                 Welcome to TDC Summit Fest 2026: Pre-Event II — <span className="text-blue-sail bg-decor px-2 inline-block -rotate-2 transform">Impacture</span>
               </h2>
-              <p className="font-mono text-xl sm:text-2xl text-ballroom font-bold">
+              <p className="font-mono text-xl sm:text-2xl text-blue-sail font-bold">
                 "Turning Challenges Into Sustainable Opportunities"
               </p>
-              <p className="font-sans text-base sm:text-lg text-ballroom/80 leading-relaxed max-w-2xl mx-auto">
+              <p className="font-sans text-base sm:text-lg text-blue-sail/80 leading-relaxed max-w-2xl mx-auto">
                 Permasalahan limbah nggak harus selalu jadi masalah. Impacture hadir sebagai ruang buat generasi muda ngolah limbah jadi produk yang bernilai guna, lewat pendekatan sustainability dan circular economy!
                 <br /><br />
                 <strong>Take your step. Create your impact. Be part of Impacture🌱✨</strong>
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-4 font-mono text-sm text-ballroom">
-                <div className="flex items-center gap-2 bg-ballroom/10 px-4 py-2 border border-ballroom/20">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-4 font-mono text-sm text-blue-sail">
+                <div className="flex items-center gap-2 bg-blue-sail/10 px-4 py-2 border border-blue-sail/20">
                   <Icon name="Calendar" size={16} className="text-decor" />
                   <span>Minggu, 4 Oktober 2026</span>
                 </div>
-                <div className="flex items-center gap-2 bg-ballroom/10 px-4 py-2 border border-ballroom/20">
+                <div className="flex items-center gap-2 bg-blue-sail/10 px-4 py-2 border border-blue-sail/20">
                   <Icon name="Clock" size={16} className="text-decor" />
                   <span>10.00 WIB</span>
                 </div>
-                <div className="flex items-center gap-2 bg-ballroom/10 px-4 py-2 border border-ballroom/20">
+                <div className="flex items-center gap-2 bg-blue-sail/10 px-4 py-2 border border-blue-sail/20">
                   <Icon name="MapPin" size={16} className="text-decor" />
                   <span>Visma Coffee, Art & Co-Working Space, Jl. Tegalsari No. 35, Surabaya</span>
                 </div>
