@@ -312,13 +312,13 @@ export const Admin: React.FC = () => {
     } else if (activeTab === 'ambassadors' && (!ambassadorApplications || ambassadorApplications.length === 0)) {
       setTabLoading(true);
       fetchAmbassadorApplications().finally(() => setTabLoading(false));
-    } else if (activeTab === 'pe1' && (!pe1Registrations || pe1Registrations.length === 0)) {
+    } else if (activeTab === 'pe1') {
       setTabLoading(true);
       fetchPE1Registrations().finally(() => setTabLoading(false));
-    } else if (activeTab === 'pe2' && (!pe2Registrations || pe2Registrations.length === 0)) {
+    } else if (activeTab === 'pe2') {
       setTabLoading(true);
       fetchPE2Registrations().finally(() => setTabLoading(false));
-    } else if (activeTab === 'competitions' && competitionRegistrations.length === 0) {
+    } else if (activeTab === 'competitions') {
       setTabLoading(true);
       fetchCompetitionRegistrations().finally(() => setTabLoading(false));
     } else if (activeTab === 'user-accounts' && adminUsersList.length === 0) {
@@ -2255,10 +2255,13 @@ export const Admin: React.FC = () => {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => refreshState()}
+                  onClick={() => {
+                    setTabLoading(true);
+                    fetchPE2Registrations().finally(() => setTabLoading(false));
+                  }}
                   className="bg-white border-2 border-blue-sail text-blue-sail hover:bg-gray-50 px-4 py-2 font-mono font-bold text-sm flex items-center gap-2 shadow-[2px_2px_0_0_#1E2A4F] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
                 >
-                  <Icon name="RefreshCw" size={16} className={isFetchingUsers ? 'animate-spin' : ''} /> Refresh
+                  <Icon name="RefreshCw" size={16} className={tabLoading ? 'animate-spin' : ''} /> Refresh
                 </button>
               </div>
             </div>
