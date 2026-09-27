@@ -193,7 +193,7 @@ export const PE2: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-3 bg-white px-5 py-3 border-4 border-blue-sail shadow-[4px_4px_0_0_#F6BB02]">
                     <Icon name="Clock" size={24} className="text-red-inferno shrink-0" />
-                    <span className="font-bold uppercase">08.45 WIB</span>
+                    <span className="font-bold uppercase">09.00 WIB</span>
                   </div>
                   <div className="flex items-center gap-3 bg-white px-5 py-3 border-4 border-blue-sail shadow-[4px_4px_0_0_#F6BB02]">
                     <Icon name="MapPin" size={24} className="text-red-inferno shrink-0" />
@@ -226,7 +226,7 @@ export const PE2: React.FC = () => {
                 <Icon name="Sprout" size={32} /> What is Impacture?
               </h3>
               <p className="font-sans text-lg mb-6 border-l-4 border-decor pl-4 italic">
-                Impact + Culture is where small actions grow into a culture of change.
+                Impact + Future is where small actions grow into a sustainable future.
               </p>
               <p className="font-sans text-base leading-relaxed mb-8">
                 Impacture dibangun dari keyakinan bahwa perubahan besar lahir dari langkah-langkah kecil yang konsisten. Limbah bukan akhir dari nilai suatu barang, tapi awal dari peluang baru.
@@ -239,7 +239,7 @@ export const PE2: React.FC = () => {
                 {[
                   { title: "Impactalk: Waste as Opportunity", desc: "Ngobrol bareng soal limbah sebagai peluang." },
                   { title: "Upcycling Workshop", desc: "Praktik langsung olah limbah jadi produk bernilai guna, kolaborasi bareng C-Pop Watch." },
-                  { title: "Sustainability Business Talk", desc: "Insight gimana ide sustainability bisa jadi peluang bisnis." },
+                  { title: "Impactshare", desc: "sharing session bareng praktisi bisnis" },
                   { title: "Future Impact Challenge", desc: "Kembangin & submit ide berdampak berkelanjutan, dinilai lewat impact voting." }
                 ].map((item, idx) => (
                   <li key={idx} className="bg-ballroom/10 border border-ballroom/20 p-4 space-y-2">

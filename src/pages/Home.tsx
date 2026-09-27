@@ -168,19 +168,28 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
               </div>
               <p className="font-mono text-xs font-bold text-red-inferno tracking-wider mb-2">● REGISTRATION OPEN</p>
               <h3 className="font-display font-black text-2xl uppercase tracking-tight leading-tight border-b-2 border-blue-sail/20 pb-3 mb-4">
-                Open Registration BPC & BCC Competition
+                Open Registration Impacture (PE 2) & Competition
               </h3>
               <p className="text-sm text-blue-sail/80 font-sans leading-relaxed mb-6">
-                Pendaftaran Business Plan & Business Case Competition TSF 2026 resmi dibuka! Siapkan tim terbaikmu dan jadilah juara inovasi bisnis.
+                Pendaftaran Impacture (PE 2) dan Business Plan & Case Competition resmi dibuka! Segera daftarkan dirimu dan jadilah bagian dari perubahan.
               </p>
 
-              <button
-                id="hero-banner-action"
-                onClick={() => setCurrentPage('competition')}
-                className="w-full bg-blue-sail hover:bg-barbera text-ballroom font-display font-extrabold text-xs uppercase py-3 rounded-none border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] tracking-wider transition-all text-center cursor-pointer"
-              >
-                Daftar Kompetisi Sekarang
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  id="hero-banner-action-pe2"
+                  onClick={() => setCurrentPage('pe2')}
+                  className="w-full bg-decor hover:bg-yellow-400 text-blue-sail font-display font-extrabold text-xs uppercase py-3 rounded-none border-2 border-blue-sail shadow-[3px_3px_0_0_#1E2A4F] tracking-wider transition-all text-center cursor-pointer"
+                >
+                  Daftar PE 2 Sekarang
+                </button>
+                <button
+                  id="hero-banner-action-comp"
+                  onClick={() => setCurrentPage('competition')}
+                  className="w-full bg-blue-sail hover:bg-barbera text-ballroom font-display font-extrabold text-xs uppercase py-3 rounded-none border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] tracking-wider transition-all text-center cursor-pointer"
+                >
+                  Daftar Kompetisi Sekarang
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -203,22 +212,29 @@ export const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   </span>
                 </div>
                 <h3 className="font-display font-black text-2xl uppercase tracking-tight text-decor mt-1">
-                  Pendaftaran BPC & BCC TSF 2026 Dibuka!
+                  Pendaftaran Impacture (PE 2) & Kompetisi Dibuka!
                 </h3>
                 <p className="text-sm text-ballroom/80 font-sans max-w-xl mt-1.5">
-                  Fase kompetisi skala nasional dari TDC Summit Fest telah dimulai. Buktikan bahwa ide bisnis inovatifmu adalah yang terbaik dan dapatkan total hadiah jutaan rupiah!
+                  Pre-Event 2: Impacture dan kompetisi skala nasional TSF telah dimulai. Bergabunglah bersama kami, wujudkan ide inovatif dan jadilah bagian dari agen perubahan!
                 </p>
               </div>
             </div>
 
             {/* Banner Right */}
-            <button
-              id="dynamic-banner-cta"
-              onClick={() => setCurrentPage('competition')}
-              className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest shrink-0 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-            >
-              DAFTAR SEKARANG
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setCurrentPage('pe2')}
+                className="bg-blue-sail text-ballroom hover:bg-barbera font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest shrink-0 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                INFO PE 2
+              </button>
+              <button
+                onClick={() => setCurrentPage('competition')}
+                className="bg-decor hover:bg-decor/95 text-blue-sail font-display font-black text-xs uppercase px-6 py-3.5 rounded-none tracking-widest shrink-0 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                INFO KOMPETISI
+              </button>
+            </div>
 
           </div>
         </div>
