@@ -147,7 +147,7 @@ export const PE2: React.FC = () => {
     scrollToFormSection();
   };
 
-  const price = form.setType === 'Single Set' ? 'Rp. 100.000' : 'Rp. 180.000';
+  const price = form.setType === 'Single Set' ? 'Rp. 60.000' : 'Rp. 110.000';
 
   return (
     <div className="asphalt-texture min-h-screen py-12">
@@ -193,7 +193,7 @@ export const PE2: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-3 bg-white px-5 py-3 border-4 border-blue-sail shadow-[4px_4px_0_0_#F6BB02]">
                     <Icon name="Clock" size={24} className="text-red-inferno shrink-0" />
-                    <span className="font-bold uppercase">10.00 WIB</span>
+                    <span className="font-bold uppercase">08.45 WIB</span>
                   </div>
                   <div className="flex items-center gap-3 bg-white px-5 py-3 border-4 border-blue-sail shadow-[4px_4px_0_0_#F6BB02]">
                     <Icon name="MapPin" size={24} className="text-red-inferno shrink-0" />
@@ -284,13 +284,13 @@ export const PE2: React.FC = () => {
                       {[
                         { 
                           id: 'Single Set', 
-                          price: 'Rp. 100.000', 
+                          price: 'Rp. 60.000', 
                           desc: 'Ambil langkah pertamamu mengubah limbah jadi karya bernilai, lewat sesi upcycling workshop langsung bareng C-Pop Watch.',
                           include: '1 slot workshop upcycling + 1 pax snack'
                         },
                         { 
                           id: 'Couple Set', 
-                          price: 'Rp. 180.000', 
+                          price: 'Rp. 110.000', 
                           desc: 'Ciptakan impact berdua, olah limbah jadi karya bareng teman atau pasanganmu, dalam sesi upcycling workshop bersama C-Pop Watch.',
                           include: '2 slot workshop upcycling + 2 pax snack'
                         }
@@ -566,7 +566,7 @@ export const PE2: React.FC = () => {
                           </span>
                         </div>
                         <img 
-                          src="/qristsf.jpeg" 
+                          src="/qrispe2.jpeg" 
                           alt="QRIS Pembayaran" 
                           className="w-full max-w-[250px] mx-auto border-4 border-ballroom rounded-lg shadow-lg"
                         />
