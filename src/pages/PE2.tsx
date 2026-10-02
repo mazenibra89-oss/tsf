@@ -147,7 +147,7 @@ export const PE2: React.FC = () => {
     scrollToFormSection();
   };
 
-  const price = form.setType === 'Single Set' ? 'Rp. 60.000' : 'Rp. 110.000';
+  const price = form.setType === 'Single Set' ? 'Rp. 35.000' : 'Rp. 60.000';
 
   return (
     <div className="asphalt-texture min-h-screen py-12">
@@ -284,13 +284,15 @@ export const PE2: React.FC = () => {
                       {[
                         { 
                           id: 'Single Set', 
-                          price: 'Rp. 60.000', 
+                          price: 'Rp. 35.000', 
+                          originalPrice: 'Rp. 60.000',
                           desc: 'Ambil langkah pertamamu mengubah limbah jadi karya bernilai, lewat sesi upcycling workshop langsung bareng C-Pop Watch.',
                           include: '1 slot workshop upcycling + 1 pax snack'
                         },
                         { 
                           id: 'Couple Set', 
-                          price: 'Rp. 110.000', 
+                          price: 'Rp. 60.000', 
+                          originalPrice: 'Rp. 110.000',
                           desc: 'Ciptakan impact berdua, olah limbah jadi karya bareng teman atau pasanganmu, dalam sesi upcycling workshop bersama C-Pop Watch.',
                           include: '2 slot workshop upcycling + 2 pax snack'
                         }
@@ -307,8 +309,9 @@ export const PE2: React.FC = () => {
                           <div className={`font-display font-black text-xl mb-1 ${form.setType === pkg.id ? 'text-decor' : 'text-blue-sail'}`}>
                             {pkg.id}
                           </div>
-                          <div className={`font-mono text-lg font-bold mb-3 ${form.setType === pkg.id ? 'text-white' : 'text-blue-sail'}`}>
-                            {pkg.price}
+                          <div className={`font-mono text-lg font-bold mb-3 flex items-center gap-2 ${form.setType === pkg.id ? 'text-white' : 'text-blue-sail'}`}>
+                            {pkg.originalPrice && <span className="line-through opacity-60 text-sm">{pkg.originalPrice}</span>}
+                            <span>{pkg.price}</span>
                           </div>
                           <p className={`font-sans text-sm mb-4 leading-relaxed ${form.setType === pkg.id ? 'text-gray-300' : 'text-gray-600'}`}>
                             {pkg.desc}
