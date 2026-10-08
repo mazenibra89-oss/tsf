@@ -678,7 +678,7 @@ export const RegistCompetition: React.FC = () => {
 
             <div className="pt-4 flex flex-col items-center gap-4 w-full">
               <a
-                href={myTeam.competition_type === 'BCC' ? 'https://intip.in/GRUPWHATSAPPBCCTSF2026' : 'https://intip.in/WHATSAPPBPCTSF2026'}
+                href={myTeam.competition_type === 'BCC' ? 'https://intip.in/GRUPWHATSAPPBCCTSF2026' : 'https://chat.whatsapp.com/Bud4lTLi3zVJ2AqezNzL1o'}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full max-w-md bg-emerald-500 hover:bg-emerald-600 text-white font-display font-black text-xs sm:text-sm uppercase px-8 py-4 border-2 border-blue-sail shadow-[5px_5px_0_0_#000] cursor-pointer inline-flex justify-center items-center gap-2"
@@ -1722,7 +1722,7 @@ export const RegistCompetition: React.FC = () => {
                   </p>
 
                   <a
-                    href={form.competitionType === 'BCC' ? 'https://intip.in/GRUPWHATSAPPBCCTSF2026' : 'https://intip.in/WHATSAPPBPCTSF2026'}
+                    href={form.competitionType === 'BCC' ? 'https://intip.in/GRUPWHATSAPPBCCTSF2026' : 'https://chat.whatsapp.com/Bud4lTLi3zVJ2AqezNzL1o'}
                     target="_blank"
                     rel="noreferrer"
                     className="w-full bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase py-3.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] cursor-pointer flex items-center justify-center gap-2"
