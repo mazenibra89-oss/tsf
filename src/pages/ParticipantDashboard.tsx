@@ -337,7 +337,7 @@ export const ParticipantDashboard: React.FC = () => {
             <p className="text-xs font-sans font-bold mt-1 opacity-90">Pastikan ketua dan seluruh anggota tim bergabung untuk mendapatkan informasi terbaru dan koordinasi.</p>
           </div>
           <a
-            href={myTeam.competition_type === 'BCC' ? 'https://intip.in/GRUPWHATSAPPBCCTSF2026' : 'https://chat.whatsapp.com/Bud4lTLi3zVJ2AqezNzL1o'}
+            href={myTeam.competition_type === 'BCC' ? 'https://chat.whatsapp.com/HdFqvvZ2oWr1zvBVfHnS3L?s=cl&p=a&mlu=4&ilr=4' : 'https://chat.whatsapp.com/Bud4lTLi3zVJ2AqezNzL1o'}
             target="_blank"
             rel="noreferrer"
             className="shrink-0 bg-blue-sail hover:bg-blue-sail/90 text-decor font-display font-black text-xs uppercase px-6 py-3 border-2 border-blue-sail transition-all cursor-pointer shadow-[3px_3px_0_0_#BD1B1F] flex items-center gap-2"
