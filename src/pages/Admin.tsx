@@ -2728,8 +2728,9 @@ export const Admin: React.FC = () => {
                 <h2 className="font-display font-black text-lg uppercase text-blue-sail">PENGATURAN SISTEM & SUBMISSION</h2>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {[
+                  { key: 'competition_registration_open', label: 'PENDAFTARAN BPC & BCC', icon: 'UserPlus' },
                   { key: 'submission_preliminary_open', label: 'PRELIMINARY (PROPOSAL)', icon: 'FileText' },
                   { key: 'submission_semifinal_payment_open', label: 'BUKTI BAYAR SEMI FINAL', icon: 'CreditCard' },
                   { key: 'submission_semifinal_open', label: 'SEMI FINAL (PROPOSAL)', icon: 'FileCheck' },

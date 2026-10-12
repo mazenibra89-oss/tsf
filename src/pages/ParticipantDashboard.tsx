@@ -117,7 +117,13 @@ export const ParticipantDashboard: React.FC = () => {
 
   // File inputs replaced by direct URL inputs to prevent server memory spikes
 
+  const isPreliminaryClosed = systemSettings?.submission_preliminary_open === 'false' || Date.now() >= new Date('2026-10-12T23:59:59+07:00').getTime();
+
   const handleUploadSubmit = async () => {
+    if (isPreliminaryClosed) {
+      setError('Mohon maaf, waktu pengumpulan berkas Preliminary telah resmi ditutup.');
+      return;
+    }
     let targetUrl = fileUrl;
 
     if (!targetUrl || !targetUrl.startsWith('http')) {
@@ -554,14 +560,14 @@ export const ParticipantDashboard: React.FC = () => {
                   </button>
                 </div>
               </div>
-            ) : systemSettings?.submission_preliminary_open === 'false' ? (
+            ) : isPreliminaryClosed ? (
               <div className="bg-red-50 border-2 border-red-600 p-5 space-y-2 text-center shadow-[4px_4px_0_0_#DC2626]">
                 <Icon name="Lock" size={24} className="text-red-600 mx-auto" />
                 <h4 className="font-display font-black text-sm uppercase text-red-700">
                   MOHON MAAF, WAKTU PENGUMPULAN BERKAS PRELIMINARY TELAH DITUTUP.
                 </h4>
                 <p className="text-xs font-sans text-red-900 font-bold">
-                  Batas waktu pengumpulan berkas tahap Preliminary telah berakhir.
+                  Batas waktu pengumpulan berkas tahap Preliminary telah berakhir pada 12 Oktober 2026 pukul 23:59 WIB.
                 </p>
               </div>
             ) : (

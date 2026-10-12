@@ -254,14 +254,21 @@ async function initDatabase() {
       });
       console.log('Created system_settings table.');
       
-      // Auto-seed default submission toggles
+      // Auto-seed default submission & registration toggles
       const defaultSettings = [
+        { key: 'competition_registration_open', value: 'true' },
         { key: 'submission_preliminary_open', value: 'true' },
         { key: 'submission_semifinal_payment_open', value: 'true' },
         { key: 'submission_semifinal_open', value: 'true' },
         { key: 'submission_final_open', value: 'true' }
       ];
       await db('system_settings').insert(defaultSettings);
+    } else {
+      // Ensure competition_registration_open exists if table was created previously
+      const hasCompReg = await db('system_settings').where({ key: 'competition_registration_open' }).first();
+      if (!hasCompReg) {
+        await db('system_settings').insert({ key: 'competition_registration_open', value: 'true' });
+      }
     }
 
     // Auto update competition_registrations table if missing new columns
@@ -292,9 +299,55 @@ async function initDatabase() {
     // Seed run will automatically skip if database already has data
     await db.seed.run();
     console.log('Database seeds checked/run.');
+
+    // Check and trigger auto-closing if past deadline
+    await checkAndAutoCloseCompetitionDeadlines();
   } catch (err) {
     console.error('Error during database initialization:', err);
   }
+}
+
+// -------------------------------------------------------------
+// COMPETITION DEADLINE AUTO-CLOSER (12 OKTOBER 2026, 23:59:59 WIB)
+// -------------------------------------------------------------
+const COMPETITION_DEADLINE_MS = new Date('2026-10-12T23:59:59+07:00').getTime();
+
+async function checkAndAutoCloseCompetitionDeadlines() {
+  try {
+    const hasTable = await db.schema.hasTable('system_settings');
+    if (!hasTable) return;
+
+    if (Date.now() >= COMPETITION_DEADLINE_MS) {
+      // 1. Auto-close preliminary submission toggle in database
+      const prelim = await db('system_settings').where({ key: 'submission_preliminary_open' }).first();
+      if (!prelim) {
+        await db('system_settings').insert({ key: 'submission_preliminary_open', value: 'false' });
+        console.log('[Auto-Close] Preliminary submission toggle initialized to false.');
+      } else if (prelim.value !== 'false') {
+        await db('system_settings').where({ key: 'submission_preliminary_open' }).update({ value: 'false' });
+        console.log('[Auto-Close] Preliminary submission toggle automatically set to false.');
+      }
+
+      // 2. Auto-close competition registration toggle in database
+      const compReg = await db('system_settings').where({ key: 'competition_registration_open' }).first();
+      if (!compReg) {
+        await db('system_settings').insert({ key: 'competition_registration_open', value: 'false' });
+        console.log('[Auto-Close] Competition registration toggle initialized to false.');
+      } else if (compReg.value !== 'false') {
+        await db('system_settings').where({ key: 'competition_registration_open' }).update({ value: 'false' });
+        console.log('[Auto-Close] Competition registration toggle automatically set to false.');
+      }
+    }
+  } catch (err) {
+    console.error('Error in checkAndAutoCloseCompetitionDeadlines:', err);
+  }
+}
+
+// Periodically run auto-closer check every 15 seconds
+setInterval(checkAndAutoCloseCompetitionDeadlines, 15000);
+const msUntilDeadline = COMPETITION_DEADLINE_MS - Date.now();
+if (msUntilDeadline > 0) {
+  setTimeout(checkAndAutoCloseCompetitionDeadlines, msUntilDeadline);
 }
 
 // -------------------------------------------------------------
@@ -1634,6 +1687,12 @@ app.post('/api/competition-registrations', async (req: Request, res: Response): 
   const email = data.email ? String(data.email).toLowerCase().trim() : '';
 
   try {
+    // Check if competition registration is closed
+    const regSetting = await db('system_settings').where({ key: 'competition_registration_open' }).first();
+    if (regSetting?.value === 'false' || Date.now() >= COMPETITION_DEADLINE_MS) {
+      res.status(403).json({ message: 'Pendaftaran kompetisi BPC dan BCC telah resmi ditutup pada 12 Oktober 2026 pukul 23:59 WIB.' });
+      return;
+    }
 
 
     let categoryId = data.category_id || `${data.competition_type || 'BPC'} - ${data.education_category || 'Mahasiswa'}`;
@@ -1753,6 +1812,12 @@ app.post('/api/competitions/submit-preliminary', async (req: Request, res: Respo
   }
 
   try {
+    // Check if preliminary submission is closed
+    const prelimSetting = await db('system_settings').where({ key: 'submission_preliminary_open' }).first();
+    if (prelimSetting?.value === 'false' || Date.now() >= COMPETITION_DEADLINE_MS) {
+      res.status(403).json({ message: 'Mohon maaf, waktu pengumpulan berkas Preliminary telah resmi ditutup.' });
+      return;
+    }
     await db('competition_registrations').where({ id: team_id }).update({
       preliminary_file_url,
       preliminary_file_name: preliminary_file_name || 'Berkas_Preliminary.pdf',

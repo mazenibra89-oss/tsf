@@ -19,12 +19,14 @@ interface MemberFields {
 }
 
 export const RegistCompetition: React.FC = () => {
-  const { addCompetitionRegistration, currentUser, setCurrentPage, myTeam } = useApp();
+  const { addCompetitionRegistration, currentUser, setCurrentPage, myTeam, systemSettings } = useApp();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const isRegistrationClosed = systemSettings?.competition_registration_open === 'false' || Date.now() >= new Date('2026-10-12T23:59:59+07:00').getTime();
 
   // Scroll helper
   const scrollToForm = () => {
-    if (!currentUser) {
+    if (!isRegistrationClosed && !currentUser) {
       setIsAuthModalOpen(true);
       return;
     }
@@ -252,6 +254,10 @@ export const RegistCompetition: React.FC = () => {
   };
 
   const handleSubmit = () => {
+    if (isRegistrationClosed) {
+      alert('Mohon maaf, pendaftaran kompetisi BPC dan BCC telah resmi ditutup pada 12 Oktober 2026 pukul 23:59 WIB.');
+      return;
+    }
     if (!currentUser) {
       setIsAuthModalOpen(true);
       return;
@@ -376,7 +382,7 @@ export const RegistCompetition: React.FC = () => {
 
   // Timeline List
   const timelineEvents = [
-    { date: '5 Sep – 11 Okt 2026', title: 'Open Registration & Submit BMC', status: 'Active', icon: 'Edit3' },
+    { date: '5 Sep – 12 Okt 2026', title: 'Open Registration & Submit BMC', status: isRegistrationClosed ? 'Completed' : 'Active', icon: 'Edit3' },
     { date: '18 Oktober 2026', title: 'Semi-Finalist Announcement', status: 'Upcoming', icon: 'Megaphone' },
     { date: '18 – 31 Oktober 2026', title: 'Semi-Final Stage', status: 'Upcoming', icon: 'Monitor' },
     { date: '22 November 2026', title: 'Final Stage', status: 'Upcoming', icon: 'Award' }
@@ -412,25 +418,45 @@ export const RegistCompetition: React.FC = () => {
             {/* Featured Hero Action CTA Card */}
             <div className="w-full max-w-sm shrink-0">
               <div className="bg-ballroom text-blue-sail p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#F6BB02] space-y-4 text-center transform rotate-1 hover:rotate-0 transition-transform">
-                <span className="bg-red-inferno text-ballroom font-display font-black text-[10px] px-3 py-1 uppercase tracking-wider inline-block border border-blue-sail">
-                  FASE PENDAFTARAN
+                <span className={`${isRegistrationClosed ? 'bg-gray-800' : 'bg-red-inferno'} text-ballroom font-display font-black text-[10px] px-3 py-1 uppercase tracking-wider inline-block border border-blue-sail`}>
+                  {isRegistrationClosed ? 'PENDAFTARAN DITUTUP' : 'FASE PENDAFTARAN'}
                 </span>
                 <h3 className="font-display font-black text-xl uppercase tracking-tight">
-                  SIAPKAN TIM TERBAIKMU!
+                  {isRegistrationClosed ? 'PENDAFTARAN RESMI DITUTUP' : 'SIAPKAN TIM TERBAIKMU!'}
                 </h3>
                 <p className="text-xs text-blue-sail/80 leading-relaxed font-sans">
-                  Pendaftaran dibuka untuk cabang <strong>BPC</strong> (SMA &amp; Mahasiswa) &amp; <strong>BCC</strong> (Mahasiswa).
+                  {isRegistrationClosed
+                    ? 'Batas waktu pendaftaran dan pengumpulan berkas Preliminary telah berakhir pada 12 Oktober 2026 pukul 23:59 WIB.'
+                    : 'Pendaftaran dibuka untuk cabang BPC (SMA & Mahasiswa) & BCC (Mahasiswa).'}
                 </p>
 
                 {/* Prominent Featured CTA Button */}
                 <div className="space-y-2 pt-2">
-                  <button
-                    onClick={scrollToForm}
-                    className="w-full bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-sm uppercase py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <span>DAFTAR SEKARANG</span>
-                    <Icon name="ArrowRight" size={18} className="stroke-[3px]" />
-                  </button>
+                  {myTeam ? (
+                    <button
+                      onClick={() => { window.location.hash = '#/dashboard'; }}
+                      className="w-full bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-sm uppercase py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Icon name="Trophy" size={18} />
+                      <span>MASUK DASHBOARD TIM</span>
+                    </button>
+                  ) : isRegistrationClosed ? (
+                    <button
+                      onClick={scrollToForm}
+                      className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-display font-black text-sm uppercase py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Icon name="Lock" size={18} />
+                      <span>PENDAFTARAN DITUTUP</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={scrollToForm}
+                      className="w-full bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-sm uppercase py-4 border-2 border-blue-sail shadow-[4px_4px_0_0_#8B011A] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <span>DAFTAR SEKARANG</span>
+                      <Icon name="ArrowRight" size={18} className="stroke-[3px]" />
+                    </button>
+                  )}
 
                   <button
                     onClick={() => window.open('https://intip.in/GuidebookTSF2026', '_blank', 'noopener,noreferrer')}
@@ -619,10 +645,10 @@ export const RegistCompetition: React.FC = () => {
             </div>
             <button
               onClick={scrollToForm}
-              className="bg-red-inferno hover:bg-red-700 text-ballroom font-display font-black text-xs uppercase px-6 py-3 border-2 border-blue-sail shadow-[3px_3px_0_0_#000] shrink-0 cursor-pointer flex items-center gap-2"
+              className={`${isRegistrationClosed ? 'bg-gray-300 text-gray-800' : 'bg-red-inferno hover:bg-red-700 text-ballroom'} font-display font-black text-xs uppercase px-6 py-3 border-2 border-blue-sail shadow-[3px_3px_0_0_#000] shrink-0 cursor-pointer flex items-center gap-2`}
             >
-              <Icon name="Edit3" size={14} />
-              <span>MULAI PENDAFTARAN TIM</span>
+              <Icon name={isRegistrationClosed ? 'Lock' : 'Edit3'} size={14} />
+              <span>{isRegistrationClosed ? 'PENDAFTARAN DITUTUP' : 'MULAI PENDAFTARAN TIM'}</span>
             </button>
           </div>
         </div>
@@ -694,6 +720,48 @@ export const RegistCompetition: React.FC = () => {
                 <Icon name="Trophy" size={18} />
                 <span>MASUK KE DASHBOARD TIM SAYA</span>
               </button>
+            </div>
+          </div>
+        ) : isRegistrationClosed ? (
+          <div className="bg-ballroom border-4 border-red-600 p-8 sm:p-12 shadow-[10px_10px_0_0_#BD1B1F] space-y-6 text-center animate-fadeIn">
+            <div className="w-16 h-16 bg-red-inferno text-white flex items-center justify-center mx-auto border-2 border-blue-sail shadow-[4px_4px_0_0_#000]">
+              <Icon name="Lock" size={36} />
+            </div>
+            <div className="space-y-3">
+              <span className="bg-red-inferno text-ballroom font-display font-black text-xs px-3 py-1 border border-blue-sail uppercase tracking-wider inline-block">
+                AKSES PENDAFTARAN DITUTUP
+              </span>
+              <h3 className="font-display font-black text-2xl sm:text-3xl text-blue-sail uppercase tracking-tight">
+                PENDAFTARAN BPC & BCC TELAH RESMI DITUTUP
+              </h3>
+              <p className="text-sm font-sans text-blue-sail/80 max-w-xl mx-auto leading-relaxed">
+                Batas waktu pendaftaran dan pengumpulan berkas Preliminary untuk cabang <strong>Business Plan Competition (BPC)</strong> dan <strong>Business Case Competition (BCC)</strong> telah berakhir pada <strong>12 Oktober 2026 pukul 23:59 WIB</strong>. Akses pengisian formulir pendaftaran baru sudah tidak dapat dilakukan.
+              </p>
+            </div>
+
+            <div className="bg-decor/20 border-2 border-blue-sail p-6 max-w-md mx-auto space-y-3 text-center shadow-[4px_4px_0_0_#000]">
+              <p className="text-xs font-sans text-blue-sail font-bold leading-relaxed">
+                Sudah pernah mendaftarkan tim sebelumnya? Masuk dengan akun ketua tim untuk melihat status tim Anda.
+              </p>
+              {!currentUser ? (
+                <button
+                  type="button"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="bg-blue-sail hover:bg-blue-sail/90 text-decor font-display font-black text-xs uppercase px-6 py-3 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] cursor-pointer inline-flex items-center gap-2"
+                >
+                  <Icon name="LogIn" size={16} />
+                  <span>MASUK KE AKUN KETUA TIM</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { window.location.hash = '#/dashboard'; }}
+                  className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-6 py-3 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] cursor-pointer inline-flex items-center gap-2"
+                >
+                  <Icon name="Trophy" size={16} />
+                  <span>MASUK KE DASHBOARD TIM SAYA</span>
+                </button>
+              )}
             </div>
           </div>
         ) : (

@@ -804,6 +804,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     subEvents: SEED_SUB_EVENTS,
     competitions: SEED_COMPETITIONS,
     systemSettings: {
+      'competition_registration_open': 'true',
       'submission_preliminary_open': 'true',
       'submission_semifinal_payment_open': 'true',
       'submission_semifinal_open': 'true',
