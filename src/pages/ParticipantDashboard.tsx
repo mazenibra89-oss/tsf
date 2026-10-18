@@ -703,7 +703,7 @@ export const ParticipantDashboard: React.FC = () => {
                   </p>
                   <div className="pt-2">
                     <a
-                      href={myTeam.competition_type === 'BPC' ? 'https://intip.in/WhatsAppTSFSemifinalBPC2026' : 'https://intip.in/WhatsAppTSFSemifinalBCC2026'}
+                      href={myTeam.competition_type === 'BPC' ? 'https://intip.in/WhatsAppTSFSemifinalBPC2026' : 'https://chat.whatsapp.com/FIuUHtxO4bT79FQtLMX81o?s=cl&p=a&mlu=4&ilr=4'}
                       target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 bg-white text-blue-sail hover:bg-decor font-display font-black text-[10px] sm:text-xs px-4 py-2 uppercase tracking-widest border border-blue-sail transition-colors cursor-pointer"
                     >
