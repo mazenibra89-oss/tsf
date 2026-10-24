@@ -115,6 +115,12 @@ export const ParticipantDashboard: React.FC = () => {
   const isBPC = myTeam.competition_type === 'BPC' || myTeam.category_id?.includes('BPC');
   const requiredFileType = isBPC ? 'BMC (Business Model Canvas)' : 'Executive Summary';
 
+  const semifinalGuidebookUrl = isBPC
+    ? 'https://its.id/m/GuideebookSemifinalBPCTSF26'
+    : 'https://intip.in/GuidebookSemifinalBCCTSF26';
+
+  const isLolosSemifinal = myTeam.status_preliminary === 'passed' && myTeam.status_semifinal !== 'passed';
+
   // File inputs replaced by direct URL inputs to prevent server memory spikes
 
   const isPreliminaryClosed = systemSettings?.submission_preliminary_open === 'false' || Date.now() >= new Date('2026-10-12T23:59:59+07:00').getTime();
@@ -448,6 +454,20 @@ export const ParticipantDashboard: React.FC = () => {
                     : 'Selamat! Tim Anda berhak mengikuti babak Semi Final.'
                   : 'Terbuka setelah pengumuman kelolosan babak Preliminary.'}
               </p>
+              {isLolosSemifinal && (
+                <div className="pt-2">
+                  <a
+                    href={semifinalGuidebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 bg-decor hover:bg-decor/80 text-blue-sail font-display font-black text-[10px] px-3 py-1.5 border border-blue-sail uppercase tracking-wider transition-all shadow-[2px_2px_0_0_#BD1B1F] cursor-pointer"
+                  >
+                    <Icon name="BookOpen" size={12} />
+                    <span>GUIDEBOOK SEMIFINAL</span>
+                    <Icon name="ExternalLink" size={10} />
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Stage 3: Grand Final */}
@@ -636,7 +656,7 @@ export const ParticipantDashboard: React.FC = () => {
         {/* Semi Final Portal Box (Appears when Preliminary is Passed) */}
         {myTeam.status_preliminary === 'passed' && (
           <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] space-y-6">
-            <div className="border-b-2 border-blue-sail/20 pb-4 flex items-center justify-between">
+            <div className="border-b-2 border-blue-sail/20 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <span className="bg-emerald-600 text-white font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider inline-block mb-1">
                   STAGE 02 — BABAK SEMI FINAL
@@ -645,20 +665,63 @@ export const ParticipantDashboard: React.FC = () => {
                   PORTAL BABAK SEMI FINAL TIM {myTeam.team_name.toUpperCase()}
                 </h3>
               </div>
-              <span className={`font-display font-black text-xs px-3 py-1 border uppercase ${
-                myTeam.status_semifinal === 'passed'
-                  ? 'bg-purple-700 text-white border-purple-900'
-                  : myTeam.status_semifinal === 'rejected'
-                  ? 'bg-red-inferno text-white border-blue-sail'
-                  : 'bg-decor text-blue-sail border-blue-sail'
-              }`}>
-                {myTeam.status_semifinal === 'passed'
-                  ? 'STATUS: LOLOS SEMI FINAL'
-                  : myTeam.status_semifinal === 'rejected'
-                  ? 'STATUS: TIDAK LOLOS SEMI FINAL'
-                  : 'STATUS: LOLOS PRELIMINARY'}
-              </span>
+              <div className="flex flex-wrap items-center gap-2.5">
+                {isLolosSemifinal && (
+                  <a
+                    href={semifinalGuidebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-decor hover:bg-decor/90 text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border-2 border-blue-sail shadow-[3px_3px_0_0_#BD1B1F] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Icon name="BookOpen" size={16} />
+                    <span>LIHAT GUIDEBOOK SEMIFINAL</span>
+                    <Icon name="ExternalLink" size={14} />
+                  </a>
+                )}
+                <span className={`font-display font-black text-xs px-3 py-1.5 border uppercase ${
+                  myTeam.status_semifinal === 'passed'
+                    ? 'bg-purple-700 text-white border-purple-900'
+                    : myTeam.status_semifinal === 'rejected'
+                    ? 'bg-red-inferno text-white border-blue-sail'
+                    : 'bg-decor text-blue-sail border-blue-sail'
+                }`}>
+                  {myTeam.status_semifinal === 'passed'
+                    ? 'STATUS: LOLOS SEMI FINAL'
+                    : myTeam.status_semifinal === 'rejected'
+                    ? 'STATUS: TIDAK LOLOS SEMI FINAL'
+                    : 'STATUS: LOLOS PRELIMINARY'}
+                </span>
+              </div>
             </div>
+
+            {/* Guidebook Highlight Banner for Semifinal */}
+            {isLolosSemifinal && (
+              <div className="bg-decor/15 border-2 border-blue-sail p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[4px_4px_0_0_#BD1B1F]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-decor text-blue-sail flex items-center justify-center font-black border border-blue-sail shrink-0 shadow-sm">
+                    <Icon name="BookOpen" size={20} />
+                  </div>
+                  <div>
+                    <span className="font-display font-black text-xs uppercase text-blue-sail block">
+                      BUKU PANDUAN RESMI BABAK SEMI FINAL ({isBPC ? 'BPC' : 'BCC'})
+                    </span>
+                    <span className="text-[11px] font-sans text-blue-sail/80">
+                      Silakan pelajari panduan lomba, format dan sistematika penyusunan berkas Semi Final {isBPC ? 'Business Plan Competition (BPC)' : 'Business Case Competition (BCC)'} 2026.
+                    </span>
+                  </div>
+                </div>
+                <a
+                  href={semifinalGuidebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-sail hover:bg-blue-sail/90 text-decor font-display font-black text-xs uppercase px-5 py-2.5 border-2 border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+                >
+                  <Icon name="BookOpen" size={16} />
+                  <span>BUKA GUIDEBOOK ({isBPC ? 'BPC' : 'BCC'})</span>
+                  <Icon name="ExternalLink" size={14} />
+                </a>
+              </div>
+            )}
 
             {/* CASE 1: TEAM REJECTED IN SEMI FINAL (OVERRIDE PAYMENT DISPLAY) */}
             {myTeam.status_semifinal === 'rejected' ? (
@@ -701,7 +764,7 @@ export const ParticipantDashboard: React.FC = () => {
                   <p className="text-xs font-sans text-white/95 leading-relaxed font-semibold">
                     Selamat kepada tim <strong>{myTeam.team_name}</strong>! Berkas submission Preliminary ({myTeam.preliminary_file_type || (myTeam.competition_type === 'BCC' ? 'Executive Summary' : 'BMC')}) Anda telah dinilai oleh dewan juri dan dinyatakan <strong>LOLOS KE BABAK SEMI FINAL</strong>. Untuk mengonfirmasi keikutsertaan dan mengunggah proposal Semi Final, silakan lakukan pembayaran partisipasi Semi Final di bawah ini.
                   </p>
-                  <div className="pt-2">
+                  <div className="pt-2 flex flex-wrap items-center gap-3">
                     <a
                       href={myTeam.competition_type === 'BPC' ? 'https://intip.in/WhatsAppTSFSemifinalBPC2026' : 'https://chat.whatsapp.com/FIuUHtxO4bT79FQtLMX81o?s=cl&p=a&mlu=4&ilr=4'}
                       target="_blank" rel="noopener noreferrer"
@@ -709,6 +772,15 @@ export const ParticipantDashboard: React.FC = () => {
                     >
                       <Icon name="Users" size={16} /> GABUNG GRUP WHATSAPP SEMIFINAL
                     </a>
+                    {isLolosSemifinal && (
+                      <a
+                        href={semifinalGuidebookUrl}
+                        target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-decor text-blue-sail hover:bg-white font-display font-black text-[10px] sm:text-xs px-4 py-2 uppercase tracking-widest border border-blue-sail transition-colors cursor-pointer shadow-[2px_2px_0_0_#000]"
+                      >
+                        <Icon name="BookOpen" size={16} /> LIHAT GUIDEBOOK SEMIFINAL ({isBPC ? 'BPC' : 'BCC'})
+                      </a>
+                    )}
                   </div>
                 </div>
 
@@ -893,14 +965,30 @@ export const ParticipantDashboard: React.FC = () => {
                 )}
 
                 {(!myTeam.status_semifinal || myTeam.status_semifinal === 'pending') && (
-                  <div className="bg-emerald-600 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-2">
-                    <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
-                      <Icon name="CheckCircle" size={22} />
-                      <span>PEMBAYARAN DIVERIFIKASI — FORM SUBMISSION SEMI FINAL TERBUKA!</span>
-                    </h4>
-                    <p className="text-xs font-sans text-white/90">
-                      Pembayaran partisipasi Semi Final Anda telah diverifikasi oleh Panitia. Silakan unggah berkas proposal / solusi studi kasus Semi Final tim Anda di bawah ini.
-                    </p>
+                  <div className="bg-emerald-600 text-white p-5 border-2 border-blue-sail shadow-[4px_4px_0_0_#000] space-y-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div>
+                        <h4 className="font-display font-black text-lg uppercase flex items-center gap-2">
+                          <Icon name="CheckCircle" size={22} />
+                          <span>PEMBAYARAN DIVERIFIKASI — FORM SUBMISSION SEMI FINAL TERBUKA!</span>
+                        </h4>
+                        <p className="text-xs font-sans text-white/90 mt-1">
+                          Pembayaran partisipasi Semi Final Anda telah diverifikasi oleh Panitia. Silakan pelajari panduan lomba dan unggah berkas proposal Semi Final tim Anda di bawah ini.
+                        </p>
+                      </div>
+                      {isLolosSemifinal && (
+                        <a
+                          href={semifinalGuidebookUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-decor hover:bg-white text-blue-sail font-display font-black text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#000] flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                        >
+                          <Icon name="BookOpen" size={14} />
+                          <span>GUIDEBOOK SEMIFINAL</span>
+                          <Icon name="ExternalLink" size={12} />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 )}
 

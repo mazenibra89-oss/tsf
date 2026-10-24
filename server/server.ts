@@ -1944,6 +1944,56 @@ app.patch('/api/admin/competitions/:id/status', authenticateToken, async (req: R
   }
 });
 
+// Admin: Duplicate an existing competition team registration for a new user account
+app.post('/api/admin/competitions/duplicate-team', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  const { source_email, target_email } = req.body;
+  if (!source_email || !target_email) {
+    res.status(400).json({ message: 'source_email dan target_email wajib diisi' });
+    return;
+  }
+
+  try {
+    const cleanSource = String(source_email).toLowerCase().trim();
+    const cleanTarget = String(target_email).toLowerCase().trim();
+
+    const sourceTeam = await db('competition_registrations').where({ email: cleanSource }).first();
+    if (!sourceTeam) {
+      res.status(404).json({ message: `Tim sumber dengan email "${cleanSource}" tidak ditemukan.` });
+      return;
+    }
+
+    const targetUser = await db('users').where({ email: cleanTarget }).first();
+    const targetUserId = targetUser ? targetUser.id : (req.body.target_user_id || `usr-${Date.now()}`);
+
+    const existingTargetTeam = await db('competition_registrations').where({ email: cleanTarget }).first();
+    if (existingTargetTeam) {
+      const cloneData = { ...sourceTeam };
+      delete cloneData.id;
+      cloneData.email = cleanTarget;
+      cloneData.user_id = targetUserId;
+      cloneData.submitted_at = new Date();
+      await db('competition_registrations').where({ id: existingTargetTeam.id }).update(cloneData);
+      res.json({ message: `Tim "${sourceTeam.team_name}" berhasil diperbarui untuk ${cleanTarget}`, id: existingTargetTeam.id });
+      return;
+    }
+
+    const newTeamId = `reg-c-${Date.now()}`;
+    const newTeamData = {
+      ...sourceTeam,
+      id: newTeamId,
+      email: cleanTarget,
+      user_id: targetUserId,
+      submitted_at: new Date()
+    };
+
+    await db('competition_registrations').insert(newTeamData);
+    res.status(201).json({ message: `Tim "${sourceTeam.team_name}" berhasil diduplikasi untuk ${cleanTarget}`, id: newTeamId });
+  } catch (err: any) {
+    console.error('Duplicate team error:', err);
+    res.status(500).json({ message: err.message || 'Gagal menduplikasi tim' });
+  }
+});
+
 // -------------------------------------------------------------
 // THRIFT VENDORS ENDPOINTS
 // -------------------------------------------------------------
