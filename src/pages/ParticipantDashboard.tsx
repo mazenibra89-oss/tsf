@@ -119,6 +119,10 @@ export const ParticipantDashboard: React.FC = () => {
     ? 'https://its.id/m/GuideebookSemifinalBPCTSF26'
     : 'https://intip.in/GuidebookSemifinalBCCTSF26';
 
+  const grandFinalWhatsAppUrl = isBPC
+    ? 'https://chat.whatsapp.com/FWuRkIbAnVHJfXgjEqq88g?s=cl&p=a&iam=2'
+    : 'https://intip.in/WhatsAppTSFBCCFINAL2026';
+
   const isLolosSemifinal = myTeam.status_preliminary === 'passed' && myTeam.status_semifinal !== 'passed';
 
   // ─── SEMIFINAL ANNOUNCEMENT COUNTDOWN (21.00 WIB, 9 NOV 2026) ───
@@ -1094,11 +1098,11 @@ export const ParticipantDashboard: React.FC = () => {
                     </p>
                     <div className="pt-2">
                       <a
-                        href={myTeam.competition_type === 'BPC' ? 'https://intip.in/WhatsAppTSFBPCFINAL2026' : 'https://intip.in/WhatsAppTSFBCCFINAL2026'}
+                        href={grandFinalWhatsAppUrl}
                         target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-white text-purple-900 hover:bg-decor font-display font-black text-[10px] sm:text-xs px-4 py-2 uppercase tracking-widest border border-purple-900 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-2 bg-white text-purple-900 hover:bg-decor font-display font-black text-[10px] sm:text-xs px-5 py-2.5 uppercase tracking-widest border border-purple-900 transition-colors cursor-pointer shadow-[2px_2px_0_0_#000]"
                       >
-                        <Icon name="Users" size={16} /> GABUNG GRUP WHATSAPP GRAND FINAL
+                        <Icon name="Users" size={16} /> GABUNG GRUP WHATSAPP GRAND FINAL ({isBPC ? 'BPC' : 'BCC'})
                       </a>
                     </div>
                   </div>
@@ -1240,7 +1244,7 @@ export const ParticipantDashboard: React.FC = () => {
         {/* Grand Final Portal Box (Appears when Semi Final is Passed AND Announced) */}
         {isSemifinalAnnounced && myTeam.status_semifinal === 'passed' && (
           <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] space-y-6">
-            <div className="border-b-2 border-blue-sail/20 pb-4 flex items-center justify-between">
+            <div className="border-b-2 border-blue-sail/20 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <span className="bg-purple-700 text-white font-display font-black text-[10px] px-2.5 py-1 uppercase tracking-wider inline-block mb-1">
                   STAGE 03 PORTAL
@@ -1249,6 +1253,15 @@ export const ParticipantDashboard: React.FC = () => {
                   PORTAL BABAK GRAND FINAL TIM {myTeam.team_name.toUpperCase()}
                 </h3>
               </div>
+              <a
+                href={grandFinalWhatsAppUrl}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-black text-xs uppercase px-4 py-2.5 border-2 border-blue-sail shadow-[3px_3px_0_0_#000] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none transition-all cursor-pointer shrink-0"
+              >
+                <Icon name="Users" size={16} />
+                <span>GABUNG GRUP WA FINAL ({isBPC ? 'BPC' : 'BCC'})</span>
+                <Icon name="ExternalLink" size={14} />
+              </a>
             </div>
 
             {myTeam.status_final === 'rejected' ? (
