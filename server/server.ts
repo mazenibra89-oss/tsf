@@ -1972,6 +1972,9 @@ app.post('/api/admin/competitions/duplicate-team', authenticateToken, async (req
       cloneData.email = cleanTarget;
       cloneData.user_id = targetUserId;
       cloneData.submitted_at = new Date();
+      if (cloneData.members && typeof cloneData.members === 'object') cloneData.members = JSON.stringify(cloneData.members);
+      if (cloneData.leader_data && typeof cloneData.leader_data === 'object') cloneData.leader_data = JSON.stringify(cloneData.leader_data);
+      if (cloneData.members_data && typeof cloneData.members_data === 'object') cloneData.members_data = JSON.stringify(cloneData.members_data);
       await db('competition_registrations').where({ id: existingTargetTeam.id }).update(cloneData);
       res.json({ message: `Tim "${sourceTeam.team_name}" berhasil diperbarui untuk ${cleanTarget}`, id: existingTargetTeam.id });
       return;
@@ -1985,6 +1988,9 @@ app.post('/api/admin/competitions/duplicate-team', authenticateToken, async (req
       user_id: targetUserId,
       submitted_at: new Date()
     };
+    if (newTeamData.members && typeof newTeamData.members === 'object') newTeamData.members = JSON.stringify(newTeamData.members);
+    if (newTeamData.leader_data && typeof newTeamData.leader_data === 'object') newTeamData.leader_data = JSON.stringify(newTeamData.leader_data);
+    if (newTeamData.members_data && typeof newTeamData.members_data === 'object') newTeamData.members_data = JSON.stringify(newTeamData.members_data);
 
     await db('competition_registrations').insert(newTeamData);
     res.status(201).json({ message: `Tim "${sourceTeam.team_name}" berhasil diduplikasi untuk ${cleanTarget}`, id: newTeamId });

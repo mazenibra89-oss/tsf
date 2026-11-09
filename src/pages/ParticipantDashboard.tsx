@@ -121,6 +121,44 @@ export const ParticipantDashboard: React.FC = () => {
 
   const isLolosSemifinal = myTeam.status_preliminary === 'passed' && myTeam.status_semifinal !== 'passed';
 
+  // ─── SEMIFINAL ANNOUNCEMENT COUNTDOWN (21.00 WIB, 9 NOV 2026) ───
+  const SEMIFINAL_ANNOUNCEMENT_DATE = '2026-11-09T21:00:00+07:00';
+  const SEMIFINAL_ANNOUNCEMENT_TARGET = new Date(SEMIFINAL_ANNOUNCEMENT_DATE).getTime();
+
+  const [semifinalCountdown, setSemifinalCountdown] = useState<{
+    hours: number;
+    minutes: number;
+    seconds: number;
+    isAnnounced: boolean;
+  }>({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    isAnnounced: Date.now() >= SEMIFINAL_ANNOUNCEMENT_TARGET
+  });
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = Date.now();
+      const diff = SEMIFINAL_ANNOUNCEMENT_TARGET - now;
+
+      if (diff <= 0) {
+        setSemifinalCountdown({ hours: 0, minutes: 0, seconds: 0, isAnnounced: true });
+      } else {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setSemifinalCountdown({ hours, minutes, seconds, isAnnounced: false });
+      }
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, [SEMIFINAL_ANNOUNCEMENT_TARGET]);
+
+  const isSemifinalAnnounced = semifinalCountdown.isAnnounced;
+
   // File inputs replaced by direct URL inputs to prevent server memory spikes
 
   const isPreliminaryClosed = systemSettings?.submission_preliminary_open === 'false' || Date.now() >= new Date('2026-10-12T23:59:59+07:00').getTime();
@@ -409,7 +447,9 @@ export const ParticipantDashboard: React.FC = () => {
             {/* Stage 2: Semi Final */}
             <div className={`border-3 p-4 space-y-2 transition-all ${
               myTeam.status_preliminary === 'passed'
-                ? myTeam.status_semifinal === 'passed'
+                ? !isSemifinalAnnounced
+                  ? 'bg-amber-50 border-amber-500 shadow-[3px_3px_0_0_#BD1B1F]'
+                  : myTeam.status_semifinal === 'passed'
                   ? 'bg-emerald-50 border-emerald-600 shadow-[3px_3px_0_0_#BD1B1F]'
                   : myTeam.status_semifinal === 'rejected'
                   ? 'bg-red-50 border-red-500 shadow-[3px_3px_0_0_#BD1B1F]'
@@ -426,7 +466,9 @@ export const ParticipantDashboard: React.FC = () => {
                 </span>
                 <span className={`font-display font-bold text-[10px] px-2 py-0.5 uppercase flex items-center gap-1 ${
                   myTeam.status_preliminary === 'passed'
-                    ? myTeam.status_semifinal === 'passed'
+                    ? !isSemifinalAnnounced
+                      ? 'bg-amber-500 text-white'
+                      : myTeam.status_semifinal === 'passed'
                       ? 'bg-emerald-600 text-white'
                       : myTeam.status_semifinal === 'rejected'
                       ? 'bg-red-inferno text-white'
@@ -434,7 +476,9 @@ export const ParticipantDashboard: React.FC = () => {
                     : 'bg-gray-400 text-white'
                 }`}>
                   {myTeam.status_preliminary === 'passed'
-                    ? myTeam.status_semifinal === 'passed'
+                    ? !isSemifinalAnnounced
+                      ? '⏳ PENGUMUMAN 21.00 WIB'
+                      : myTeam.status_semifinal === 'passed'
                       ? '✓ LOLOS SEMI FINAL'
                       : myTeam.status_semifinal === 'rejected'
                       ? '✕ TIDAK LOLOS SEMI FINAL'
@@ -447,7 +491,9 @@ export const ParticipantDashboard: React.FC = () => {
               </h4>
               <p className="text-xs font-sans text-blue-sail/80">
                 {myTeam.status_preliminary === 'passed'
-                  ? myTeam.status_semifinal === 'passed'
+                  ? !isSemifinalAnnounced
+                    ? 'Pengumuman kelolosan ke babak Grand Final akan dibuka pukul 21.00 WIB hari ini.'
+                    : myTeam.status_semifinal === 'passed'
                     ? 'Selamat! Tim Anda LOLOS ke babak Grand Final!'
                     : myTeam.status_semifinal === 'rejected'
                     ? 'Mohon maaf, perjalanan tim Anda terhenti di babak Semi Final.'
@@ -472,7 +518,7 @@ export const ParticipantDashboard: React.FC = () => {
 
             {/* Stage 3: Grand Final */}
             <div className={`border-3 p-4 space-y-2 transition-all ${
-              myTeam.status_semifinal === 'passed'
+              isSemifinalAnnounced && myTeam.status_semifinal === 'passed'
                 ? myTeam.status_final === 'passed'
                   ? 'bg-purple-50 border-purple-600 shadow-[3px_3px_0_0_#BD1B1F]'
                   : myTeam.status_final === 'rejected'
@@ -482,14 +528,14 @@ export const ParticipantDashboard: React.FC = () => {
             }`}>
               <div className="flex items-center justify-between">
                 <span className={`font-display font-black text-[10px] px-2.5 py-0.5 uppercase border ${
-                  myTeam.status_semifinal === 'passed'
+                  isSemifinalAnnounced && myTeam.status_semifinal === 'passed'
                     ? 'bg-blue-sail text-decor border-decor'
                     : 'bg-gray-300 text-gray-700 border-gray-400'
                 }`}>
                   STAGE 03
                 </span>
                 <span className={`font-display font-bold text-[10px] px-2 py-0.5 uppercase flex items-center gap-1 ${
-                  myTeam.status_semifinal === 'passed'
+                  isSemifinalAnnounced && myTeam.status_semifinal === 'passed'
                     ? myTeam.status_final === 'passed'
                       ? 'bg-purple-700 text-white'
                       : myTeam.status_final === 'rejected'
@@ -497,7 +543,7 @@ export const ParticipantDashboard: React.FC = () => {
                       : 'bg-amber-500 text-white'
                     : 'bg-gray-400 text-white'
                 }`}>
-                  {myTeam.status_semifinal === 'passed'
+                  {isSemifinalAnnounced && myTeam.status_semifinal === 'passed'
                     ? myTeam.status_final === 'passed'
                       ? 'JUARA GRAND FINAL'
                       : myTeam.status_final === 'rejected'
@@ -506,11 +552,11 @@ export const ParticipantDashboard: React.FC = () => {
                     : 'TERKUNCI'}
                 </span>
               </div>
-              <h4 className={`font-display font-black text-base uppercase ${myTeam.status_semifinal === 'passed' ? 'text-blue-sail' : 'text-gray-600'}`}>
+              <h4 className={`font-display font-black text-base uppercase ${isSemifinalAnnounced && myTeam.status_semifinal === 'passed' ? 'text-blue-sail' : 'text-gray-600'}`}>
                 GRAND FINAL
               </h4>
-              <p className={`text-xs font-sans ${myTeam.status_semifinal === 'passed' ? 'text-blue-sail/80' : 'text-gray-500'}`}>
-                {myTeam.status_semifinal === 'passed'
+              <p className={`text-xs font-sans ${isSemifinalAnnounced && myTeam.status_semifinal === 'passed' ? 'text-blue-sail/80' : 'text-gray-500'}`}>
+                {isSemifinalAnnounced && myTeam.status_semifinal === 'passed'
                   ? myTeam.status_final === 'passed'
                     ? 'Selamat! Tim Anda meraih Juara Grand Final TDC Summit Fest 2026!'
                     : 'Selamat! Tim Anda bertanding di babak Grand Final!'
@@ -679,13 +725,17 @@ export const ParticipantDashboard: React.FC = () => {
                   </a>
                 )}
                 <span className={`font-display font-black text-xs px-3 py-1.5 border uppercase ${
-                  myTeam.status_semifinal === 'passed'
+                  !isSemifinalAnnounced
+                    ? 'bg-amber-500 text-white border-blue-sail'
+                    : myTeam.status_semifinal === 'passed'
                     ? 'bg-purple-700 text-white border-purple-900'
                     : myTeam.status_semifinal === 'rejected'
                     ? 'bg-red-inferno text-white border-blue-sail'
                     : 'bg-decor text-blue-sail border-blue-sail'
                 }`}>
-                  {myTeam.status_semifinal === 'passed'
+                  {!isSemifinalAnnounced
+                    ? 'STATUS: MENUNGGU PENGUMUMAN (21.00 WIB)'
+                    : myTeam.status_semifinal === 'passed'
                     ? 'STATUS: LOLOS SEMI FINAL'
                     : myTeam.status_semifinal === 'rejected'
                     ? 'STATUS: TIDAK LOLOS SEMI FINAL'
@@ -723,8 +773,98 @@ export const ParticipantDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* CASE 1: TEAM REJECTED IN SEMI FINAL (OVERRIDE PAYMENT DISPLAY) */}
-            {myTeam.status_semifinal === 'rejected' ? (
+            {/* CASE 0: COUNTDOWN ACTIVE BEFORE 21:00 WIB */}
+            {!isSemifinalAnnounced ? (
+              <div className="space-y-6 animate-fadeIn">
+                {/* Countdown Announcement Card */}
+                <div className="bg-blue-sail border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] text-ballroom space-y-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-white/20 pb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-decor text-blue-sail flex items-center justify-center font-black border-2 border-blue-sail shrink-0 shadow-[3px_3px_0_0_#BD1B1F] animate-pulse">
+                        <Icon name="Clock" size={26} />
+                      </div>
+                      <div>
+                        <span className="bg-red-inferno text-white font-mono text-[10px] font-bold px-2.5 py-0.5 uppercase tracking-widest border border-white/30 inline-block mb-1">
+                          COUNTDOWN PENGUMUMAN HASIL JUDGING
+                        </span>
+                        <h3 className="font-display font-black text-xl sm:text-2xl uppercase tracking-tight text-white">
+                          PENGUMUMAN KELOLOSAN SEMI FINAL DIBUKA PUKUL 21.00 WIB
+                        </h3>
+                      </div>
+                    </div>
+                    <span className="bg-decor text-blue-sail font-mono font-black text-xs px-3 py-1.5 border-2 border-blue-sail shadow-[2px_2px_0_0_#000] shrink-0 uppercase tracking-wider">
+                      HARI INI • 21.00 WIB
+                    </span>
+                  </div>
+
+                  <p className="text-xs sm:text-sm font-sans text-white/90 leading-relaxed max-w-2xl">
+                    Hasil penilaian dewan juri babak <strong>Semi Final {isBPC ? 'Business Plan Competition (BPC)' : 'Business Case Competition (BCC)'}</strong> menuju babak Grand Final TDC Summit Fest 2026 akan diumumkan serentak tepat pada pukul <strong>21.00 WIB hari ini (9 November 2026)</strong>.
+                  </p>
+
+                  {/* Countdown Digit Boxes */}
+                  <div className="bg-ballroom/10 border-2 border-decor p-5 sm:p-6 shadow-[6px_6px_0_0_#000]">
+                    <div className="text-center mb-3">
+                      <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-decor flex items-center justify-center gap-1.5">
+                        <Icon name="Sparkles" size={14} />
+                        <span>WAKTU TERSISA MENUJU PENGUMUMAN</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3 sm:gap-6 max-w-sm mx-auto text-center">
+                      <div className="bg-blue-sail/90 border-2 border-decor p-3 sm:p-4 shadow-[4px_4px_0_0_#BD1B1F]">
+                        <span className="block font-display font-black text-3xl sm:text-4xl text-ballroom tracking-tight">
+                          {String(semifinalCountdown.hours).padStart(2, '0')}
+                        </span>
+                        <span className="text-[10px] font-mono uppercase text-ballroom/75 font-bold tracking-wider">Jam</span>
+                      </div>
+                      <div className="bg-blue-sail/90 border-2 border-decor p-3 sm:p-4 shadow-[4px_4px_0_0_#BD1B1F]">
+                        <span className="block font-display font-black text-3xl sm:text-4xl text-ballroom tracking-tight">
+                          {String(semifinalCountdown.minutes).padStart(2, '0')}
+                        </span>
+                        <span className="text-[10px] font-mono uppercase text-ballroom/75 font-bold tracking-wider">Menit</span>
+                      </div>
+                      <div className="bg-blue-sail/90 border-2 border-decor p-3 sm:p-4 shadow-[4px_4px_0_0_#BD1B1F] animate-pulse">
+                        <span className="block font-display font-black text-3xl sm:text-4xl text-decor tracking-tight">
+                          {String(semifinalCountdown.seconds).padStart(2, '0')}
+                        </span>
+                        <span className="text-[10px] font-mono uppercase text-decor/90 font-bold tracking-wider">Detik</span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] font-sans text-center text-white/80 mt-4 font-medium">
+                      Halaman ini akan otomatis menampilkan status kelolosan tim Anda begitu hitung mundur selesai.
+                    </p>
+                  </div>
+
+                  {/* Proposal Submission Status if submitted */}
+                  {myTeam.semifinal_file_url && (
+                    <div className="bg-white p-4 border-2 border-blue-sail text-blue-sail flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[4px_4px_0_0_#000]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-emerald-100 text-emerald-700 flex items-center justify-center font-black border border-emerald-300 shrink-0">
+                          <Icon name="FileCheck" size={18} />
+                        </div>
+                        <div>
+                          <span className="font-display font-black text-xs uppercase text-emerald-700 block">
+                            BERKAS PROPOSAL SEMIFINAL TELAH TERSUBMIT
+                          </span>
+                          <span className="text-[11px] font-sans text-blue-sail/70">
+                            {myTeam.semifinal_file_name || `Proposal_SemiFinal_${myTeam.team_name}.pdf`}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openDoc(myTeam.semifinal_file_url, `Berkas Submission Semi Final - ${myTeam.team_name}`)}
+                        className="bg-blue-sail hover:bg-barbera text-ballroom font-display font-bold text-xs uppercase px-4 py-2 border border-blue-sail shadow-[2px_2px_0_0_#BD1B1F] shrink-0 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Icon name="Eye" size={14} />
+                        <span>LIHAT BERKAS SAYA</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : myTeam.status_semifinal === 'rejected' ? (
               <div className="bg-red-inferno text-white p-6 border-4 border-blue-sail shadow-[6px_6px_0_0_#000] space-y-3">
                 <div className="flex items-center gap-3 border-b-2 border-white/20 pb-3">
                   <div className="w-10 h-10 bg-white text-red-inferno flex items-center justify-center font-black text-xl shrink-0 shadow-md">
@@ -1097,8 +1237,8 @@ export const ParticipantDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Grand Final Portal Box (Appears when Semi Final is Passed) */}
-        {myTeam.status_semifinal === 'passed' && (
+        {/* Grand Final Portal Box (Appears when Semi Final is Passed AND Announced) */}
+        {isSemifinalAnnounced && myTeam.status_semifinal === 'passed' && (
           <div className="bg-ballroom border-4 border-blue-sail p-6 sm:p-8 shadow-[8px_8px_0_0_#BD1B1F] space-y-6">
             <div className="border-b-2 border-blue-sail/20 pb-4 flex items-center justify-between">
               <div>
