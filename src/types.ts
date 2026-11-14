@@ -167,6 +167,7 @@ export interface CompetitionRegistration {
   semifinal_submitted_at?: string;
   final_file_url?: string;
   final_file_name?: string;
+  final_submitted_at?: string;
   submitted_at: string;
 }
 

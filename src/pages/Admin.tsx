@@ -774,17 +774,22 @@ export const Admin: React.FC = () => {
   }, [activeTab, autoRefreshHealth, logFilterLevel, logSearchText]);
 
   // CSV Exporter Helper
-  const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
-    const csvContent = "data:text/csv;charset=utf-8,"
-      + [headers.join(','), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(','))].join('\n');
+  const downloadCSV = (filename: string, headers: string[], rows: (string | number | boolean | null | undefined)[][]) => {
+    const bom = "\uFEFF"; // UTF-8 BOM so Excel & Google Sheets display Indonesian characters & formatting properly
+    const csvContent = bom + [
+      headers.map(h => `"${String(h ?? '').replace(/"/g, '""')}"`).join(','),
+      ...rows.map(row => row.map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(','))
+    ].join('\r\n');
 
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const exportStaffCSV = () => {
@@ -808,25 +813,207 @@ export const Admin: React.FC = () => {
   };
 
   const exportCompCSV = () => {
-    const headers = ['Nama Tim', 'Ketua Tim', 'Anggota', 'Instansi', 'No WA', 'Email', 'Cabang Kompetisi', 'KTM Ketua', 'Bukti IG Story', 'Bukti Twibbon', 'Bukti Follow IG', 'Tanggal Daftar'];
-    const rows = competitionRegistrations.map(reg => {
+    if (!filteredCompetitionRegistrations || filteredCompetitionRegistrations.length === 0) {
+      alert('Tidak ada data pendaftar kompetisi yang sedang ditampilkan untuk diekspor.');
+      return;
+    }
+
+    const headers = [
+      'No',
+      'ID Pendaftaran',
+      'Waktu Pendaftaran',
+      'Nama Tim',
+      'Cabang Kompetisi',
+      'Kategori Pendidikan',
+      'Kategori Lengkap',
+      'Institusi / Asal Sekolah / Kampus',
+      'Jumlah Anggota Termasuk Ketua',
+      'Tahap Kompetisi Saat Ini',
+      // Data Ketua
+      'Nama Ketua Tim',
+      'Email Ketua',
+      'No WhatsApp Ketua',
+      'NIM / NISN / NRP Ketua',
+      'Jurusan Ketua',
+      'Kelas / Tingkat Ketua',
+      'Domisili Ketua',
+      'Link KTM / Kartu Pelajar Ketua',
+      // Ringkasan Anggota
+      'Daftar Semua Anggota',
+      // Anggota 1
+      'Anggota 1 - Nama Lengkap',
+      'Anggota 1 - Institusi',
+      'Anggota 1 - Email',
+      'Anggota 1 - No WhatsApp',
+      'Anggota 1 - NIM / NISN',
+      'Anggota 1 - Jurusan',
+      'Anggota 1 - Kelas / Tingkat',
+      'Anggota 1 - Domisili',
+      'Anggota 1 - Link KTM / Kartu Pelajar',
+      // Anggota 2
+      'Anggota 2 - Nama Lengkap',
+      'Anggota 2 - Institusi',
+      'Anggota 2 - Email',
+      'Anggota 2 - No WhatsApp',
+      'Anggota 2 - NIM / NISN',
+      'Anggota 2 - Jurusan',
+      'Anggota 2 - Kelas / Tingkat',
+      'Anggota 2 - Domisili',
+      'Anggota 2 - Link KTM / Kartu Pelajar',
+      // Persyaratan Berkas Pendaftaran Awal
+      'Bukti IG Story (URL)',
+      'Bukti Twibbon Feeds (URL)',
+      'Bukti Follow IG (URL)',
+      // Tahap 1: Preliminary
+      'Status Kelolosan Preliminary',
+      'Tipe Berkas Preliminary',
+      'Nama Berkas Preliminary',
+      'Link Berkas Preliminary',
+      'Waktu Kumpul Preliminary',
+      // Tahap 2: Pembayaran Semifinal & Proposal Semifinal
+      'Status Pembayaran Semifinal',
+      'Nama Berkas Bukti Transfer Semifinal',
+      'Link Bukti Transfer Semifinal',
+      'Waktu Upload Bukti Transfer Semifinal',
+      'Status Kelolosan Semifinal',
+      'Nama Berkas Proposal Semifinal',
+      'Link Berkas Proposal Semifinal',
+      'Waktu Kumpul Proposal Semifinal',
+      // Tahap 3: Grand Final
+      'Status Kelolosan Grand Final',
+      'Nama Berkas Grand Final',
+      'Link Berkas Grand Final',
+      'Waktu Kumpul Grand Final'
+    ];
+
+    const formatDateTime = (val?: string) => {
+      if (!val) return '-';
+      try {
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? '-' : d.toLocaleString('id-ID');
+      } catch {
+        return '-';
+      }
+    };
+
+    const formatPrelimStatus = (status?: string) => {
+      if (status === 'passed') return 'Lolos';
+      if (status === 'rejected') return 'Tidak Lolos';
+      if (status === 'submitted') return 'Tersubmit (Menunggu Penilaian)';
+      return 'Pending';
+    };
+
+    const formatPaymentStatus = (status?: string) => {
+      if (status === 'verified') return 'Diverifikasi';
+      if (status === 'pending') return 'Menunggu Verifikasi';
+      if (status === 'rejected') return 'Ditolak';
+      return 'Belum Bayar';
+    };
+
+    const formatSemiStatus = (status?: string) => {
+      if (status === 'passed') return 'Lolos Grand Final';
+      if (status === 'rejected') return 'Tidak Lolos Semi Final';
+      return 'Pending';
+    };
+
+    const formatFinalStatus = (status?: string) => {
+      if (status === 'passed') return 'Juara';
+      if (status === 'rejected') return 'Tidak Lolos Final';
+      return 'Pending';
+    };
+
+    const rows = filteredCompetitionRegistrations.map((reg, index) => {
       const comp = competitions.find(c => c.id === reg.category_id);
+      const compType = reg.competition_type || (reg.category_id?.includes('BCC') ? 'BCC' : 'BPC');
+      const eduCat = reg.education_category || (reg.category_id?.includes('SMA') ? 'SMA/Sederajat' : 'Mahasiswa');
+      const leaderObj = getParsedLeader(reg);
+      const membersList = getParsedMembers(reg);
+
+      const m1 = membersList[0] || {};
+      const m2 = membersList[1] || {};
+
+      const fallbackMemberNames = Array.isArray(reg.members) ? reg.members : [];
+      const m1Name = m1.fullName || m1.name || fallbackMemberNames[0] || '-';
+      const m2Name = m2.fullName || m2.name || fallbackMemberNames[1] || '-';
+
+      const memberNamesSummary = membersList.length > 0
+        ? membersList.map((m: any) => m.fullName || m.name || '-').filter(Boolean).join(', ')
+        : fallbackMemberNames.join(', ') || '-';
+
+      const totalMembersCount = 1 + (membersList.length > 0 ? membersList.length : fallbackMemberNames.length);
+
       return [
-        reg.team_name,
-        reg.leader_name,
-        reg.members.join(', '),
-        reg.institution,
-        reg.contact,
-        reg.email,
-        comp ? comp.title : 'Kategori Tidak Ditemukan',
-        reg.payment_proof_url || '-', // payment_proof_url is used for KTM in preliminary
+        index + 1,
+        reg.id || '-',
+        formatDateTime(reg.submitted_at),
+        reg.team_name || '-',
+        compType,
+        eduCat,
+        comp ? comp.title : (reg.category_id || '-'),
+        reg.institution || '-',
+        totalMembersCount,
+        reg.status_stage || 'preliminary',
+        // Ketua
+        reg.leader_name || '-',
+        reg.email || '-',
+        reg.contact || '-',
+        leaderObj.studentId || leaderObj.nim || leaderObj.nisn || '-',
+        leaderObj.major || leaderObj.jurusan || '-',
+        leaderObj.grade ? `Kelas ${leaderObj.grade}` : (leaderObj.kelas || '-'),
+        leaderObj.domicile || leaderObj.domisili || '-',
+        reg.payment_proof_url || '-',
+        // Ringkasan Anggota
+        memberNamesSummary,
+        // Anggota 1
+        m1Name,
+        m1.institution || (m1Name !== '-' ? reg.institution : '-'),
+        m1.email || '-',
+        m1.whatsapp || m1.phone || m1.contact || '-',
+        m1.studentId || m1.nim || m1.nisn || '-',
+        m1.major || m1.jurusan || '-',
+        m1.grade ? `Kelas ${m1.grade}` : (m1.kelas || '-'),
+        m1.domicile || m1.domisili || '-',
+        m1.cardFileUrl || '-',
+        // Anggota 2
+        m2Name,
+        m2.institution || (m2Name !== '-' ? reg.institution : '-'),
+        m2.email || '-',
+        m2.whatsapp || m2.phone || m2.contact || '-',
+        m2.studentId || m2.nim || m2.nisn || '-',
+        m2.major || m2.jurusan || '-',
+        m2.grade ? `Kelas ${m2.grade}` : (m2.kelas || '-'),
+        m2.domicile || m2.domisili || '-',
+        m2.cardFileUrl || '-',
+        // Berkas Pendaftaran Awal
         reg.ig_story_file_url || reg.file_url || '-',
         reg.twibbon_file_url || '-',
         reg.ig_follow_file_url || '-',
-        new Date(reg.submitted_at).toLocaleDateString('id-ID')
+        // Preliminary
+        formatPrelimStatus(reg.status_preliminary),
+        reg.preliminary_file_type || (compType === 'BCC' ? 'Executive Summary' : 'BMC'),
+        reg.preliminary_file_name || '-',
+        reg.preliminary_file_url || '-',
+        formatDateTime(reg.preliminary_submitted_at),
+        // Semifinal & Pembayaran
+        formatPaymentStatus(reg.payment_semifinal_status),
+        reg.payment_semifinal_file_name || '-',
+        reg.payment_semifinal_url || '-',
+        formatDateTime(reg.payment_semifinal_submitted_at),
+        formatSemiStatus(reg.status_semifinal),
+        reg.semifinal_file_name || '-',
+        reg.semifinal_file_url || '-',
+        formatDateTime(reg.semifinal_submitted_at),
+        // Grand Final
+        formatFinalStatus(reg.status_final),
+        reg.final_file_name || '-',
+        reg.final_file_url || '-',
+        formatDateTime(reg.final_submitted_at)
       ];
     });
-    downloadCSV('TSF_Pendaftar_Kompetisi.csv', headers, rows);
+
+    const filterTag = compFilterType !== 'all' ? `_${compFilterType}` : '';
+    const dateStr = new Date().toISOString().slice(0, 10);
+    downloadCSV(`TSF_Pendaftar_Kompetisi${filterTag}_${dateStr}.csv`, headers, rows);
   };
 
   const exportVendorCSV = () => {
@@ -2778,10 +2965,11 @@ export const Admin: React.FC = () => {
                   <button
                     id="comp-export-csv"
                     onClick={exportCompCSV}
-                    className="bg-green-600 hover:bg-green-700 text-white font-display font-bold text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#2A4C9E] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                    title="Ekspor seluruh data pendaftar yang sedang ditampilkan ke dalam format spreadsheet / CSV lengkap"
+                    className="bg-green-600 hover:bg-green-700 text-white font-display font-bold text-xs uppercase px-5 py-2.5 rounded-none border-2 border-blue-sail tracking-widest flex items-center space-x-1.5 shadow-[3px_3px_0_0_#2A4C9E] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer shrink-0"
                   >
                     <Icon name="Download" size={14} className="stroke-[2.5px]" />
-                    <span>EKSPOR CSV LOMBA</span>
+                    <span>EKSPOR SHEETS ({filteredCompetitionRegistrations.length} TIM)</span>
                   </button>
                 </div>
               </div>
