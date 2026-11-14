@@ -818,6 +818,32 @@ export const Admin: React.FC = () => {
       return;
     }
 
+    // Determine max members count across the filtered registrations (minimum 5)
+    let maxMembers = 5;
+    filteredCompetitionRegistrations.forEach(reg => {
+      const ml = getParsedMembers(reg);
+      const fn = Array.isArray(reg.members) ? reg.members : [];
+      const count = Math.max(ml.length, fn.length);
+      if (count > maxMembers) {
+        maxMembers = count;
+      }
+    });
+
+    const memberHeaders: string[] = [];
+    for (let i = 1; i <= maxMembers; i++) {
+      memberHeaders.push(
+        `Anggota ${i} - Nama Lengkap`,
+        `Anggota ${i} - Institusi`,
+        `Anggota ${i} - Email`,
+        `Anggota ${i} - No WhatsApp`,
+        `Anggota ${i} - NIM / NISN`,
+        `Anggota ${i} - Jurusan`,
+        `Anggota ${i} - Kelas / Tingkat`,
+        `Anggota ${i} - Domisili`,
+        `Anggota ${i} - Link KTM / Kartu Pelajar`
+      );
+    }
+
     const headers = [
       'No',
       'ID Pendaftaran',
@@ -840,26 +866,8 @@ export const Admin: React.FC = () => {
       'Link KTM / Kartu Pelajar Ketua',
       // Ringkasan Anggota
       'Daftar Semua Anggota',
-      // Anggota 1
-      'Anggota 1 - Nama Lengkap',
-      'Anggota 1 - Institusi',
-      'Anggota 1 - Email',
-      'Anggota 1 - No WhatsApp',
-      'Anggota 1 - NIM / NISN',
-      'Anggota 1 - Jurusan',
-      'Anggota 1 - Kelas / Tingkat',
-      'Anggota 1 - Domisili',
-      'Anggota 1 - Link KTM / Kartu Pelajar',
-      // Anggota 2
-      'Anggota 2 - Nama Lengkap',
-      'Anggota 2 - Institusi',
-      'Anggota 2 - Email',
-      'Anggota 2 - No WhatsApp',
-      'Anggota 2 - NIM / NISN',
-      'Anggota 2 - Jurusan',
-      'Anggota 2 - Kelas / Tingkat',
-      'Anggota 2 - Domisili',
-      'Anggota 2 - Link KTM / Kartu Pelajar',
+      // Dynamic Member Headers (Anggota 1 s.d. Anggota N, minimal sampai Anggota 5)
+      ...memberHeaders,
       // Persyaratan Berkas Pendaftaran Awal
       'Bukti IG Story (URL)',
       'Bukti Twibbon Feeds (URL)',
@@ -929,18 +937,33 @@ export const Admin: React.FC = () => {
       const leaderObj = getParsedLeader(reg);
       const membersList = getParsedMembers(reg);
 
-      const m1 = membersList[0] || {};
-      const m2 = membersList[1] || {};
-
       const fallbackMemberNames = Array.isArray(reg.members) ? reg.members : [];
-      const m1Name = m1.fullName || m1.name || fallbackMemberNames[0] || '-';
-      const m2Name = m2.fullName || m2.name || fallbackMemberNames[1] || '-';
 
       const memberNamesSummary = membersList.length > 0
         ? membersList.map((m: any) => m.fullName || m.name || '-').filter(Boolean).join(', ')
         : fallbackMemberNames.join(', ') || '-';
 
       const totalMembersCount = 1 + (membersList.length > 0 ? membersList.length : fallbackMemberNames.length);
+
+      const memberValues: (string | number)[] = [];
+      for (let i = 0; i < maxMembers; i++) {
+        const m = membersList[i] || {};
+        const fallbackName = fallbackMemberNames[i] || '-';
+        const mName = m.fullName || m.name || fallbackName;
+        const hasMember = mName && mName !== '-';
+
+        memberValues.push(
+          mName || '-',
+          m.institution || (hasMember ? reg.institution : '-'),
+          m.email || '-',
+          m.whatsapp || m.phone || m.contact || '-',
+          m.studentId || m.nim || m.nisn || '-',
+          m.major || m.jurusan || '-',
+          m.grade ? `Kelas ${m.grade}` : (m.kelas || '-'),
+          m.domicile || m.domisili || '-',
+          m.cardFileUrl || '-'
+        );
+      }
 
       return [
         index + 1,
@@ -964,26 +987,8 @@ export const Admin: React.FC = () => {
         reg.payment_proof_url || '-',
         // Ringkasan Anggota
         memberNamesSummary,
-        // Anggota 1
-        m1Name,
-        m1.institution || (m1Name !== '-' ? reg.institution : '-'),
-        m1.email || '-',
-        m1.whatsapp || m1.phone || m1.contact || '-',
-        m1.studentId || m1.nim || m1.nisn || '-',
-        m1.major || m1.jurusan || '-',
-        m1.grade ? `Kelas ${m1.grade}` : (m1.kelas || '-'),
-        m1.domicile || m1.domisili || '-',
-        m1.cardFileUrl || '-',
-        // Anggota 2
-        m2Name,
-        m2.institution || (m2Name !== '-' ? reg.institution : '-'),
-        m2.email || '-',
-        m2.whatsapp || m2.phone || m2.contact || '-',
-        m2.studentId || m2.nim || m2.nisn || '-',
-        m2.major || m2.jurusan || '-',
-        m2.grade ? `Kelas ${m2.grade}` : (m2.kelas || '-'),
-        m2.domicile || m2.domisili || '-',
-        m2.cardFileUrl || '-',
+        // Dynamic Members (Anggota 1 s.d. Anggota N)
+        ...memberValues,
         // Berkas Pendaftaran Awal
         reg.ig_story_file_url || reg.file_url || '-',
         reg.twibbon_file_url || '-',
